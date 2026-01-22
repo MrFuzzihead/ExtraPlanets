@@ -2,11 +2,6 @@ package com.mjr.extraplanets.planets.Saturn.worldgen.dungeon;
 
 import java.util.Random;
 
-import com.mjr.extraplanets.tileEntities.dungeonSpawners.TileEntityDungeonSpawnerSaturn;
-
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import micdoodle8.mods.galacticraft.core.GalacticraftCore;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
@@ -19,55 +14,63 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 
+import com.mjr.extraplanets.tileEntities.dungeonSpawners.TileEntityDungeonSpawnerSaturn;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import micdoodle8.mods.galacticraft.core.GalacticraftCore;
+
 public class DungeonSpawnerSaturn extends Block {
-	public DungeonSpawnerSaturn() {
-		super(Material.rock);
-		this.setBlockTextureName(GalacticraftCore.TEXTURE_PREFIX + "blank");
-	}
 
-	@Override
-	public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
-		return null;
-	}
+    public DungeonSpawnerSaturn() {
+        super(Material.rock);
+        this.setBlockTextureName(GalacticraftCore.TEXTURE_PREFIX + "blank");
+    }
 
-	@SideOnly(Side.CLIENT)
-	@Override
-	public AxisAlignedBB getSelectedBoundingBoxFromPool(World world, int x, int y, int z) {
-		return AxisAlignedBB.getBoundingBox(x + 0.0D, y + 0.0D, z + 0.0D, x + 0.0D, y + 0.0D, z + 0.0D);
-	}
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
+        return null;
+    }
 
-	@Override
-	public float getExplosionResistance(Entity par1Entity, World world, int x, int y, int z, double explosionX, double explosionY, double explosionZ) {
-		return 10000.0F;
-	}
+    @SideOnly(Side.CLIENT)
+    @Override
+    public AxisAlignedBB getSelectedBoundingBoxFromPool(World world, int x, int y, int z) {
+        return AxisAlignedBB.getBoundingBox(x + 0.0D, y + 0.0D, z + 0.0D, x + 0.0D, y + 0.0D, z + 0.0D);
+    }
 
-	@Override
-	public float getBlockHardness(World par1World, int par2, int par3, int par4) {
-		return -1.0F;
-	}
+    @Override
+    public float getExplosionResistance(Entity par1Entity, World world, int x, int y, int z, double explosionX,
+        double explosionY, double explosionZ) {
+        return 10000.0F;
+    }
 
-	@Override
-	public TileEntity createTileEntity(World world, int metadata) {
-		return new TileEntityDungeonSpawnerSaturn();
-	}
+    @Override
+    public float getBlockHardness(World par1World, int par2, int par3, int par4) {
+        return -1.0F;
+    }
 
-	@Override
-	public boolean canHarvestBlock(EntityPlayer player, int meta) {
-		return false;
-	}
+    @Override
+    public TileEntity createTileEntity(World world, int metadata) {
+        return new TileEntityDungeonSpawnerSaturn();
+    }
 
-	@Override
-	public Item getItemDropped(int meta, Random random, int par3) {
-		return Item.getItemFromBlock(Blocks.air);
-	}
+    @Override
+    public boolean canHarvestBlock(EntityPlayer player, int meta) {
+        return false;
+    }
 
-	@Override
-	public int quantityDropped(int meta, int fortune, Random random) {
-		return 0;
-	}
+    @Override
+    public Item getItemDropped(int meta, Random random, int par3) {
+        return Item.getItemFromBlock(Blocks.air);
+    }
 
-	@Override
-	public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z) {
-		return null;
-	}
+    @Override
+    public int quantityDropped(int meta, int fortune, Random random) {
+        return 0;
+    }
+
+    @Override
+    public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z) {
+        return null;
+    }
 }

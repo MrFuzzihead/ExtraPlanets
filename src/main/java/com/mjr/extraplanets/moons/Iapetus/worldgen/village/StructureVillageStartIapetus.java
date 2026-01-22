@@ -9,53 +9,61 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import net.minecraft.world.gen.structure.StructureStart;
 
 public class StructureVillageStartIapetus extends StructureStart {
-	public StructureVillageStartIapetus() {
-	}
 
-	@SuppressWarnings("unchecked")
-	public StructureVillageStartIapetus(World par1World, Random par2Random, int par3, int par4, int par5) {
-		super(par3, par4);
+    public StructureVillageStartIapetus() {}
 
-		final ArrayList<StructureVillagePieceWeightIapetus> var6 = StructureVillagePiecesIapetus.getStructureVillageWeightedPieceList(par2Random, par5);
-		final StructureComponentIapetusVillageStartPiece var7 = new StructureComponentIapetusVillageStartPiece(par1World.getWorldChunkManager(), 0, par2Random, (par3 << 4) + 2, (par4 << 4) + 2, var6, par5);
-		this.components.add(var7);
-		var7.buildComponent(var7, this.components, par2Random);
-		final ArrayList<Object> var8 = var7.field_74930_j;
-		final ArrayList<Object> var9 = var7.field_74932_i;
-		int var10;
+    @SuppressWarnings("unchecked")
+    public StructureVillageStartIapetus(World par1World, Random par2Random, int par3, int par4, int par5) {
+        super(par3, par4);
 
-		while (!var8.isEmpty() || !var9.isEmpty()) {
-			StructureComponent var11;
+        final ArrayList<StructureVillagePieceWeightIapetus> var6 = StructureVillagePiecesIapetus
+            .getStructureVillageWeightedPieceList(par2Random, par5);
+        final StructureComponentIapetusVillageStartPiece var7 = new StructureComponentIapetusVillageStartPiece(
+            par1World.getWorldChunkManager(),
+            0,
+            par2Random,
+            (par3 << 4) + 2,
+            (par4 << 4) + 2,
+            var6,
+            par5);
+        this.components.add(var7);
+        var7.buildComponent(var7, this.components, par2Random);
+        final ArrayList<Object> var8 = var7.field_74930_j;
+        final ArrayList<Object> var9 = var7.field_74932_i;
+        int var10;
 
-			if (var8.isEmpty()) {
-				var10 = par2Random.nextInt(var9.size());
-				var11 = (StructureComponent) var9.remove(var10);
-				var11.buildComponent(var7, this.components, par2Random);
-			} else {
-				var10 = par2Random.nextInt(var8.size());
-				var11 = (StructureComponent) var8.remove(var10);
-				var11.buildComponent(var7, this.components, par2Random);
-			}
-		}
+        while (!var8.isEmpty() || !var9.isEmpty()) {
+            StructureComponent var11;
 
-		this.updateBoundingBox();
-		var10 = 0;
-		final Iterator<StructureComponent> var13 = this.components.iterator();
+            if (var8.isEmpty()) {
+                var10 = par2Random.nextInt(var9.size());
+                var11 = (StructureComponent) var9.remove(var10);
+                var11.buildComponent(var7, this.components, par2Random);
+            } else {
+                var10 = par2Random.nextInt(var8.size());
+                var11 = (StructureComponent) var8.remove(var10);
+                var11.buildComponent(var7, this.components, par2Random);
+            }
+        }
 
-		while (var13.hasNext()) {
-			final StructureComponent var12 = var13.next();
+        this.updateBoundingBox();
+        var10 = 0;
+        final Iterator<StructureComponent> var13 = this.components.iterator();
 
-			if (!(var12 instanceof StructureComponentIapetusVillageRoadPiece)) {
-				++var10;
-			}
-		}
-	}
+        while (var13.hasNext()) {
+            final StructureComponent var12 = var13.next();
 
-	/**
-	 * currently only defined for Villages, returns true if Village has more than 2 non-road components
-	 */
-	@Override
-	public boolean isSizeableStructure() {
-		return true;
-	}
+            if (!(var12 instanceof StructureComponentIapetusVillageRoadPiece)) {
+                ++var10;
+            }
+        }
+    }
+
+    /**
+     * currently only defined for Villages, returns true if Village has more than 2 non-road components
+     */
+    @Override
+    public boolean isSizeableStructure() {
+        return true;
+    }
 }

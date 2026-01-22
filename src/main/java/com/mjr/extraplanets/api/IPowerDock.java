@@ -2,15 +2,17 @@ package com.mjr.extraplanets.api;
 
 import java.util.HashSet;
 
-import micdoodle8.mods.galacticraft.api.tile.ILandingPadAttachable;
 import net.minecraft.world.IBlockAccess;
 
+import micdoodle8.mods.galacticraft.api.tile.ILandingPadAttachable;
+
 public interface IPowerDock {
-	public HashSet<ILandingPadAttachable> getConnectedTiles();
 
-	public boolean isBlockAttachable(IBlockAccess world, int x, int y, int z);
+    public HashSet<ILandingPadAttachable> getConnectedTiles();
 
-	public IPoweredDockable getDockedEntity();
+    public boolean isBlockAttachable(IBlockAccess world, int x, int y, int z);
 
-	void dockEntity(IPoweredDockable entity);
+    public IPoweredDockable getDockedEntity();
+
+    void dockEntity(IPoweredDockable entity);
 }

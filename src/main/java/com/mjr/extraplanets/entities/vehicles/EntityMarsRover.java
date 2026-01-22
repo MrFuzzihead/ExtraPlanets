@@ -3,73 +3,75 @@ package com.mjr.extraplanets.entities.vehicles;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.mjr.extraplanets.api.IPowerDock;
-import com.mjr.extraplanets.items.ExtraPlanets_Items;
-import com.mjr.extraplanets.tileEntities.machines.TileEntityPoweredChargingPad;
-
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 
+import com.mjr.extraplanets.api.IPowerDock;
+import com.mjr.extraplanets.items.ExtraPlanets_Items;
+import com.mjr.extraplanets.tileEntities.machines.TileEntityPoweredChargingPad;
+
 public class EntityMarsRover extends EntityPoweredVehicleBase {
-	public float targetAngle;
-	public float currentAngle;
 
-	public EntityMarsRover(World var1) {
-		super(var1);
-	}
+    public float targetAngle;
+    public float currentAngle;
 
-	public EntityMarsRover(World par2World, float f, float g, float h, int itemDamage) {
-		super(par2World, f, g, h, itemDamage);
-	}
+    public EntityMarsRover(World var1) {
+        super(var1);
+    }
 
-	@Override
-	public String getInventoryName() {
-		return "MarsRover";
-	}
+    public EntityMarsRover(World par2World, float f, float g, float h, int itemDamage) {
+        super(par2World, f, g, h, itemDamage);
+    }
 
-	@Override
-	public List<ItemStack> getItemsDropped() {
-		final List<ItemStack> items = new ArrayList<ItemStack>();
+    @Override
+    public String getInventoryName() {
+        return "MarsRover";
+    }
 
-		ItemStack vehicle = new ItemStack(ExtraPlanets_Items.marsRover, 1, this.roverType);
-		vehicle.setTagCompound(new NBTTagCompound());
-		vehicle.getTagCompound().setFloat("currentPowerCapacity", 0);
-		items.add(vehicle);
+    @Override
+    public List<ItemStack> getItemsDropped() {
+        final List<ItemStack> items = new ArrayList<ItemStack>();
 
-		for (ItemStack item : this.cargoItems) {
-			if (item != null) {
-				items.add(item);
-			}
-		}
+        ItemStack vehicle = new ItemStack(ExtraPlanets_Items.marsRover, 1, this.roverType);
+        vehicle.setTagCompound(new NBTTagCompound());
+        vehicle.getTagCompound()
+            .setFloat("currentPowerCapacity", 0);
+        items.add(vehicle);
 
-		return items;
-	}
+        for (ItemStack item : this.cargoItems) {
+            if (item != null) {
+                items.add(item);
+            }
+        }
 
-	@Override
-	public ItemStack getPickedResult(MovingObjectPosition target) {
-		return new ItemStack(ExtraPlanets_Items.marsRover, 1, this.roverType);
-	}
+        return items;
+    }
 
-	@Override
-	public void setPad(IPowerDock pad) {
-		this.landingPad = pad;
-	}
+    @Override
+    public ItemStack getPickedResult(MovingObjectPosition target) {
+        return new ItemStack(ExtraPlanets_Items.marsRover, 1, this.roverType);
+    }
 
-	@Override
-	public IPowerDock getLandingPad() {
-		return this.landingPad;
-	}
+    @Override
+    public void setPad(IPowerDock pad) {
+        this.landingPad = pad;
+    }
 
-	@Override
-	public boolean isDockValid(IPowerDock dock) {
-		return dock instanceof TileEntityPoweredChargingPad;
-	}
+    @Override
+    public IPowerDock getLandingPad() {
+        return this.landingPad;
+    }
 
-	@Override
-	public void featureUpdate() {
-		float celestialAngle = (this.worldObj.getCelestialAngle(1.0F));
-		this.addPower(celestialAngle / 2, false);
-	}
+    @Override
+    public boolean isDockValid(IPowerDock dock) {
+        return dock instanceof TileEntityPoweredChargingPad;
+    }
+
+    @Override
+    public void featureUpdate() {
+        float celestialAngle = (this.worldObj.getCelestialAngle(1.0F));
+        this.addPower(celestialAngle / 2, false);
+    }
 }

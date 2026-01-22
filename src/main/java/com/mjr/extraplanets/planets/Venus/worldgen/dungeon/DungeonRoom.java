@@ -7,66 +7,73 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.util.ForgeDirection;
 
 public abstract class DungeonRoom {
-	public final MapGenDungeon dungeonInstance;
-	public World worldObj;
 
-	// Min Corner, Lower, Left, Back
-	public int posX;
-	public int posY;
-	public int posZ;
+    public final MapGenDungeon dungeonInstance;
+    public World worldObj;
 
-	// East = 0, North = 1, South = 2, West = 3, Up = 4, Down = 5.
-	// North is z++, East is x++.
-	public ForgeDirection entranceDir;
+    // Min Corner, Lower, Left, Back
+    public int posX;
+    public int posY;
+    public int posZ;
 
-	public DungeonRoom(MapGenDungeon dungeon, int posX, int posY, int posZ, ForgeDirection entranceDir) {
-		this.dungeonInstance = dungeon;
-		this.worldObj = dungeon != null ? dungeon.worldObj : null;
-		this.posX = posX;
-		this.posY = posY;
-		this.posZ = posZ;
-		this.entranceDir = entranceDir;
-	}
+    // East = 0, North = 1, South = 2, West = 3, Up = 4, Down = 5.
+    // North is z++, East is x++.
+    public ForgeDirection entranceDir;
 
-	public abstract void generate(Block[] chunk, byte[] meta, int cx, int cz);
+    public DungeonRoom(MapGenDungeon dungeon, int posX, int posY, int posZ, ForgeDirection entranceDir) {
+        this.dungeonInstance = dungeon;
+        this.worldObj = dungeon != null ? dungeon.worldObj : null;
+        this.posX = posX;
+        this.posY = posY;
+        this.posZ = posZ;
+        this.entranceDir = entranceDir;
+    }
 
-	public abstract DungeonBoundingBox getBoundingBox();
+    public abstract void generate(Block[] chunk, byte[] meta, int cx, int cz);
 
-	protected abstract DungeonRoom makeRoom(MapGenDungeon dungeon, int x, int y, int z, ForgeDirection dir);
+    public abstract DungeonBoundingBox getBoundingBox();
 
-	protected abstract void handleTileEntities(Random rand);
+    protected abstract DungeonRoom makeRoom(MapGenDungeon dungeon, int x, int y, int z, ForgeDirection dir);
 
-	public static DungeonRoom makeRoom(MapGenDungeon dungeon, Random rand, int x, int y, int z, ForgeDirection dir) {
-		return dungeon.otherRooms.get(rand.nextInt(dungeon.otherRooms.size())).makeRoom(dungeon, x, y, z, dir);
-	}
+    protected abstract void handleTileEntities(Random rand);
 
-	public static DungeonRoom makeBossRoom(MapGenDungeon dungeon, Random rand, int x, int y, int z, ForgeDirection dir) {
-		return dungeon.bossRooms.get(rand.nextInt(dungeon.bossRooms.size())).makeRoom(dungeon, x, y, z, dir);
-	}
+    public static DungeonRoom makeRoom(MapGenDungeon dungeon, Random rand, int x, int y, int z, ForgeDirection dir) {
+        return dungeon.otherRooms.get(rand.nextInt(dungeon.otherRooms.size()))
+            .makeRoom(dungeon, x, y, z, dir);
+    }
 
-	public static DungeonRoom makeTreasureRoom(MapGenDungeon dungeon, Random rand, int x, int y, int z, ForgeDirection dir) {
-		return dungeon.treasureRooms.get(rand.nextInt(dungeon.treasureRooms.size())).makeRoom(dungeon, x, y, z, dir);
-	}
+    public static DungeonRoom makeBossRoom(MapGenDungeon dungeon, Random rand, int x, int y, int z,
+        ForgeDirection dir) {
+        return dungeon.bossRooms.get(rand.nextInt(dungeon.bossRooms.size()))
+            .makeRoom(dungeon, x, y, z, dir);
+    }
 
-	protected boolean placeBlock(Block[] blocks, byte[] metas, int x, int y, int z, int cx, int cz, Block id, int meta) {
-		if (MapGenDungeon.useArrays) {
-			cx *= 16;
-			cz *= 16;
-			x -= cx;
-			z -= cz;
-			if (x < 0 || x >= 16 || z < 0 || z >= 16) {
-				return false;
-			}
-			final int index = this.getIndex(x, y, z);
-			blocks[index] = id;
-			metas[index] = (byte) meta;
-		} else {
-			this.worldObj.setBlock(x, y, z, id, meta, 0);
-		}
-		return true;
-	}
+    public static DungeonRoom makeTreasureRoom(MapGenDungeon dungeon, Random rand, int x, int y, int z,
+        ForgeDirection dir) {
+        return dungeon.treasureRooms.get(rand.nextInt(dungeon.treasureRooms.size()))
+            .makeRoom(dungeon, x, y, z, dir);
+    }
 
-	private int getIndex(int x, int y, int z) {
-		return (x * 16 + z) * 256 + y;
-	}
+    protected boolean placeBlock(Block[] blocks, byte[] metas, int x, int y, int z, int cx, int cz, Block id,
+        int meta) {
+        if (MapGenDungeon.useArrays) {
+            cx *= 16;
+            cz *= 16;
+            x -= cx;
+            z -= cz;
+            if (x < 0 || x >= 16 || z < 0 || z >= 16) {
+                return false;
+            }
+            final int index = this.getIndex(x, y, z);
+            blocks[index] = id;
+            metas[index] = (byte) meta;
+        } else {
+            this.worldObj.setBlock(x, y, z, id, meta, 0);
+        }
+        return true;
+    }
+
+    private int getIndex(int x, int y, int z) {
+        return (x * 16 + z) * 256 + y;
+    }
 }

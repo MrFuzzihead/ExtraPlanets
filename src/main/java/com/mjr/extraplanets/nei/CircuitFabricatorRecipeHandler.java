@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import net.minecraft.item.ItemStack;
+import net.minecraft.util.ResourceLocation;
+
 import org.lwjgl.opengl.GL11;
 
 import codechicken.lib.gui.GuiDraw;
@@ -13,139 +16,149 @@ import codechicken.nei.NEIServerUtils;
 import codechicken.nei.PositionedStack;
 import codechicken.nei.recipe.TemplateRecipeHandler;
 import micdoodle8.mods.galacticraft.core.GalacticraftCore;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.ResourceLocation;
 
 public class CircuitFabricatorRecipeHandler extends TemplateRecipeHandler {
-	private static final ResourceLocation circuitFabricatorTexture = new ResourceLocation(GalacticraftCore.ASSET_PREFIX, "textures/gui/circuitFabricator.png");
-	int ticksPassed;
 
-	public String getRecipeId() {
-		return "galacticraft.circuits";
-	}
+    private static final ResourceLocation circuitFabricatorTexture = new ResourceLocation(
+        GalacticraftCore.ASSET_PREFIX,
+        "textures/gui/circuitFabricator.png");
+    int ticksPassed;
 
-	@Override
-	public int recipiesPerPage() {
-		return 1;
-	}
+    public String getRecipeId() {
+        return "galacticraft.circuits";
+    }
 
-	public Set<Entry<ArrayList<PositionedStack>, PositionedStack>> getRecipes() {
-		HashMap<ArrayList<PositionedStack>, PositionedStack> recipes = new HashMap<ArrayList<PositionedStack>, PositionedStack>();
+    @Override
+    public int recipiesPerPage() {
+        return 1;
+    }
 
-		for (Entry<HashMap<Integer, PositionedStack>, PositionedStack> stack : NEIExtraPlanetsConfig.getCircuitFabricatorRecipes()) {
-			ArrayList<PositionedStack> inputStacks = new ArrayList<PositionedStack>();
+    public Set<Entry<ArrayList<PositionedStack>, PositionedStack>> getRecipes() {
+        HashMap<ArrayList<PositionedStack>, PositionedStack> recipes = new HashMap<ArrayList<PositionedStack>, PositionedStack>();
 
-			for (Map.Entry<Integer, PositionedStack> input : stack.getKey().entrySet()) {
-				inputStacks.add(input.getValue());
-			}
+        for (Entry<HashMap<Integer, PositionedStack>, PositionedStack> stack : NEIExtraPlanetsConfig
+            .getCircuitFabricatorRecipes()) {
+            ArrayList<PositionedStack> inputStacks = new ArrayList<PositionedStack>();
 
-			recipes.put(inputStacks, stack.getValue());
-		}
+            for (Map.Entry<Integer, PositionedStack> input : stack.getKey()
+                .entrySet()) {
+                inputStacks.add(input.getValue());
+            }
 
-		return recipes.entrySet();
-	}
+            recipes.put(inputStacks, stack.getValue());
+        }
 
-	@Override
-	public void drawBackground(int i) {
-		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
-		GuiDraw.changeTexture(CircuitFabricatorRecipeHandler.circuitFabricatorTexture);
-		GuiDraw.drawTexturedModalRect(-2, 9, 3, 4, 168, 64);
-		GuiDraw.drawTexturedModalRect(68, 73, 73, 68, 96, 35);
-		GuiDraw.drawTexturedModalRect(83, 25, 176, 17 + 10 * (Math.min(this.ticksPassed % 70, 51) / 3 % 3), Math.min(this.ticksPassed % 70, 51), 10);
-	}
+        return recipes.entrySet();
+    }
 
-	@Override
-	public void onUpdate() {
-		this.ticksPassed += 1;
-		super.onUpdate();
-	}
+    @Override
+    public void drawBackground(int i) {
+        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GuiDraw.changeTexture(CircuitFabricatorRecipeHandler.circuitFabricatorTexture);
+        GuiDraw.drawTexturedModalRect(-2, 9, 3, 4, 168, 64);
+        GuiDraw.drawTexturedModalRect(68, 73, 73, 68, 96, 35);
+        GuiDraw.drawTexturedModalRect(
+            83,
+            25,
+            176,
+            17 + 10 * (Math.min(this.ticksPassed % 70, 51) / 3 % 3),
+            Math.min(this.ticksPassed % 70, 51),
+            10);
+    }
 
-	@Override
-	public void loadTransferRects() {
-	}
+    @Override
+    public void onUpdate() {
+        this.ticksPassed += 1;
+        super.onUpdate();
+    }
 
-	@Override
-	public void loadCraftingRecipes(String outputId, Object... results) {
-		if (outputId.equals(this.getRecipeId())) {
-			for (final Map.Entry<ArrayList<PositionedStack>, PositionedStack> irecipe : this.getRecipes()) {
-				this.arecipes.add(new CachedCircuitRecipe(irecipe));
-			}
-		} else {
-			super.loadCraftingRecipes(outputId, results);
-		}
-	}
+    @Override
+    public void loadTransferRects() {}
 
-	@Override
-	public void loadCraftingRecipes(ItemStack result) {
-		for (final Map.Entry<ArrayList<PositionedStack>, PositionedStack> irecipe : this.getRecipes()) {
-			if (NEIServerUtils.areStacksSameTypeCrafting(irecipe.getValue().item, result)) {
-				this.arecipes.add(new CachedCircuitRecipe(irecipe));
-			}
-		}
-	}
+    @Override
+    public void loadCraftingRecipes(String outputId, Object... results) {
+        if (outputId.equals(this.getRecipeId())) {
+            for (final Map.Entry<ArrayList<PositionedStack>, PositionedStack> irecipe : this.getRecipes()) {
+                this.arecipes.add(new CachedCircuitRecipe(irecipe));
+            }
+        } else {
+            super.loadCraftingRecipes(outputId, results);
+        }
+    }
 
-	@Override
-	public void loadUsageRecipes(ItemStack ingredient) {
-		for (final Map.Entry<ArrayList<PositionedStack>, PositionedStack> irecipe : this.getRecipes()) {
-			for (final PositionedStack pstack : irecipe.getKey()) {
-				if (NEIServerUtils.areStacksSameTypeCrafting(ingredient, pstack.item)) {
-					this.arecipes.add(new CachedCircuitRecipe(irecipe));
-					break;
-				}
-			}
-		}
-	}
+    @Override
+    public void loadCraftingRecipes(ItemStack result) {
+        for (final Map.Entry<ArrayList<PositionedStack>, PositionedStack> irecipe : this.getRecipes()) {
+            if (NEIServerUtils.areStacksSameTypeCrafting(irecipe.getValue().item, result)) {
+                this.arecipes.add(new CachedCircuitRecipe(irecipe));
+            }
+        }
+    }
 
-	@Override
-	public ArrayList<PositionedStack> getIngredientStacks(int recipe) {
-		return (ArrayList<PositionedStack>) this.arecipes.get(recipe).getIngredients();
-	}
+    @Override
+    public void loadUsageRecipes(ItemStack ingredient) {
+        for (final Map.Entry<ArrayList<PositionedStack>, PositionedStack> irecipe : this.getRecipes()) {
+            for (final PositionedStack pstack : irecipe.getKey()) {
+                if (NEIServerUtils.areStacksSameTypeCrafting(ingredient, pstack.item)) {
+                    this.arecipes.add(new CachedCircuitRecipe(irecipe));
+                    break;
+                }
+            }
+        }
+    }
 
-	@Override
-	public PositionedStack getResultStack(int recipe) {
-		if (this.ticksPassed % 70 >= 51) {
-			return this.arecipes.get(recipe).getResult();
-		}
+    @Override
+    public ArrayList<PositionedStack> getIngredientStacks(int recipe) {
+        return (ArrayList<PositionedStack>) this.arecipes.get(recipe)
+            .getIngredients();
+    }
 
-		return null;
-	}
+    @Override
+    public PositionedStack getResultStack(int recipe) {
+        if (this.ticksPassed % 70 >= 51) {
+            return this.arecipes.get(recipe)
+                .getResult();
+        }
 
-	public class CachedCircuitRecipe extends TemplateRecipeHandler.CachedRecipe {
-		public ArrayList<PositionedStack> input;
-		public PositionedStack output;
+        return null;
+    }
 
-		@Override
-		public ArrayList<PositionedStack> getIngredients() {
-			return (ArrayList<PositionedStack>) getCycledIngredients(cycleticks / 20, this.input);
-		}
+    public class CachedCircuitRecipe extends TemplateRecipeHandler.CachedRecipe {
 
-		@Override
-		public PositionedStack getResult() {
-			return this.output;
-		}
+        public ArrayList<PositionedStack> input;
+        public PositionedStack output;
 
-		public CachedCircuitRecipe(ArrayList<PositionedStack> pstack1, PositionedStack pstack2) {
-			super();
-			this.input = pstack1;
-			this.output = pstack2;
-		}
+        @Override
+        public ArrayList<PositionedStack> getIngredients() {
+            return (ArrayList<PositionedStack>) getCycledIngredients(cycleticks / 20, this.input);
+        }
 
-		public CachedCircuitRecipe(Map.Entry<ArrayList<PositionedStack>, PositionedStack> recipe) {
-			this(recipe.getKey(), recipe.getValue());
-		}
-	}
+        @Override
+        public PositionedStack getResult() {
+            return this.output;
+        }
 
-	@Override
-	public String getRecipeName() {
-		return "Circuit Fabricator";
-	}
+        public CachedCircuitRecipe(ArrayList<PositionedStack> pstack1, PositionedStack pstack2) {
+            super();
+            this.input = pstack1;
+            this.output = pstack2;
+        }
 
-	@Override
-	public String getGuiTexture() {
-		return GalacticraftCore.TEXTURE_PREFIX + "textures/gui/circuitFabricator.png";
-	}
+        public CachedCircuitRecipe(Map.Entry<ArrayList<PositionedStack>, PositionedStack> recipe) {
+            this(recipe.getKey(), recipe.getValue());
+        }
+    }
 
-	@Override
-	public void drawForeground(int recipe) {
-	}
+    @Override
+    public String getRecipeName() {
+        return "Circuit Fabricator";
+    }
+
+    @Override
+    public String getGuiTexture() {
+        return GalacticraftCore.TEXTURE_PREFIX + "textures/gui/circuitFabricator.png";
+    }
+
+    @Override
+    public void drawForeground(int recipe) {}
 }

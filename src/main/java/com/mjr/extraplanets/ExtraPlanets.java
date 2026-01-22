@@ -1,5 +1,10 @@
 package com.mjr.extraplanets;
 
+import net.minecraft.creativetab.CreativeTabs;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraftforge.common.MinecraftForge;
+
 import com.mjr.extraplanets.armor.ExtraPlanets_Armor;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.blocks.ExtraPlanets_MicroBlocks;
@@ -22,10 +27,10 @@ import com.mjr.extraplanets.handlers.GalacticraftVersionChecker;
 import com.mjr.extraplanets.handlers.MainHandler;
 import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.items.tools.ExtraPlanets_Tools;
-import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
 import com.mjr.extraplanets.moons.Callisto.event.CallistoEvents;
 import com.mjr.extraplanets.moons.Deimos.event.DeimosEvents;
 import com.mjr.extraplanets.moons.Europa.event.EuropaEvents;
+import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
 import com.mjr.extraplanets.moons.Ganymede.event.GanymedeEvents;
 import com.mjr.extraplanets.moons.Iapetus.event.IapetusEvents;
 import com.mjr.extraplanets.moons.Io.event.IoEvents;
@@ -36,10 +41,10 @@ import com.mjr.extraplanets.moons.Titan.event.TitanEvents;
 import com.mjr.extraplanets.moons.Titania.event.TitaniaEvents;
 import com.mjr.extraplanets.moons.Triton.event.TritonEvents;
 import com.mjr.extraplanets.network.ExtraPlanetsChannelHandler;
-import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
-import com.mjr.extraplanets.planets.ExtraPlanets_SpaceStations;
 import com.mjr.extraplanets.planets.Ceres.event.CeresEvents;
 import com.mjr.extraplanets.planets.Eris.event.ErisEvents;
+import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
+import com.mjr.extraplanets.planets.ExtraPlanets_SpaceStations;
 import com.mjr.extraplanets.planets.Jupiter.event.JupiterEvents;
 import com.mjr.extraplanets.planets.Kepler22b.event.Kepler22bEvents;
 import com.mjr.extraplanets.planets.KuiperBelt.KuiperBeltEvents;
@@ -67,346 +72,417 @@ import cpw.mods.fml.relauncher.Side;
 import micdoodle8.mods.galacticraft.api.GalacticraftRegistry;
 import micdoodle8.mods.galacticraft.api.recipe.SchematicRegistry;
 import micdoodle8.mods.galacticraft.core.items.GCItems;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
 
-@Mod(modid = Constants.modID, name = Constants.modName, version = Constants.modVersion, dependencies = Constants.DEPENDENCIES_FORGE + Constants.DEPENDENCIES_MODS)
+@Mod(
+    modid = Constants.modID,
+    name = Constants.modName,
+    version = Constants.modVersion,
+    dependencies = Constants.DEPENDENCIES_FORGE + Constants.DEPENDENCIES_MODS)
 public class ExtraPlanets {
 
-	@SidedProxy(clientSide = "com.mjr.extraplanets.proxy.ClientProxy", serverSide = "com.mjr.extraplanets.proxy.CommonProxy")
-	public static CommonProxy proxy;
+    @SidedProxy(
+        clientSide = "com.mjr.extraplanets.proxy.ClientProxy",
+        serverSide = "com.mjr.extraplanets.proxy.CommonProxy")
+    public static CommonProxy proxy;
 
-	@Instance(Constants.modID)
-	public static ExtraPlanets instance;
+    @Instance(Constants.modID)
+    public static ExtraPlanets instance;
 
-	public static ExtraPlanetsChannelHandler packetPipeline;
+    public static ExtraPlanetsChannelHandler packetPipeline;
 
-	// Blocks Creative Tab
-	public static CreativeTabs BlocksTab = new CreativeTabs("SpaceBlocksTab") {
-		@Override
-		public Item getTabIconItem() {
-			if (Config.advancedRefinery)
-				return Item.getItemFromBlock(ExtraPlanets_Machines.advancedRefinery);
-			else
-				return Item.getItemFromBlock(ExtraPlanets_Blocks.denseIce);
-		}
-	};
+    // Blocks Creative Tab
+    public static CreativeTabs BlocksTab = new CreativeTabs("SpaceBlocksTab") {
 
-	// Items Creative Tab
-	public static CreativeTabs ItemsTab = new CreativeTabs("SpaceItemsTab") {
-		@Override
-		public Item getTabIconItem() {
-			if (Config.venus)
-				return ExtraPlanets_Items.tier4Rocket;
-			else if (Config.jupiter)
-				return ExtraPlanets_Items.tier5Rocket;
-			else if (Config.saturn && Config.morePlanetsCompatibilityAdv143 == false)
-				return ExtraPlanets_Items.tier6Rocket;
-			else if (Config.uranus && Config.morePlanetsCompatibilityAdv143 == false)
-				return ExtraPlanets_Items.tier7Rocket;
-			else if (Config.neptune && Config.morePlanetsCompatibilityAdv143 == false)
-				return ExtraPlanets_Items.tier8Rocket;
-			else if (Config.pluto)
-				return ExtraPlanets_Items.tier9Rocket;
-			else if (Config.eris && Config.morePlanetsCompatibilityAdv143 == false)
-				return ExtraPlanets_Items.tier10Rocket;
-			return GCItems.rocketTier1;
-		}
-	};
-	// Tools Creative Tab
-	public static CreativeTabs ToolsTab = new CreativeTabs("SpaceToolsTab") {
-		@Override
-		public Item getTabIconItem() {
-			if (Config.venus && Config.carbonItems)
-				return ExtraPlanets_Tools.carbonPickaxe;
-			else if (Config.jupiter && Config.palladiumItems)
-				return ExtraPlanets_Tools.palladiumPickaxe;
-			else if (Config.saturn && Config.magnesiumItems)
-				return ExtraPlanets_Tools.magnesiumPickaxe;
-			else if (Config.uranus && Config.crystalItems)
-				return ExtraPlanets_Tools.crystalPickaxe;
-			return GCItems.steelPickaxe;
-		}
-	};
-	// Armour Creative Tab
-	public static CreativeTabs ArmorTab = new CreativeTabs("SpaceArmorTab") {
-		@Override
-		public Item getTabIconItem() {
-			if (Config.venus && Config.carbonItems)
-				return ExtraPlanets_Armor.carbonChest;
-			else if (Config.jupiter && Config.palladiumItems)
-				return ExtraPlanets_Armor.palladiumChest;
-			else if (Config.saturn && Config.magnesiumItems)
-				return ExtraPlanets_Armor.magnesiumChest;
-			else if (Config.uranus && Config.crystalItems)
-				return ExtraPlanets_Armor.crystalChest;
-			return GCItems.steelChestplate;
-		}
-	};
+        @Override
+        public Item getTabIconItem() {
+            if (Config.advancedRefinery) return Item.getItemFromBlock(ExtraPlanets_Machines.advancedRefinery);
+            else return Item.getItemFromBlock(ExtraPlanets_Blocks.denseIce);
+        }
+    };
 
-	@EventHandler
-	public void preInit(FMLPreInitializationEvent event) {
-		if (FMLCommonHandler.instance().getSide() == Side.CLIENT)
-			GalacticraftVersionChecker.run();
+    // Items Creative Tab
+    public static CreativeTabs ItemsTab = new CreativeTabs("SpaceItemsTab") {
 
-		Config.init();
+        @Override
+        public Item getTabIconItem() {
+            if (Config.venus) return ExtraPlanets_Items.tier4Rocket;
+            else if (Config.jupiter) return ExtraPlanets_Items.tier5Rocket;
+            else if (Config.saturn && Config.morePlanetsCompatibilityAdv143 == false)
+                return ExtraPlanets_Items.tier6Rocket;
+            else if (Config.uranus && Config.morePlanetsCompatibilityAdv143 == false)
+                return ExtraPlanets_Items.tier7Rocket;
+            else if (Config.neptune && Config.morePlanetsCompatibilityAdv143 == false)
+                return ExtraPlanets_Items.tier8Rocket;
+            else if (Config.pluto) return ExtraPlanets_Items.tier9Rocket;
+            else if (Config.eris && Config.morePlanetsCompatibilityAdv143 == false)
+                return ExtraPlanets_Items.tier10Rocket;
+            return GCItems.rocketTier1;
+        }
+    };
+    // Tools Creative Tab
+    public static CreativeTabs ToolsTab = new CreativeTabs("SpaceToolsTab") {
 
-		// Main Events
-		MinecraftForge.EVENT_BUS.register(new MainHandler());
+        @Override
+        public Item getTabIconItem() {
+            if (Config.venus && Config.carbonItems) return ExtraPlanets_Tools.carbonPickaxe;
+            else if (Config.jupiter && Config.palladiumItems) return ExtraPlanets_Tools.palladiumPickaxe;
+            else if (Config.saturn && Config.magnesiumItems) return ExtraPlanets_Tools.magnesiumPickaxe;
+            else if (Config.uranus && Config.crystalItems) return ExtraPlanets_Tools.crystalPickaxe;
+            return GCItems.steelPickaxe;
+        }
+    };
+    // Armour Creative Tab
+    public static CreativeTabs ArmorTab = new CreativeTabs("SpaceArmorTab") {
 
-		// Planets Events
-		if (Config.mercury)
-			MinecraftForge.EVENT_BUS.register(new MercuryEvents());
-		if (Config.venus)
-			MinecraftForge.EVENT_BUS.register(new VenusEvents());
-		if (Config.ceres)
-			MinecraftForge.EVENT_BUS.register(new CeresEvents());
-		if (Config.jupiter)
-			MinecraftForge.EVENT_BUS.register(new JupiterEvents());
-		if (Config.saturn)
-			MinecraftForge.EVENT_BUS.register(new SaturnEvents());
-		if (Config.uranus)
-			MinecraftForge.EVENT_BUS.register(new UranusEvents());
-		if (Config.neptune)
-			MinecraftForge.EVENT_BUS.register(new NeptuneEvents());
-		if (Config.pluto)
-			MinecraftForge.EVENT_BUS.register(new PlutoEvents());
-		if (Config.eris)
-			MinecraftForge.EVENT_BUS.register(new ErisEvents());
-		if (Config.kepler22b && Config.keplerSolarSystems)
-			MinecraftForge.EVENT_BUS.register(new Kepler22bEvents());
+        @Override
+        public Item getTabIconItem() {
+            if (Config.venus && Config.carbonItems) return ExtraPlanets_Armor.carbonChest;
+            else if (Config.jupiter && Config.palladiumItems) return ExtraPlanets_Armor.palladiumChest;
+            else if (Config.saturn && Config.magnesiumItems) return ExtraPlanets_Armor.magnesiumChest;
+            else if (Config.uranus && Config.crystalItems) return ExtraPlanets_Armor.crystalChest;
+            return GCItems.steelChestplate;
+        }
+    };
 
-		// Moons Events
-		if (Config.callisto)
-			MinecraftForge.EVENT_BUS.register(new CallistoEvents());
-		if (Config.deimos)
-			MinecraftForge.EVENT_BUS.register(new DeimosEvents());
-		if (Config.europa)
-			MinecraftForge.EVENT_BUS.register(new EuropaEvents());
-		if (Config.ganymede)
-			MinecraftForge.EVENT_BUS.register(new GanymedeEvents());
-		if (Config.io)
-			MinecraftForge.EVENT_BUS.register(new IoEvents());
-		if (Config.phobos)
-			MinecraftForge.EVENT_BUS.register(new PhobosEvents());
-		if (Config.triton)
-			MinecraftForge.EVENT_BUS.register(new TritonEvents());
-		if (Config.rhea)
-			MinecraftForge.EVENT_BUS.register(new RheaEvents());
-		if (Config.titan)
-			MinecraftForge.EVENT_BUS.register(new TitanEvents());
-		if (Config.oberon)
-			MinecraftForge.EVENT_BUS.register(new OberonEvents());
-		if (Config.iapetus)
-			MinecraftForge.EVENT_BUS.register(new IapetusEvents());
-		if (Config.titania)
-			MinecraftForge.EVENT_BUS.register(new TitaniaEvents());
-		if (Config.kuiperBelt)
-			MinecraftForge.EVENT_BUS.register(new KuiperBeltEvents());
+    @EventHandler
+    public void preInit(FMLPreInitializationEvent event) {
+        if (FMLCommonHandler.instance()
+            .getSide() == Side.CLIENT) GalacticraftVersionChecker.run();
 
-		NetworkRegistry.INSTANCE.registerGuiHandler(ExtraPlanets.instance, new GuiHandler());
+        Config.init();
 
-		// Initialization/Registering Methods For Blocks/Items
-		ExtraPlanets_Blocks.init();
-		if (Config.slabsAndStairs)
-			ExtraPlanets_SlabsStairsBlocks.init();
-		ExtraPlanets_Machines.init();
-		ExtraPlanets_Fluids.init();
-		ExtraPlanets_Tools.init();
-		ExtraPlanets_Armor.init();
-		ExtraPlanets_Items.init();
+        // Main Events
+        MinecraftForge.EVENT_BUS.register(new MainHandler());
 
-		// Registering fluids with Bucket Handler
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.salt, ExtraPlanets_Items.salt_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.magma, ExtraPlanets_Items.magma_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.glowstone, ExtraPlanets_Items.glowstone_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.frozen_water, ExtraPlanets_Items.frozen_water_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.nitrogen, ExtraPlanets_Items.nitrogen_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.nitrogen_ice, ExtraPlanets_Items.nitrogen_ice_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.methane, ExtraPlanets_Items.methane_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.infected_water, ExtraPlanets_Items.infected_water_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.liquid_hydrocarbon, ExtraPlanets_Items.liquid_hydrocarbon_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.liquid_chocolate, ExtraPlanets_Items.liquid_chocolate_bucket);
-		BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.liquid_caramel, ExtraPlanets_Items.liquid_caramel_bucket);
+        // Planets Events
+        if (Config.mercury) MinecraftForge.EVENT_BUS.register(new MercuryEvents());
+        if (Config.venus) MinecraftForge.EVENT_BUS.register(new VenusEvents());
+        if (Config.ceres) MinecraftForge.EVENT_BUS.register(new CeresEvents());
+        if (Config.jupiter) MinecraftForge.EVENT_BUS.register(new JupiterEvents());
+        if (Config.saturn) MinecraftForge.EVENT_BUS.register(new SaturnEvents());
+        if (Config.uranus) MinecraftForge.EVENT_BUS.register(new UranusEvents());
+        if (Config.neptune) MinecraftForge.EVENT_BUS.register(new NeptuneEvents());
+        if (Config.pluto) MinecraftForge.EVENT_BUS.register(new PlutoEvents());
+        if (Config.eris) MinecraftForge.EVENT_BUS.register(new ErisEvents());
+        if (Config.kepler22b && Config.keplerSolarSystems) MinecraftForge.EVENT_BUS.register(new Kepler22bEvents());
 
-		// Bucket Handler
-		MinecraftForge.EVENT_BUS.register(BucketHandler.INSTANCE);
+        // Moons Events
+        if (Config.callisto) MinecraftForge.EVENT_BUS.register(new CallistoEvents());
+        if (Config.deimos) MinecraftForge.EVENT_BUS.register(new DeimosEvents());
+        if (Config.europa) MinecraftForge.EVENT_BUS.register(new EuropaEvents());
+        if (Config.ganymede) MinecraftForge.EVENT_BUS.register(new GanymedeEvents());
+        if (Config.io) MinecraftForge.EVENT_BUS.register(new IoEvents());
+        if (Config.phobos) MinecraftForge.EVENT_BUS.register(new PhobosEvents());
+        if (Config.triton) MinecraftForge.EVENT_BUS.register(new TritonEvents());
+        if (Config.rhea) MinecraftForge.EVENT_BUS.register(new RheaEvents());
+        if (Config.titan) MinecraftForge.EVENT_BUS.register(new TitanEvents());
+        if (Config.oberon) MinecraftForge.EVENT_BUS.register(new OberonEvents());
+        if (Config.iapetus) MinecraftForge.EVENT_BUS.register(new IapetusEvents());
+        if (Config.titania) MinecraftForge.EVENT_BUS.register(new TitaniaEvents());
+        if (Config.kuiperBelt) MinecraftForge.EVENT_BUS.register(new KuiperBeltEvents());
 
-		// Bone Meal Handler
-		MinecraftForge.EVENT_BUS.register(new BoneMealHandler());
+        NetworkRegistry.INSTANCE.registerGuiHandler(ExtraPlanets.instance, new GuiHandler());
 
-		// Proxy PreInit Method
-		ExtraPlanets.proxy.preInit(event);
-	}
+        // Initialization/Registering Methods For Blocks/Items
+        ExtraPlanets_Blocks.init();
+        if (Config.slabsAndStairs) ExtraPlanets_SlabsStairsBlocks.init();
+        ExtraPlanets_Machines.init();
+        ExtraPlanets_Fluids.init();
+        ExtraPlanets_Tools.init();
+        ExtraPlanets_Armor.init();
+        ExtraPlanets_Items.init();
 
-	@EventHandler
-	public void init(FMLInitializationEvent event) {
-		// Initialization/Registering Methods For SolarSystems/Planets/Moons/SpaceStations
-		ExtraPlanets_SolarSystems.init();
-		ExtraPlanets_Planets.init();
-		ExtraPlanets_Moons.init();
-		ExtraPlanets_SpaceStations.init();
+        // Registering fluids with Bucket Handler
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.salt, ExtraPlanets_Items.salt_bucket);
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.magma, ExtraPlanets_Items.magma_bucket);
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.glowstone, ExtraPlanets_Items.glowstone_bucket);
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.frozen_water, ExtraPlanets_Items.frozen_water_bucket);
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.nitrogen, ExtraPlanets_Items.nitrogen_bucket);
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.nitrogen_ice, ExtraPlanets_Items.nitrogen_ice_bucket);
+        BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.methane, ExtraPlanets_Items.methane_bucket);
+        BucketHandler.INSTANCE.buckets
+            .put(ExtraPlanets_Fluids.infected_water, ExtraPlanets_Items.infected_water_bucket);
+        BucketHandler.INSTANCE.buckets
+            .put(ExtraPlanets_Fluids.liquid_hydrocarbon, ExtraPlanets_Items.liquid_hydrocarbon_bucket);
+        BucketHandler.INSTANCE.buckets
+            .put(ExtraPlanets_Fluids.liquid_chocolate, ExtraPlanets_Items.liquid_chocolate_bucket);
+        BucketHandler.INSTANCE.buckets
+            .put(ExtraPlanets_Fluids.liquid_caramel, ExtraPlanets_Items.liquid_caramel_bucket);
 
-		// Compatibility Methods
-		if (Config.microBlock)
-			ExtraPlanets_MicroBlocks.init();
+        // Bucket Handler
+        MinecraftForge.EVENT_BUS.register(BucketHandler.INSTANCE);
 
-		// Initialization/Registering Methods For Entities
-		registerNonMobEntities();
-		registerCreatures();
+        // Bone Meal Handler
+        MinecraftForge.EVENT_BUS.register(new BoneMealHandler());
 
-		packetPipeline = ExtraPlanetsChannelHandler.init();
+        // Proxy PreInit Method
+        ExtraPlanets.proxy.preInit(event);
+    }
 
-		// Proxy Init Method
-		ExtraPlanets.proxy.init(event);
-	}
+    @EventHandler
+    public void init(FMLInitializationEvent event) {
+        // Initialization/Registering Methods For SolarSystems/Planets/Moons/SpaceStations
+        ExtraPlanets_SolarSystems.init();
+        ExtraPlanets_Planets.init();
+        ExtraPlanets_Moons.init();
+        ExtraPlanets_SpaceStations.init();
 
-	@EventHandler
-	public void postInit(FMLPostInitializationEvent event) {
-		// Register Schematics Recipes
-		if (Config.morePlanetsCompatibilityAdv143 == false)
-			registerSchematicsRecipes();
+        // Compatibility Methods
+        if (Config.microBlock) ExtraPlanets_MicroBlocks.init();
 
-		// Register/Add Dungeon Loot
-		if (Config.morePlanetsCompatibilityAdv143 == false)
-			addDungeonLoot();
+        // Initialization/Registering Methods For Entities
+        registerNonMobEntities();
+        registerCreatures();
 
-		// Register Recipes
-		ExtraPlanets_Recipes.init();
+        packetPipeline = ExtraPlanetsChannelHandler.init();
 
-		// Initialize/Register Achievements
-		if (Config.achievements)
-			ExtraPlanets_Achievements.init();
+        // Proxy Init Method
+        ExtraPlanets.proxy.init(event);
+    }
 
-		// Proxy PostInit Method
-		ExtraPlanets.proxy.postInit(event);
-	}
+    @EventHandler
+    public void postInit(FMLPostInitializationEvent event) {
+        // Register Schematics Recipes
+        if (Config.morePlanetsCompatibilityAdv143 == false) registerSchematicsRecipes();
 
-	private void registerNonMobEntities() {
-		if (Config.nuclearBomb)
-			RegisterHelper.registerExtraPlanetsNonMobEntity(EntityNuclearBombPrimed.class, Constants.modName + "NuclearBombPrimed", 150, 1, true);
-		RegisterHelper.registerExtraPlanetsNonMobEntity(EntityFireBombPrimed.class, Constants.modName + "FireBombPrimed", 150, 1, true);
+        // Register/Add Dungeon Loot
+        if (Config.morePlanetsCompatibilityAdv143 == false) addDungeonLoot();
 
-		if (Config.morePlanetsCompatibilityAdv143 == false) {
-			if (Config.venus)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier4Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier4Rocket", 150, 1, false);
-			if (Config.jupiter)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier5Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier5Rocket", 150, 1, false);
-			if (Config.saturn)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier6Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier6Rocket", 150, 1, false);
-			if (Config.uranus)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier7Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier7Rocket", 150, 1, false);
-			if (Config.neptune)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier8Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier8Rocket", 150, 1, false);
-			if (Config.pluto)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier9Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier9Rocket", 150, 1, false);
-			if (Config.eris)
-				RegisterHelper.registerExtraPlanetsNonMobEntity(EntityTier10Rocket.class, Constants.ASSET_PREFIX + "." + "EntityTier10Rocket", 150, 1, false);
-			RegisterHelper.registerExtraPlanetsNonMobEntity(EntitySmallSnowball.class, Constants.ASSET_PREFIX + "." + "SmallSnowBall", 150, 1, true);
-		}
-		if (Config.marsRover)
-			RegisterHelper.registerExtraPlanetsNonMobEntity(EntityMarsRover.class, Constants.ASSET_PREFIX + "." + "EntityMarsRover", 150, 1, false);
-		if (Config.venusRover)
-			RegisterHelper.registerExtraPlanetsNonMobEntity(EntityVenusRover.class, Constants.ASSET_PREFIX + "." + "EntityVenusRover", 150, 1, false);
-	}
+        // Register Recipes
+        ExtraPlanets_Recipes.init();
 
-	private void registerCreatures() {
-		// Dungeon Bosses
-		if (Config.venus)
-			if (Config.useDefaultBosses)
-				RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossVenus.class, Constants.ASSET_PREFIX + "." + "CreeperBossVenus", 894731, 0);
-			else
-				RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedMagmaCubeBoss.class, Constants.ASSET_PREFIX + "." + "EvolvedMagmaCubeBoss", 3407872, 16579584);
-		if (Config.jupiter)
-			if (Config.useDefaultBosses)
-				RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossJupiter.class, Constants.ASSET_PREFIX + "." + "CreeperBossJupiter", 894731, 0);
-			else
-				RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedFireBatBoss.class, Constants.ASSET_PREFIX + "." + "EvolvedFireBatBoss", 16167425, 0);
-		if (Config.saturn)
-			if (Config.useDefaultBosses)
-				RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossSaturn.class, Constants.ASSET_PREFIX + "." + "CreeperBossSaturn", 894731, 0);
-			else
-				RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedGhastBoss.class, Constants.ASSET_PREFIX + "." + "EvolvedGhastBoss", 894731, 0);
-		if (Config.uranus)
-			if (Config.useDefaultBosses)
-				RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossUranus.class, Constants.ASSET_PREFIX + "." + "CreeperBossUranus", 894731, 0);
-			else
-				RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedIceSlimeBoss.class, Constants.ASSET_PREFIX + "." + "EvolvedIceSlimeBoss", 16382457, 44975);
-		if (Config.neptune)
-			if (Config.useDefaultBosses)
-				RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossNeptune.class, Constants.ASSET_PREFIX + "." + "CreeperBossNeptune", 894731, 0);
-			else
-				RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedSnowmanBoss.class, Constants.ASSET_PREFIX + "." + "EvolvedSnowmanBoss", 894731, 0);
-		if (Config.pluto)
-			RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossPluto.class, Constants.ASSET_PREFIX + "." + "CreeperBossPluto", 894731, 0);
-		if (Config.eris)
-			RegisterHelper.registerExtraPlanetsCreature(EntityCreeperBossEris.class, Constants.ASSET_PREFIX + "." + "CreeperBossEris", 894731, 0);
+        // Initialize/Register Achievements
+        if (Config.achievements) ExtraPlanets_Achievements.init();
 
-		// Entities
-		if (Config.evolvedMagmaCube)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedMagmaCube.class, Constants.ASSET_PREFIX + "." + "EvolvedMagmaCube", 3407872, 16579584);
-		if (Config.evolvedIceSlime)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedIceSlime.class, Constants.ASSET_PREFIX + "." + "EvolvedIceSlime", 16382457, 44975);
-		if (Config.evolvedWitch)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedWitch.class, Constants.ASSET_PREFIX + "." + "EvolvedWitch", 3407872, 5349438);
-		if (Config.evolvedEnderman)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedEnderman.class, Constants.ASSET_PREFIX + "." + "EvolvedEnderman", 1447446, 0);
-		if (Config.evolvedBlaze)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedBlaze.class, Constants.ASSET_PREFIX + "." + "EvolvedBlaze", 16167425, 16775294);
-		if (Config.evolvedBlueCreeper)
-			RegisterHelper.registerExtraPlanetsCreature(EntityBlueCreeper.class, Constants.ASSET_PREFIX + "." + "EvolvedBlueCreeper", 44975, 0);
-		if (Config.evolvedRedCreeper)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedRedCreeper.class, Constants.ASSET_PREFIX + "." + "EvolvedRedCreeper", 11013646, 0);
-		if (Config.evolvedPowerSkeleton)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedPowerSkeleton.class, Constants.ASSET_PREFIX + "." + "EvolvedPowerSkeleton", 12698049, 4802889);
-		if (Config.evolvedGiantSpider)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedGiantSpider.class, Constants.ASSET_PREFIX + "." + "EvolvedGiantSpider", 12698049, 4802889);
-		if (Config.evolvedMiniEnderman)
-			RegisterHelper.registerExtraPlanetsCreature(EntityEvolvedMiniEnderman.class, Constants.ASSET_PREFIX + "." + "EvolvedMiniEnderman", 1447446, 0);
-	}
+        // Proxy PostInit Method
+        ExtraPlanets.proxy.postInit(event);
+    }
 
-	private void registerSchematicsRecipes() {
-		if (Config.venus)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier4Rocket());
-		if (Config.jupiter)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier5Rocket());
-		if (Config.saturn)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier6Rocket());
-		if (Config.uranus)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier7Rocket());
-		if (Config.neptune)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier8Rocket());
-		if (Config.pluto)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier9Rocket());
-		if (Config.eris)
-			SchematicRegistry.registerSchematicRecipe(new SchematicTier10Rocket());
-		if (Config.marsRover)
-			SchematicRegistry.registerSchematicRecipe(new SchematicMarsRover());
-		if (Config.venusRover)
-			SchematicRegistry.registerSchematicRecipe(new SchematicVenusRover());
-	}
+    private void registerNonMobEntities() {
+        if (Config.nuclearBomb) RegisterHelper.registerExtraPlanetsNonMobEntity(
+            EntityNuclearBombPrimed.class,
+            Constants.modName + "NuclearBombPrimed",
+            150,
+            1,
+            true);
+        RegisterHelper.registerExtraPlanetsNonMobEntity(
+            EntityFireBombPrimed.class,
+            Constants.modName + "FireBombPrimed",
+            150,
+            1,
+            true);
 
-	private void addDungeonLoot() {
-		if (Config.marsRover)
-			GalacticraftRegistry.addDungeonLoot(1, new ItemStack(ExtraPlanets_Items.schematicMarsRover, 1, 0));
-		if (Config.venus) {
-			GalacticraftRegistry.addDungeonLoot(4, new ItemStack(ExtraPlanets_Items.schematicTier4, 1, 0));
-			if (Config.venusRover)
-				GalacticraftRegistry.addDungeonLoot(4, new ItemStack(ExtraPlanets_Items.schematicVenusRover, 1, 0));
-		}
-		if (Config.jupiter)
-			GalacticraftRegistry.addDungeonLoot(5, new ItemStack(ExtraPlanets_Items.schematicTier5, 1, 0));
-		if (Config.saturn)
-			GalacticraftRegistry.addDungeonLoot(6, new ItemStack(ExtraPlanets_Items.schematicTier6, 1, 0));
-		if (Config.uranus)
-			GalacticraftRegistry.addDungeonLoot(7, new ItemStack(ExtraPlanets_Items.schematicTier7, 1, 0));
-		if (Config.neptune)
-			GalacticraftRegistry.addDungeonLoot(8, new ItemStack(ExtraPlanets_Items.schematicTier8, 1, 0));
-		if (Config.pluto)
-			GalacticraftRegistry.addDungeonLoot(9, new ItemStack(ExtraPlanets_Items.schematicTier9, 1, 0));
-		if (Config.eris)
-			GalacticraftRegistry.addDungeonLoot(10, new ItemStack(ExtraPlanets_Items.schematicTier10, 1, 0));
-	}
+        if (Config.morePlanetsCompatibilityAdv143 == false) {
+            if (Config.venus) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier4Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier4Rocket",
+                150,
+                1,
+                false);
+            if (Config.jupiter) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier5Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier5Rocket",
+                150,
+                1,
+                false);
+            if (Config.saturn) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier6Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier6Rocket",
+                150,
+                1,
+                false);
+            if (Config.uranus) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier7Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier7Rocket",
+                150,
+                1,
+                false);
+            if (Config.neptune) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier8Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier8Rocket",
+                150,
+                1,
+                false);
+            if (Config.pluto) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier9Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier9Rocket",
+                150,
+                1,
+                false);
+            if (Config.eris) RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntityTier10Rocket.class,
+                Constants.ASSET_PREFIX + "." + "EntityTier10Rocket",
+                150,
+                1,
+                false);
+            RegisterHelper.registerExtraPlanetsNonMobEntity(
+                EntitySmallSnowball.class,
+                Constants.ASSET_PREFIX + "." + "SmallSnowBall",
+                150,
+                1,
+                true);
+        }
+        if (Config.marsRover) RegisterHelper.registerExtraPlanetsNonMobEntity(
+            EntityMarsRover.class,
+            Constants.ASSET_PREFIX + "." + "EntityMarsRover",
+            150,
+            1,
+            false);
+        if (Config.venusRover) RegisterHelper.registerExtraPlanetsNonMobEntity(
+            EntityVenusRover.class,
+            Constants.ASSET_PREFIX + "." + "EntityVenusRover",
+            150,
+            1,
+            false);
+    }
+
+    private void registerCreatures() {
+        // Dungeon Bosses
+        if (Config.venus) if (Config.useDefaultBosses) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossVenus.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossVenus",
+            894731,
+            0);
+        else RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedMagmaCubeBoss.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedMagmaCubeBoss",
+            3407872,
+            16579584);
+        if (Config.jupiter) if (Config.useDefaultBosses) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossJupiter.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossJupiter",
+            894731,
+            0);
+        else RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedFireBatBoss.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedFireBatBoss",
+            16167425,
+            0);
+        if (Config.saturn) if (Config.useDefaultBosses) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossSaturn.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossSaturn",
+            894731,
+            0);
+        else RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedGhastBoss.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedGhastBoss",
+            894731,
+            0);
+        if (Config.uranus) if (Config.useDefaultBosses) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossUranus.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossUranus",
+            894731,
+            0);
+        else RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedIceSlimeBoss.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedIceSlimeBoss",
+            16382457,
+            44975);
+        if (Config.neptune) if (Config.useDefaultBosses) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossNeptune.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossNeptune",
+            894731,
+            0);
+        else RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedSnowmanBoss.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedSnowmanBoss",
+            894731,
+            0);
+        if (Config.pluto) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossPluto.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossPluto",
+            894731,
+            0);
+        if (Config.eris) RegisterHelper.registerExtraPlanetsCreature(
+            EntityCreeperBossEris.class,
+            Constants.ASSET_PREFIX + "." + "CreeperBossEris",
+            894731,
+            0);
+
+        // Entities
+        if (Config.evolvedMagmaCube) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedMagmaCube.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedMagmaCube",
+            3407872,
+            16579584);
+        if (Config.evolvedIceSlime) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedIceSlime.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedIceSlime",
+            16382457,
+            44975);
+        if (Config.evolvedWitch) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedWitch.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedWitch",
+            3407872,
+            5349438);
+        if (Config.evolvedEnderman) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedEnderman.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedEnderman",
+            1447446,
+            0);
+        if (Config.evolvedBlaze) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedBlaze.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedBlaze",
+            16167425,
+            16775294);
+        if (Config.evolvedBlueCreeper) RegisterHelper.registerExtraPlanetsCreature(
+            EntityBlueCreeper.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedBlueCreeper",
+            44975,
+            0);
+        if (Config.evolvedRedCreeper) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedRedCreeper.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedRedCreeper",
+            11013646,
+            0);
+        if (Config.evolvedPowerSkeleton) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedPowerSkeleton.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedPowerSkeleton",
+            12698049,
+            4802889);
+        if (Config.evolvedGiantSpider) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedGiantSpider.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedGiantSpider",
+            12698049,
+            4802889);
+        if (Config.evolvedMiniEnderman) RegisterHelper.registerExtraPlanetsCreature(
+            EntityEvolvedMiniEnderman.class,
+            Constants.ASSET_PREFIX + "." + "EvolvedMiniEnderman",
+            1447446,
+            0);
+    }
+
+    private void registerSchematicsRecipes() {
+        if (Config.venus) SchematicRegistry.registerSchematicRecipe(new SchematicTier4Rocket());
+        if (Config.jupiter) SchematicRegistry.registerSchematicRecipe(new SchematicTier5Rocket());
+        if (Config.saturn) SchematicRegistry.registerSchematicRecipe(new SchematicTier6Rocket());
+        if (Config.uranus) SchematicRegistry.registerSchematicRecipe(new SchematicTier7Rocket());
+        if (Config.neptune) SchematicRegistry.registerSchematicRecipe(new SchematicTier8Rocket());
+        if (Config.pluto) SchematicRegistry.registerSchematicRecipe(new SchematicTier9Rocket());
+        if (Config.eris) SchematicRegistry.registerSchematicRecipe(new SchematicTier10Rocket());
+        if (Config.marsRover) SchematicRegistry.registerSchematicRecipe(new SchematicMarsRover());
+        if (Config.venusRover) SchematicRegistry.registerSchematicRecipe(new SchematicVenusRover());
+    }
+
+    private void addDungeonLoot() {
+        if (Config.marsRover)
+            GalacticraftRegistry.addDungeonLoot(1, new ItemStack(ExtraPlanets_Items.schematicMarsRover, 1, 0));
+        if (Config.venus) {
+            GalacticraftRegistry.addDungeonLoot(4, new ItemStack(ExtraPlanets_Items.schematicTier4, 1, 0));
+            if (Config.venusRover)
+                GalacticraftRegistry.addDungeonLoot(4, new ItemStack(ExtraPlanets_Items.schematicVenusRover, 1, 0));
+        }
+        if (Config.jupiter)
+            GalacticraftRegistry.addDungeonLoot(5, new ItemStack(ExtraPlanets_Items.schematicTier5, 1, 0));
+        if (Config.saturn)
+            GalacticraftRegistry.addDungeonLoot(6, new ItemStack(ExtraPlanets_Items.schematicTier6, 1, 0));
+        if (Config.uranus)
+            GalacticraftRegistry.addDungeonLoot(7, new ItemStack(ExtraPlanets_Items.schematicTier7, 1, 0));
+        if (Config.neptune)
+            GalacticraftRegistry.addDungeonLoot(8, new ItemStack(ExtraPlanets_Items.schematicTier8, 1, 0));
+        if (Config.pluto)
+            GalacticraftRegistry.addDungeonLoot(9, new ItemStack(ExtraPlanets_Items.schematicTier9, 1, 0));
+        if (Config.eris)
+            GalacticraftRegistry.addDungeonLoot(10, new ItemStack(ExtraPlanets_Items.schematicTier10, 1, 0));
+    }
 }

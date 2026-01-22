@@ -2,8 +2,6 @@ package com.mjr.extraplanets.entities.monsters;
 
 import java.util.List;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.SharedMonsterAttributes;
 import net.minecraft.entity.effect.EntityLightningBolt;
@@ -20,269 +18,290 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.DamageSource;
 import net.minecraft.world.World;
 
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
 public class EntityCustomBlueCreeper extends EntityMob {
-	/**
-	 * Time when this creeper was last in an active state (Messed up code here, probably causes creeper animation to go weird)
-	 */
-	private int lastActiveTime;
-	/**
-	 * The amount of time since the creeper was close enough to the player to ignite
-	 */
-	private int timeSinceIgnited;
-	private int fuseTime = 30;
-	/** Explosion radius for this creeper. */
-	private int explosionRadius = 3;
 
-	public EntityCustomBlueCreeper(World p_i1733_1_) {
-		super(p_i1733_1_);
-	}
+    /**
+     * Time when this creeper was last in an active state (Messed up code here, probably causes creeper animation to go
+     * weird)
+     */
+    private int lastActiveTime;
+    /**
+     * The amount of time since the creeper was close enough to the player to ignite
+     */
+    private int timeSinceIgnited;
+    private int fuseTime = 30;
+    /** Explosion radius for this creeper. */
+    private int explosionRadius = 3;
 
-	@Override
-	protected void applyEntityAttributes() {
-		super.applyEntityAttributes();
-		this.getEntityAttribute(SharedMonsterAttributes.movementSpeed).setBaseValue(0.25D);
-	}
+    public EntityCustomBlueCreeper(World p_i1733_1_) {
+        super(p_i1733_1_);
+    }
 
-	/**
-	 * Returns true if the newer Entity AI code should be run
-	 */
-	@Override
-	public boolean isAIEnabled() {
-		return true;
-	}
+    @Override
+    protected void applyEntityAttributes() {
+        super.applyEntityAttributes();
+        this.getEntityAttribute(SharedMonsterAttributes.movementSpeed)
+            .setBaseValue(0.25D);
+    }
 
-	/**
-	 * The number of iterations PathFinder.getSafePoint will execute before giving up.
-	 */
-	@Override
-	public int getMaxSafePointTries() {
-		return this.getAttackTarget() == null ? 3 : 3 + (int) (this.getHealth() - 1.0F);
-	}
+    /**
+     * Returns true if the newer Entity AI code should be run
+     */
+    @Override
+    public boolean isAIEnabled() {
+        return true;
+    }
 
-	/**
-	 * Called when the mob is falling. Calculates and applies fall damage.
-	 */
-	@Override
-	protected void fall(float p_70069_1_) {
-		super.fall(p_70069_1_);
-		this.timeSinceIgnited = (int) (this.timeSinceIgnited + p_70069_1_ * 1.5F);
+    /**
+     * The number of iterations PathFinder.getSafePoint will execute before giving up.
+     */
+    @Override
+    public int getMaxSafePointTries() {
+        return this.getAttackTarget() == null ? 3 : 3 + (int) (this.getHealth() - 1.0F);
+    }
 
-		if (this.timeSinceIgnited > this.fuseTime - 5) {
-			this.timeSinceIgnited = this.fuseTime - 5;
-		}
-	}
+    /**
+     * Called when the mob is falling. Calculates and applies fall damage.
+     */
+    @Override
+    protected void fall(float p_70069_1_) {
+        super.fall(p_70069_1_);
+        this.timeSinceIgnited = (int) (this.timeSinceIgnited + p_70069_1_ * 1.5F);
 
-	@Override
-	protected void entityInit() {
-		super.entityInit();
-		this.dataWatcher.addObject(16, Byte.valueOf((byte) -1));
-		this.dataWatcher.addObject(17, Byte.valueOf((byte) 0));
-		this.dataWatcher.addObject(18, Byte.valueOf((byte) 0));
-	}
+        if (this.timeSinceIgnited > this.fuseTime - 5) {
+            this.timeSinceIgnited = this.fuseTime - 5;
+        }
+    }
 
-	/**
-	 * (abstract) Protected helper method to write subclass entity data to NBT.
-	 */
-	@Override
-	public void writeEntityToNBT(NBTTagCompound p_70014_1_) {
-		super.writeEntityToNBT(p_70014_1_);
+    @Override
+    protected void entityInit() {
+        super.entityInit();
+        this.dataWatcher.addObject(16, Byte.valueOf((byte) -1));
+        this.dataWatcher.addObject(17, Byte.valueOf((byte) 0));
+        this.dataWatcher.addObject(18, Byte.valueOf((byte) 0));
+    }
 
-		if (this.dataWatcher.getWatchableObjectByte(17) == 1) {
-			p_70014_1_.setBoolean("powered", true);
-		}
+    /**
+     * (abstract) Protected helper method to write subclass entity data to NBT.
+     */
+    @Override
+    public void writeEntityToNBT(NBTTagCompound p_70014_1_) {
+        super.writeEntityToNBT(p_70014_1_);
 
-		p_70014_1_.setShort("Fuse", (short) this.fuseTime);
-		p_70014_1_.setByte("ExplosionRadius", (byte) this.explosionRadius);
-		p_70014_1_.setBoolean("ignited", this.func_146078_ca());
-	}
+        if (this.dataWatcher.getWatchableObjectByte(17) == 1) {
+            p_70014_1_.setBoolean("powered", true);
+        }
 
-	/**
-	 * (abstract) Protected helper method to read subclass entity data from NBT.
-	 */
-	@Override
-	public void readEntityFromNBT(NBTTagCompound p_70037_1_) {
-		super.readEntityFromNBT(p_70037_1_);
-		this.dataWatcher.updateObject(17, Byte.valueOf((byte) (p_70037_1_.getBoolean("powered") ? 1 : 0)));
+        p_70014_1_.setShort("Fuse", (short) this.fuseTime);
+        p_70014_1_.setByte("ExplosionRadius", (byte) this.explosionRadius);
+        p_70014_1_.setBoolean("ignited", this.func_146078_ca());
+    }
 
-		if (p_70037_1_.hasKey("Fuse", 99)) {
-			this.fuseTime = p_70037_1_.getShort("Fuse");
-		}
+    /**
+     * (abstract) Protected helper method to read subclass entity data from NBT.
+     */
+    @Override
+    public void readEntityFromNBT(NBTTagCompound p_70037_1_) {
+        super.readEntityFromNBT(p_70037_1_);
+        this.dataWatcher.updateObject(17, Byte.valueOf((byte) (p_70037_1_.getBoolean("powered") ? 1 : 0)));
 
-		if (p_70037_1_.hasKey("ExplosionRadius", 99)) {
-			this.explosionRadius = p_70037_1_.getByte("ExplosionRadius");
-		}
+        if (p_70037_1_.hasKey("Fuse", 99)) {
+            this.fuseTime = p_70037_1_.getShort("Fuse");
+        }
 
-		if (p_70037_1_.getBoolean("ignited")) {
-			this.func_146079_cb();
-		}
-	}
+        if (p_70037_1_.hasKey("ExplosionRadius", 99)) {
+            this.explosionRadius = p_70037_1_.getByte("ExplosionRadius");
+        }
 
-	/**
-	 * Called to update the entity's position/logic.
-	 */
-	@Override
-	public void onUpdate() {
-		if (this.isEntityAlive()) {
-			this.lastActiveTime = this.timeSinceIgnited;
+        if (p_70037_1_.getBoolean("ignited")) {
+            this.func_146079_cb();
+        }
+    }
 
-			if (this.func_146078_ca()) {
-				this.setCreeperState(1);
-			}
+    /**
+     * Called to update the entity's position/logic.
+     */
+    @Override
+    public void onUpdate() {
+        if (this.isEntityAlive()) {
+            this.lastActiveTime = this.timeSinceIgnited;
 
-			int i = this.getCreeperState();
+            if (this.func_146078_ca()) {
+                this.setCreeperState(1);
+            }
 
-			if (i > 0 && this.timeSinceIgnited == 0) {
-				this.playSound("creeper.primed", 1.0F, 0.5F);
-			}
+            int i = this.getCreeperState();
 
-			this.timeSinceIgnited += i;
+            if (i > 0 && this.timeSinceIgnited == 0) {
+                this.playSound("creeper.primed", 1.0F, 0.5F);
+            }
 
-			if (this.timeSinceIgnited < 0) {
-				this.timeSinceIgnited = 0;
-			}
+            this.timeSinceIgnited += i;
 
-			if (this.timeSinceIgnited >= this.fuseTime) {
-				this.timeSinceIgnited = this.fuseTime;
-				this.func_146077_cc();
-			}
-		}
+            if (this.timeSinceIgnited < 0) {
+                this.timeSinceIgnited = 0;
+            }
 
-		super.onUpdate();
-	}
+            if (this.timeSinceIgnited >= this.fuseTime) {
+                this.timeSinceIgnited = this.fuseTime;
+                this.func_146077_cc();
+            }
+        }
 
-	/**
-	 * Returns the sound this mob makes when it is hurt.
-	 */
-	@Override
-	protected String getHurtSound() {
-		return "mob.creeper.say";
-	}
+        super.onUpdate();
+    }
 
-	/**
-	 * Returns the sound this mob makes on death.
-	 */
-	@Override
-	protected String getDeathSound() {
-		return "mob.creeper.death";
-	}
+    /**
+     * Returns the sound this mob makes when it is hurt.
+     */
+    @Override
+    protected String getHurtSound() {
+        return "mob.creeper.say";
+    }
 
-	/**
-	 * Called when the mob's health reaches 0.
-	 */
-	@Override
-	public void onDeath(DamageSource p_70645_1_) {
-		super.onDeath(p_70645_1_);
+    /**
+     * Returns the sound this mob makes on death.
+     */
+    @Override
+    protected String getDeathSound() {
+        return "mob.creeper.death";
+    }
 
-		if (p_70645_1_.getEntity() instanceof EntitySkeleton) {
-			int i = Item.getIdFromItem(Items.record_13);
-			int j = Item.getIdFromItem(Items.record_wait);
-			int k = i + this.rand.nextInt(j - i + 1);
-			this.dropItem(Item.getItemById(k), 1);
-		}
-	}
+    /**
+     * Called when the mob's health reaches 0.
+     */
+    @Override
+    public void onDeath(DamageSource p_70645_1_) {
+        super.onDeath(p_70645_1_);
 
-	@Override
-	public boolean attackEntityAsMob(Entity p_70652_1_) {
-		return true;
-	}
+        if (p_70645_1_.getEntity() instanceof EntitySkeleton) {
+            int i = Item.getIdFromItem(Items.record_13);
+            int j = Item.getIdFromItem(Items.record_wait);
+            int k = i + this.rand.nextInt(j - i + 1);
+            this.dropItem(Item.getItemById(k), 1);
+        }
+    }
 
-	/**
-	 * Returns true if the creeper is powered by a lightning bolt.
-	 */
-	public boolean getPowered() {
-		return this.dataWatcher.getWatchableObjectByte(17) == 1;
-	}
+    @Override
+    public boolean attackEntityAsMob(Entity p_70652_1_) {
+        return true;
+    }
 
-	/**
-	 * Params: (Float)Render tick. Returns the intensity of the creeper's flash when it is ignited.
-	 */
-	@SideOnly(Side.CLIENT)
-	public float getCreeperFlashIntensity(float p_70831_1_) {
-		return (this.lastActiveTime + (this.timeSinceIgnited - this.lastActiveTime) * p_70831_1_) / (this.fuseTime - 2);
-	}
+    /**
+     * Returns true if the creeper is powered by a lightning bolt.
+     */
+    public boolean getPowered() {
+        return this.dataWatcher.getWatchableObjectByte(17) == 1;
+    }
 
-	@Override
-	protected Item getDropItem() {
-		return Items.gunpowder;
-	}
+    /**
+     * Params: (Float)Render tick. Returns the intensity of the creeper's flash when it is ignited.
+     */
+    @SideOnly(Side.CLIENT)
+    public float getCreeperFlashIntensity(float p_70831_1_) {
+        return (this.lastActiveTime + (this.timeSinceIgnited - this.lastActiveTime) * p_70831_1_) / (this.fuseTime - 2);
+    }
 
-	/**
-	 * Returns the current state of creeper, -1 is idle, 1 is 'in fuse'
-	 */
-	public int getCreeperState() {
-		return this.dataWatcher.getWatchableObjectByte(16);
-	}
+    @Override
+    protected Item getDropItem() {
+        return Items.gunpowder;
+    }
 
-	/**
-	 * Sets the state of creeper, -1 to idle and 1 to be 'in fuse'
-	 */
-	public void setCreeperState(int p_70829_1_) {
-		this.dataWatcher.updateObject(16, Byte.valueOf((byte) p_70829_1_));
-	}
+    /**
+     * Returns the current state of creeper, -1 is idle, 1 is 'in fuse'
+     */
+    public int getCreeperState() {
+        return this.dataWatcher.getWatchableObjectByte(16);
+    }
 
-	/**
-	 * Called when a lightning bolt hits the entity.
-	 */
-	@Override
-	public void onStruckByLightning(EntityLightningBolt p_70077_1_) {
-		super.onStruckByLightning(p_70077_1_);
-		this.dataWatcher.updateObject(17, Byte.valueOf((byte) 1));
-	}
+    /**
+     * Sets the state of creeper, -1 to idle and 1 to be 'in fuse'
+     */
+    public void setCreeperState(int p_70829_1_) {
+        this.dataWatcher.updateObject(16, Byte.valueOf((byte) p_70829_1_));
+    }
 
-	/**
-	 * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
-	 */
-	@Override
-	protected boolean interact(EntityPlayer p_70085_1_) {
-		ItemStack itemstack = p_70085_1_.inventory.getCurrentItem();
+    /**
+     * Called when a lightning bolt hits the entity.
+     */
+    @Override
+    public void onStruckByLightning(EntityLightningBolt p_70077_1_) {
+        super.onStruckByLightning(p_70077_1_);
+        this.dataWatcher.updateObject(17, Byte.valueOf((byte) 1));
+    }
 
-		if (itemstack != null && itemstack.getItem() == Items.flint_and_steel) {
-			this.worldObj.playSoundEffect(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D, "fire.ignite", 1.0F, this.rand.nextFloat() * 0.4F + 0.8F);
-			p_70085_1_.swingItem();
+    /**
+     * Called when a player interacts with a mob. e.g. gets milk from a cow, gets into the saddle on a pig.
+     */
+    @Override
+    protected boolean interact(EntityPlayer p_70085_1_) {
+        ItemStack itemstack = p_70085_1_.inventory.getCurrentItem();
 
-			if (!this.worldObj.isRemote) {
-				this.func_146079_cb();
-				itemstack.damageItem(1, p_70085_1_);
-				return true;
-			}
-		}
+        if (itemstack != null && itemstack.getItem() == Items.flint_and_steel) {
+            this.worldObj.playSoundEffect(
+                this.posX + 0.5D,
+                this.posY + 0.5D,
+                this.posZ + 0.5D,
+                "fire.ignite",
+                1.0F,
+                this.rand.nextFloat() * 0.4F + 0.8F);
+            p_70085_1_.swingItem();
 
-		return super.interact(p_70085_1_);
-	}
+            if (!this.worldObj.isRemote) {
+                this.func_146079_cb();
+                itemstack.damageItem(1, p_70085_1_);
+                return true;
+            }
+        }
 
-	private void func_146077_cc() {
-		if (!this.worldObj.isRemote) {
-			boolean flag = this.worldObj.getGameRules().getGameRuleBooleanValue("mobGriefing");
+        return super.interact(p_70085_1_);
+    }
 
-			if (this.getPowered()) {
-				this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, this.explosionRadius * 2, flag);
-			} else {
-				this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, this.explosionRadius, flag);
-			}
+    private void func_146077_cc() {
+        if (!this.worldObj.isRemote) {
+            boolean flag = this.worldObj.getGameRules()
+                .getGameRuleBooleanValue("mobGriefing");
 
-			if (this.worldObj.getClosestPlayer(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D, 10.0) != null) {
-				List<?> list = worldObj.getEntitiesWithinAABB(Entity.class, AxisAlignedBB.getBoundingBox((float) posX - 5, (float) posY - 5, (float) posZ - 5, (float) (posX + 10), (float) (posY + 10), (float) (posZ + 10)));
-				if (list != null) {
-					System.out.println(list.size());
-					for (int i = 0; i < list.size(); i++) {
-						if (list.get(i) instanceof EntityPlayer) {
-							System.out.println(i + " = yes");
-							EntityPlayer entity = (EntityPlayer) list.get(i);
-							entity.addPotionEffect(new PotionEffect(Potion.weakness.getId(), 50, 1));
-						}
-					}
-				}
-			}
+            if (this.getPowered()) {
+                this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, this.explosionRadius * 2, flag);
+            } else {
+                this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, this.explosionRadius, flag);
+            }
 
-			this.setDead();
-		}
-	}
+            if (this.worldObj.getClosestPlayer(this.posX + 0.5D, this.posY + 0.5D, this.posZ + 0.5D, 10.0) != null) {
+                List<?> list = worldObj.getEntitiesWithinAABB(
+                    Entity.class,
+                    AxisAlignedBB.getBoundingBox(
+                        (float) posX - 5,
+                        (float) posY - 5,
+                        (float) posZ - 5,
+                        (float) (posX + 10),
+                        (float) (posY + 10),
+                        (float) (posZ + 10)));
+                if (list != null) {
+                    System.out.println(list.size());
+                    for (int i = 0; i < list.size(); i++) {
+                        if (list.get(i) instanceof EntityPlayer) {
+                            System.out.println(i + " = yes");
+                            EntityPlayer entity = (EntityPlayer) list.get(i);
+                            entity.addPotionEffect(new PotionEffect(Potion.weakness.getId(), 50, 1));
+                        }
+                    }
+                }
+            }
 
-	public boolean func_146078_ca() {
-		return this.dataWatcher.getWatchableObjectByte(18) != 0;
-	}
+            this.setDead();
+        }
+    }
 
-	public void func_146079_cb() {
-		this.dataWatcher.updateObject(18, Byte.valueOf((byte) 1));
-	}
+    public boolean func_146078_ca() {
+        return this.dataWatcher.getWatchableObjectByte(18) != 0;
+    }
+
+    public void func_146079_cb() {
+        this.dataWatcher.updateObject(18, Byte.valueOf((byte) 1));
+    }
 }

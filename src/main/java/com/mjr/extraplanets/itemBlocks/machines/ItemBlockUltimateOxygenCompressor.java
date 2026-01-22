@@ -1,26 +1,27 @@
 package com.mjr.extraplanets.itemBlocks.machines;
 
-import com.mjr.extraplanets.blocks.machines.UltimateOxygenCompressor;
-import com.mjr.extraplanets.itemBlocks.blocks.ItemBlockDescDefaults;
-
 import net.minecraft.block.Block;
 import net.minecraft.item.ItemStack;
 
+import com.mjr.extraplanets.blocks.machines.UltimateOxygenCompressor;
+import com.mjr.extraplanets.itemBlocks.blocks.ItemBlockDescDefaults;
+
 public class ItemBlockUltimateOxygenCompressor extends ItemBlockDescDefaults {
-	public ItemBlockUltimateOxygenCompressor(Block block) {
-		super(block);
-	}
 
-	@Override
-	public String getUnlocalizedName(ItemStack itemstack) {
-		int metadata = 0;
+    public ItemBlockUltimateOxygenCompressor(Block block) {
+        super(block);
+    }
 
-		if (itemstack.getItemDamage() >= UltimateOxygenCompressor.OXYGEN_DECOMPRESSOR_METADATA) {
-			metadata = 1;
-		} else if (itemstack.getItemDamage() >= UltimateOxygenCompressor.OXYGEN_COMPRESSOR_METADATA) {
-			metadata = 0;
-		}
+    @Override
+    public String getUnlocalizedName(ItemStack itemstack) {
+        int metadata = 0;
 
-		return this.field_150939_a.getUnlocalizedName() + "." + metadata;
-	}
+        if (itemstack.getItemDamage() >= UltimateOxygenCompressor.OXYGEN_DECOMPRESSOR_METADATA) {
+            metadata = 1;
+        } else if (itemstack.getItemDamage() >= UltimateOxygenCompressor.OXYGEN_COMPRESSOR_METADATA) {
+            metadata = 0;
+        }
+
+        return this.field_150939_a.getUnlocalizedName() + "." + metadata;
+    }
 }

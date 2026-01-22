@@ -2,13 +2,6 @@ package com.mjr.extraplanets.planets.Venus.worldgen.dungeon;
 
 import java.util.Random;
 
-import com.mjr.extraplanets.Config;
-import com.mjr.extraplanets.tileEntities.dungeonSpawners.TileEntityDungeonSpawnerVenus;
-import com.mjr.extraplanets.tileEntities.dungeonSpawners.TileEntityDungeonSpawnerVenusDefault;
-
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
-import micdoodle8.mods.galacticraft.core.GalacticraftCore;
 import net.minecraft.block.Block;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.Entity;
@@ -21,58 +14,66 @@ import net.minecraft.util.AxisAlignedBB;
 import net.minecraft.util.MovingObjectPosition;
 import net.minecraft.world.World;
 
+import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.tileEntities.dungeonSpawners.TileEntityDungeonSpawnerVenus;
+import com.mjr.extraplanets.tileEntities.dungeonSpawners.TileEntityDungeonSpawnerVenusDefault;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import micdoodle8.mods.galacticraft.core.GalacticraftCore;
+
 public class DungeonSpawnerVenus extends Block {
-	public DungeonSpawnerVenus() {
-		super(Material.rock);
-		this.setBlockTextureName(GalacticraftCore.TEXTURE_PREFIX + "blank");
-	}
 
-	@Override
-	public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
-		return null;
-	}
+    public DungeonSpawnerVenus() {
+        super(Material.rock);
+        this.setBlockTextureName(GalacticraftCore.TEXTURE_PREFIX + "blank");
+    }
 
-	@SideOnly(Side.CLIENT)
-	@Override
-	public AxisAlignedBB getSelectedBoundingBoxFromPool(World world, int x, int y, int z) {
-		return AxisAlignedBB.getBoundingBox(x + 0.0D, y + 0.0D, z + 0.0D, x + 0.0D, y + 0.0D, z + 0.0D);
-	}
+    @Override
+    public AxisAlignedBB getCollisionBoundingBoxFromPool(World world, int x, int y, int z) {
+        return null;
+    }
 
-	@Override
-	public float getExplosionResistance(Entity par1Entity, World world, int x, int y, int z, double explosionX, double explosionY, double explosionZ) {
-		return 10000.0F;
-	}
+    @SideOnly(Side.CLIENT)
+    @Override
+    public AxisAlignedBB getSelectedBoundingBoxFromPool(World world, int x, int y, int z) {
+        return AxisAlignedBB.getBoundingBox(x + 0.0D, y + 0.0D, z + 0.0D, x + 0.0D, y + 0.0D, z + 0.0D);
+    }
 
-	@Override
-	public float getBlockHardness(World par1World, int par2, int par3, int par4) {
-		return -1.0F;
-	}
+    @Override
+    public float getExplosionResistance(Entity par1Entity, World world, int x, int y, int z, double explosionX,
+        double explosionY, double explosionZ) {
+        return 10000.0F;
+    }
 
-	@Override
-	public TileEntity createTileEntity(World world, int metadata) {
-		if (Config.useDefaultBosses)
-			return new TileEntityDungeonSpawnerVenusDefault();
-		else
-			return new TileEntityDungeonSpawnerVenus();
-	}
+    @Override
+    public float getBlockHardness(World par1World, int par2, int par3, int par4) {
+        return -1.0F;
+    }
 
-	@Override
-	public boolean canHarvestBlock(EntityPlayer player, int meta) {
-		return false;
-	}
+    @Override
+    public TileEntity createTileEntity(World world, int metadata) {
+        if (Config.useDefaultBosses) return new TileEntityDungeonSpawnerVenusDefault();
+        else return new TileEntityDungeonSpawnerVenus();
+    }
 
-	@Override
-	public Item getItemDropped(int meta, Random random, int par3) {
-		return Item.getItemFromBlock(Blocks.air);
-	}
+    @Override
+    public boolean canHarvestBlock(EntityPlayer player, int meta) {
+        return false;
+    }
 
-	@Override
-	public int quantityDropped(int meta, int fortune, Random random) {
-		return 0;
-	}
+    @Override
+    public Item getItemDropped(int meta, Random random, int par3) {
+        return Item.getItemFromBlock(Blocks.air);
+    }
 
-	@Override
-	public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z) {
-		return null;
-	}
+    @Override
+    public int quantityDropped(int meta, int fortune, Random random) {
+        return 0;
+    }
+
+    @Override
+    public ItemStack getPickBlock(MovingObjectPosition target, World world, int x, int y, int z) {
+        return null;
+    }
 }
