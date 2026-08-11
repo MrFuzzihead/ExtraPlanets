@@ -10,7 +10,18 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
-import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.*;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bBlueMapleForest;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bCoalPlains;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bDiamondPlains;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bEmeraldPlains;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bGoldPlains;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bIronPlains;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bPlains;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bPurpleMapleForest;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bRedDesert;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bRedMapleForest;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bWasteLands;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bYellowMapleForest;
 
 public class Kepler22bBiomes extends BiomeGenBase {
 

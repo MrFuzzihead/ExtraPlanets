@@ -38,6 +38,8 @@ public class Config {
     public static boolean mercuryItems;
     public static boolean uraniumItems;
     public static boolean kepler22bItems;
+    public static boolean pressure;
+    public static boolean radiation;
 
     public static boolean thermalPaddings;
     public static boolean batteries;
@@ -452,6 +454,21 @@ public class Config {
                 "Kepler22b Tools & Armor",
                 true,
                 "This option will will disable & remove & remove all Kepler22b Tools & Armour")
+            .getBoolean(true);
+
+        pressure = config
+            .get(
+                Constants.CONFIG_CATEGORY_ITEMS,
+                "Pressure System",
+                true,
+                "Setting this option to false will disable & remove the Pressure System")
+            .getBoolean(true);
+        radiation = config
+            .get(
+                Constants.CONFIG_CATEGORY_ITEMS,
+                "Radiation System",
+                true,
+                "Setting this option to false will disable & remove the Radiation System")
             .getBoolean(true);
 
         thermalPaddings = config

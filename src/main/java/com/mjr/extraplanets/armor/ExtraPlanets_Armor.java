@@ -46,6 +46,14 @@ public class ExtraPlanets_Armor {
     private static ArmorMaterial green_diamond_ArmorMaterial = EnumHelper
         .addArmorMaterial("Green__diamond_Armor", 28, new int[] { 3, 8, 6, 3 }, 7);
 
+    private static ArmorMaterial TIER_1_SPACE_SUIT_ARMOR_MATERIAL = EnumHelper
+        .addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[] { 3, 8, 6, 3 }, 0);
+
+    public static Item tier1SpaceSuitHelmet;
+    public static Item tier1SpaceSuitChest;
+    public static Item tier1SpaceSuitLegings;
+    public static Item tier1SpaceSuitBoots;
+
     public static Item carbonHelmet;
     public static Item carbonChest;
     public static Item carbonLegings;
@@ -273,6 +281,16 @@ public class ExtraPlanets_Armor {
             greenDiamondBoots = new GreenDiamondArmor("green_diamond", green_diamond_ArmorMaterial, 3)
                 .setUnlocalizedName("green_diamond_boots");
         }
+        if (Config.pressure || Config.radiation) {
+            tier1SpaceSuitHelmet = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 0)
+                .setUnlocalizedName("tier1_space_suit_helmet");
+            tier1SpaceSuitChest = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 1)
+                .setUnlocalizedName("tier1_space_suit_chest");
+            tier1SpaceSuitLegings = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 2)
+                .setUnlocalizedName("tier1_space_suit_legings");
+            tier1SpaceSuitBoots = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 3)
+                .setUnlocalizedName("tier1_space_suit_boots");
+        }
     }
 
     private static void registerArmor() {
@@ -373,6 +391,12 @@ public class ExtraPlanets_Armor {
             GameRegistry.registerItem(greenDiamondChest, "greenDiamondChest");
             GameRegistry.registerItem(greenDiamondLegings, "greenDiamondLegings");
             GameRegistry.registerItem(greenDiamondBoots, "greenDiamondBoots");
+        }
+        if (Config.pressure || Config.radiation) {
+            GameRegistry.registerItem(tier1SpaceSuitHelmet, "tier1SpaceSuitHelmet");
+            GameRegistry.registerItem(tier1SpaceSuitChest, "tier1SpaceSuitChest");
+            GameRegistry.registerItem(tier1SpaceSuitLegings, "tier1SpaceSuitLegings");
+            GameRegistry.registerItem(tier1SpaceSuitBoots, "tier1SpaceSuitBoots");
         }
     }
 }

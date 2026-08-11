@@ -1,0 +1,185 @@
+package com.mjr.extraplanets.client.model;
+
+import net.minecraft.client.model.ModelBiped;
+import net.minecraft.entity.Entity;
+
+import org.lwjgl.opengl.GL11;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+
+@SideOnly(Side.CLIENT)
+public abstract class ArmorCustomModel extends ModelBiped {
+
+    public ArmorCustomModel() {
+        super(1.0F);
+    }
+
+    public int color = -1;
+
+    public abstract void pre();
+
+    public abstract void post();
+
+    public abstract void partHead();
+
+    public abstract void partBody();
+
+    public abstract void partRightArm();
+
+    public abstract void partLeftArm();
+
+    public abstract void partRightLeg();
+
+    public abstract void partLeftLeg();
+
+    @Override
+    public void render(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+        float headPitch, float scale) {
+        super.render(entity, limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale);
+        GL11.glPushMatrix();
+        if (this.color != -1) {
+            float red = (this.color >> 16 & 255) / 255F;
+            float blue = (this.color >> 8 & 255) / 255F;
+            float green = (this.color & 255) / 255F;
+            GL11.glColor3f(red, blue, green);
+        }
+
+        pre();
+        // THE primary anti-Z-fighting measure: scale the whole armor 10% larger than the body
+        // so armor surfaces never coincide with the skin surfaces.
+        GL11.glScalef(1.1F, 1.1F, 1.1F);
+        float f6 = 4.0F;
+        {// partHead
+            GL11.glPushMatrix();
+            if (this.isChild) {
+                GL11.glScalef(1.5F / f6, 1.5F / f6, 1.5F / f6);
+                GL11.glTranslatef(0.0F, 16.0F * scale, 0.0F);
+            }
+            GL11.glTranslatef(
+                this.bipedHead.rotationPointX * scale,
+                this.bipedHead.rotationPointY * scale,
+                this.bipedHead.rotationPointZ * scale);
+            GL11.glRotatef(this.bipedHead.rotateAngleZ * (180F / (float) Math.PI), 0F, 0F, 1F);
+            GL11.glRotatef(this.bipedHead.rotateAngleY * (180F / (float) Math.PI), 0F, 1F, 0F);
+            GL11.glRotatef(this.bipedHead.rotateAngleX * (180F / (float) Math.PI), 1F, 0F, 0F);
+            GL11.glRotatef(180F, 1F, 0F, 0F);
+            // Note: 1.12.2 had an EntityArmorStand check here; EntityArmorStand does not exist
+            // in 1.7.10, so the extra 180F Y rotation is always applied.
+            GL11.glRotatef(180F, 0F, 1F, 0F);
+            if (this.isSneak) {
+                GL11.glTranslatef(0F, -0.125F, 0F);
+                if (this.bipedHead.rotateAngleX < 0.48) {
+                    GL11.glRotatef(-this.bipedHead.rotateAngleX * 2, 1F, 0F, 0F);
+                } else if (this.bipedHead.rotateAngleX > 0.48) {
+                    GL11.glTranslatef(0F, this.bipedHead.rotateAngleX / 10, -this.bipedHead.rotateAngleX / 10);
+                }
+            }
+            partHead();
+            GL11.glPopMatrix();
+        }
+
+        if (this.isChild) {
+            GL11.glPushMatrix();
+            GL11.glScalef(1.0F / f6, 1.0F / f6, 1.0F / f6);
+            GL11.glTranslatef(0.0F, 24.0F * scale, 0.0F);
+        }
+
+        {// partBody
+            GL11.glPushMatrix();
+            GL11.glTranslatef(
+                this.bipedBody.rotationPointX * scale,
+                this.bipedBody.rotationPointY * scale,
+                this.bipedBody.rotationPointZ * scale);
+            GL11.glRotatef(this.bipedBody.rotateAngleZ * (180F / (float) Math.PI), 0F, 0F, 1F);
+            GL11.glRotatef(this.bipedBody.rotateAngleY * (180F / (float) Math.PI), 0F, 1F, 0F);
+            GL11.glRotatef(this.bipedBody.rotateAngleX * (180F / (float) Math.PI), 1F, 0F, 0F);
+            GL11.glRotatef(180F, 1F, 0F, 0F);
+            GL11.glRotatef(180F, 0F, 1F, 0F);
+            if (this.isSneak) {
+                GL11.glTranslatef(0F, -0.20F, -0.1F);
+            }
+            partBody();
+            GL11.glPopMatrix();
+        }
+
+        {// partRightArm
+            GL11.glPushMatrix();
+            GL11.glTranslatef(
+                this.bipedRightArm.rotationPointX * scale,
+                this.bipedRightArm.rotationPointY * scale,
+                this.bipedRightArm.rotationPointZ * scale);
+            GL11.glRotatef(this.bipedRightArm.rotateAngleZ * (180F / (float) Math.PI), 0F, 0F, 1F);
+            GL11.glRotatef(this.bipedRightArm.rotateAngleY * (180F / (float) Math.PI), 0F, 1F, 0F);
+            GL11.glRotatef(this.bipedRightArm.rotateAngleX * (180F / (float) Math.PI), 1F, 0F, 0F);
+            GL11.glRotatef(180F, 1F, 0F, 0F);
+            GL11.glRotatef(180F, 0F, 1F, 0F);
+            if (this.isSneak) {
+                GL11.glTranslatef(0.02F, -0.1F, -0.05F + (-0.02F + limbSwingAmount / 10));
+            }
+            partRightArm();
+            GL11.glPopMatrix();
+        }
+
+        {// partLeftArm
+            GL11.glPushMatrix();
+            GL11.glTranslatef(
+                this.bipedLeftArm.rotationPointX * scale,
+                this.bipedLeftArm.rotationPointY * scale,
+                this.bipedLeftArm.rotationPointZ * scale);
+            GL11.glRotatef(this.bipedLeftArm.rotateAngleZ * (180F / (float) Math.PI), 0F, 0F, 1F);
+            GL11.glRotatef(this.bipedLeftArm.rotateAngleY * (180F / (float) Math.PI), 0F, 1F, 0F);
+            GL11.glRotatef(this.bipedLeftArm.rotateAngleX * (180F / (float) Math.PI), 1F, 0F, 0F);
+            GL11.glRotatef(180F, 1F, 0F, 0F);
+            GL11.glRotatef(180F, 0F, 1F, 0F);
+            if (this.isSneak) {
+                GL11.glTranslatef(-0.02F, -0.1F, -0.05F + (-0.02F + limbSwingAmount / 10));
+            }
+            partLeftArm();
+            GL11.glPopMatrix();
+        }
+
+        {// partRightLeg
+            GL11.glPushMatrix();
+            GL11.glTranslatef(
+                this.bipedRightLeg.rotationPointX * scale,
+                this.bipedRightLeg.rotationPointY * scale,
+                this.bipedRightLeg.rotationPointZ * scale);
+            GL11.glRotatef(-this.bipedRightLeg.rotateAngleZ * (180F / (float) Math.PI), 0F, 0F, 1F);
+            GL11.glRotatef(-this.bipedRightLeg.rotateAngleY * (180F / (float) Math.PI), 0F, 1F, 0F);
+            GL11.glRotatef(-this.bipedRightLeg.rotateAngleX * (180F / (float) Math.PI), 1F, 0F, 0F);
+            GL11.glRotatef(180F, 1F, 0F, 0F);
+            GL11.glRotatef(180F, 0F, 1F, 0F);
+            if (this.isSneak) {
+                GL11.glTranslatef(0F, -0.225F, -0.10F);
+            }
+            partRightLeg();
+            GL11.glPopMatrix();
+        }
+
+        {// partLeftLeg
+            GL11.glPushMatrix();
+            GL11.glTranslatef(
+                this.bipedLeftLeg.rotationPointX * scale,
+                this.bipedLeftLeg.rotationPointY * scale,
+                this.bipedLeftLeg.rotationPointZ * scale);
+            GL11.glRotatef(-this.bipedLeftLeg.rotateAngleZ * (180F / (float) Math.PI), 0F, 0F, 1F);
+            GL11.glRotatef(-this.bipedLeftLeg.rotateAngleY * (180F / (float) Math.PI), 0F, 1F, 0F);
+            GL11.glRotatef(-this.bipedLeftLeg.rotateAngleX * (180F / (float) Math.PI), 1F, 0F, 0F);
+            GL11.glRotatef(180F, 1F, 0F, 0F);
+            GL11.glRotatef(180F, 0F, 1F, 0F);
+            if (this.isSneak) {
+                GL11.glTranslatef(0F, -0.225F, -0.10F);
+            }
+            partLeftLeg();
+            GL11.glPopMatrix();
+        }
+
+        if (this.isChild) {
+            GL11.glPopMatrix();
+        }
+        post();
+        // GL11.glColor3f(1F, 1F, 1F);
+        GL11.glPopMatrix();
+    }
+}
