@@ -110,6 +110,7 @@ import com.mjr.extraplanets.entities.rockets.EntityTier9Rocket;
 import com.mjr.extraplanets.entities.vehicles.EntityMarsRover;
 import com.mjr.extraplanets.entities.vehicles.EntityVenusRover;
 import com.mjr.extraplanets.handlers.MainHandler;
+import com.mjr.extraplanets.handlers.SpaceSuitRenderHandler;
 import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.tileEntities.machines.TileEntitySolar;
 import com.mjr.extraplanets.tileEntities.treasureChest.TileEntityT10TreasureChest;
@@ -172,6 +173,9 @@ public class ClientProxy extends CommonProxy {
         FMLCommonHandler.instance()
             .bus()
             .register(new MainHandler());
+
+        // Hide GC Thermal Padding under a full ExtraPlanets space suit (see SpaceSuitRenderHandler)
+        SpaceSuitRenderHandler.register();
 
         // Register TileEntity Special Renderers
         renderBlocksTileEntitySpecialRenderers();
