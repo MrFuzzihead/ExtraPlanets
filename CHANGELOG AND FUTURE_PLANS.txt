@@ -1,4 +1,9 @@
 ========================================Not Released Updates==========================================
+BETA - Tier 1 Space Suit (local modpack testing)
+*Added Tier 1 Space Suit armor: 4-piece set with custom OBJ 3D model rendering
+*Suit implements IPressureSuit, IRadiationSuit and IBreathableArmor interfaces (pressure/radiation damage system will be enabled in a later sweep)
+*Balance: protection set to Iron-tier {2, 6, 5, 2} (down from Diamond-tier {3, 8, 6, 3}), enchantability 9 (Iron) for the interim
+*Planned follow-ups: electric charging, pressure + radiation system, and armor modules (protection upgrades)
 
 ======================================================================================================
 

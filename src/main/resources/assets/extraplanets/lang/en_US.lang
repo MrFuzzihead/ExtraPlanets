@@ -1638,16 +1638,3 @@ item.t7key.name=Tier 7 Dungeon Key
 item.t8key.name=Tier 8 Dungeon Key
 item.t9key.name=Tier 9 Dungeon Key
 item.t10key.name=Tier 10 Dungeon Key
-item.tier1_space_suit_helmet.name=Tier 1 Space Suit Helmet
-item.tier1_space_suit_chest.name=Tier 1 Space Suit Chestplate
-item.tier1_space_suit_legings.name=Tier 1 Space Suit Leggings
-item.tier1_space_suit_boots.name=Tier 1 Space Suit Boots
-
-space.suit.information=Used to fully stop pressure damage
-space.suit.information.2=& to slow down the rate of radiation gained
-space.suit.information.extra=The tier of each part of the Space Suits counts
-space.suit.information.extra.2=towards reducing the amount of radiation gained
-space.suit.information.extra.3=The higher the Space Suit tier the
-space.suit.information.extra.4=slower radiation will be gained
-
-item_desc.spacesuit.shift.name=Press %s for Pressure & Radiation info

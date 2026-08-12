@@ -46,8 +46,12 @@ public class ExtraPlanets_Armor {
     private static ArmorMaterial green_diamond_ArmorMaterial = EnumHelper
         .addArmorMaterial("Green__diamond_Armor", 28, new int[] { 3, 8, 6, 3 }, 7);
 
+    // Beta balance: Iron-tier protection {2, 6, 5, 2} (down from Diamond-tier {3, 8, 6, 3}).
+    // Enchantable now (9 = Iron) because nothing replaces enchanting yet; when the electric
+    // charging + module sweep lands, protection modules become the upgrade path and this
+    // material's enchantability goes back to 0.
     private static ArmorMaterial TIER_1_SPACE_SUIT_ARMOR_MATERIAL = EnumHelper
-        .addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[] { 3, 8, 6, 3 }, 0);
+        .addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[] { 2, 6, 5, 2 }, 9);
 
     public static Item tier1SpaceSuitHelmet;
     public static Item tier1SpaceSuitChest;

@@ -280,8 +280,18 @@ for gravity boots. Since gravity boots aren't implemented yet, these will return
 ### 3a. `src/main/java/com/mjr/extraplanets/armor/ExtraPlanets_Armor.java`
 
 - Add `TIER_1_SPACE_SUIT_ARMOR_MATERIAL` using 1.7.10
-  `EnumHelper.addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[]{3, 8, 6, 3}, 0)` (no
-  SoundEvents/toughness params in 1.7.10)
+  `EnumHelper.addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[]{2, 6, 5, 2}, 9)` (no
+  SoundEvents/toughness params in 1.7.10).
+
+  > **Beta balance decision (2026-08):** Protection lowered from Diamond-tier `{3, 8, 6, 3}`
+  > (= 20, the 1.7.10 armor cap) to **Iron-tier `{2, 6, 5, 2}` (15)** so the suit isn't
+  > best-in-slot combat armor on craft. Enchantability set to Iron's `9` for the interim
+  > (there is no electric charging or module system yet, so 0 enchantability has no reason).
+  > Durability factor kept at `28` (between Iron's 15 and Diamond's 33).
+  > When the pressure + radiation system and armor modules sweep lands, the plan is:
+  > protection modules become the upgrade path (port `Module`/`ModuleHelper`,
+  > `ArmorProperties`-style or `LivingHurtEvent` reduction), and this material's
+  > enchantability returns to `0` alongside `ElectricArmorBase.isEnchantable() == false`.
 - Add static `Item` fields: `tier1SpaceSuitHelmet`, `tier1SpaceSuitChest`,
   `tier1SpaceSuitLegings`, `tier1SpaceSuitBoots`
 - In `init()`: instantiate the 4 armor pieces with appropriate names and slot indices (0, 1, 2, 3)
