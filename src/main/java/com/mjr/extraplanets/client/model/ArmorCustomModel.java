@@ -1,6 +1,7 @@
 package com.mjr.extraplanets.client.model;
 
 import net.minecraft.client.model.ModelBiped;
+import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
 
 import org.lwjgl.opengl.GL11;
@@ -17,6 +18,15 @@ public abstract class ArmorCustomModel extends ModelBiped {
 
     public int color = -1;
 
+    /**
+     * The player's main {@link ModelBiped} for the entity currently being rendered, captured in
+     * {@code RenderPlayerEvent.Pre}. The suit model mirrors this model's exact limb angles in
+     * {@link #setRotationAngles} so the suit geometry stays attached to the body in every pose
+     * (held item, bow aim, blocking, sword swing, sneak, ride, etc.). Null when no player is being
+     * rendered, in which case the model falls back to computing its pose from its own fields.
+     */
+    public static ModelBiped poseSource;
+
     public abstract void pre();
 
     public abstract void post();
@@ -32,6 +42,42 @@ public abstract class ArmorCustomModel extends ModelBiped {
     public abstract void partRightLeg();
 
     public abstract void partLeftLeg();
+
+    @Override
+    public void setRotationAngles(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
+        float headPitch, float scale, Entity entity) {
+        final ModelBiped source = ArmorCustomModel.poseSource;
+        if (source != null) {
+            // Mirror the exact pose of the player's main model so the suit stays attached to the
+            // body in every pose (held item, bow aim, blocking, swing, sneak, ride, etc.).
+            copyModelAngles(source.bipedHead, this.bipedHead);
+            copyModelAngles(source.bipedHeadwear, this.bipedHeadwear);
+            copyModelAngles(source.bipedBody, this.bipedBody);
+            copyModelAngles(source.bipedRightArm, this.bipedRightArm);
+            copyModelAngles(source.bipedLeftArm, this.bipedLeftArm);
+            copyModelAngles(source.bipedRightLeg, this.bipedRightLeg);
+            copyModelAngles(source.bipedLeftLeg, this.bipedLeftLeg);
+
+            // State flags used by partXxx()/render() for sneak/ride offsets etc.
+            this.isSneak = source.isSneak;
+            this.isRiding = source.isRiding;
+            this.isChild = source.isChild;
+            this.aimedBow = source.aimedBow;
+            this.heldItemRight = source.heldItemRight;
+            this.heldItemLeft = source.heldItemLeft;
+            return;
+        }
+        super.setRotationAngles(limbSwing, limbSwingAmount, ageInTicks, netHeadYaw, headPitch, scale, entity);
+    }
+
+    private static void copyModelAngles(ModelRenderer src, ModelRenderer dst) {
+        dst.rotateAngleX = src.rotateAngleX;
+        dst.rotateAngleY = src.rotateAngleY;
+        dst.rotateAngleZ = src.rotateAngleZ;
+        dst.rotationPointX = src.rotationPointX;
+        dst.rotationPointY = src.rotationPointY;
+        dst.rotationPointZ = src.rotationPointZ;
+    }
 
     @Override
     public void render(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,

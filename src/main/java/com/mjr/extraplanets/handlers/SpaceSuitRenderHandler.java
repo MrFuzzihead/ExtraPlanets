@@ -1,11 +1,13 @@
 package com.mjr.extraplanets.handlers;
 
+import net.minecraft.client.renderer.entity.RenderPlayer;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.common.MinecraftForge;
 
 import com.mjr.extraplanets.armor.Tier1SpaceSuitArmor;
+import com.mjr.extraplanets.client.model.ArmorCustomModel;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import micdoodle8.mods.galacticraft.core.proxy.ClientProxyCore;
@@ -60,6 +62,8 @@ public class SpaceSuitRenderHandler {
     @SubscribeEvent
     public void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
         EntityPlayer player = event.entityPlayer;
+        // Capture the player's main model so the suit armor model can mirror its exact pose.
+        ArmorCustomModel.poseSource = event.renderer.modelBipedMain;
         PlayerGearData gearData = gearDataFor(player);
         if (gearData == null) {
             return;
@@ -105,6 +109,8 @@ public class SpaceSuitRenderHandler {
 
     @SubscribeEvent
     public void onRenderPlayerPost(RenderPlayerEvent.Post event) {
+        // Pose source is only valid for the duration of this player's render.
+        ArmorCustomModel.poseSource = null;
         PlayerGearData gearData = gearDataFor(event.entityPlayer);
         if (gearData == null) {
             return;
