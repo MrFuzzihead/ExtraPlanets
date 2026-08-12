@@ -39,6 +39,7 @@ public class ExtraPlanets_Recipes {
         if (Config.morePlanetsCompatibilityAdv143 == false) registerRocketCraftingRecipes();
         registerFurnaceRecipes();
         registerCraftingRecipes();
+        registerSpaceSuitRecipes();
         registerCompressorRecipes();
         registerCircuitFabricatorRecipes();
         registerSatellitesRecipes();
@@ -2619,6 +2620,67 @@ public class ExtraPlanets_Recipes {
         // Bucket to Chocolate Bar
         // GameRegistry.addShapelessRecipe(new ItemStack(ExtraPlanets_Items.chocolateBar, 3), new Object[] { new
         // ItemStack(ExtraPlanets_Items.liquid_chocolate_bucket) });
+    }
+
+    /**
+     * Interim crafting recipes for the Tier 1 Space Suit.
+     *
+     * <p>
+     * The upstream 1.12.2 chain normally builds the suit from layered radiation/pressure/armor
+     * components (aluminum shell + cloth + radiation/pressure layers + armor layer). Those
+     * components belong to the radiation &amp; pressure systems, which are a stretch goal and not
+     * yet implemented on 1.7.10. Until they land, expose a simple interim recipe so the suit is
+     * obtainable in the meantime.
+     *
+     * <p>
+     * Design: each suit piece is the vanilla <b>iron</b> armor piece at the center of the grid
+     * (roughly matching the suit's iron-tier protection), surrounded by <b>aluminum</b> ingots
+     * (ore-dictionary {@code "ingotAluminum"}). Aluminum is used because it is Galacticraft's
+     * early-game structural metal (already registered to the ore dictionary and used by GC's own
+     * recipes) and is what the 1.12.2 Tier-1 suit shell is built from. Lead was deliberately
+     * avoided for this interim recipe: EP {@code ingotLead} only drops from Deimos/Phobos ore, so
+     * gating the suit on lead would lock it behind outer planets and defeat the point of an
+     * iron-tier-reachable recipe. Lead's radiation-shielding role can return when the real
+     * layered radiation recipe is added.
+     *
+     * <p>
+     * Gated on {@code Config.pressure || Config.radiation} (the same flag that registers the
+     * suit items themselves in {@link ExtraPlanets_Armor}), so the recipes never reference an
+     * unregistered item.
+     */
+    private static void registerSpaceSuitRecipes() {
+        if (Config.pressure || Config.radiation) {
+            Item helmet = ExtraPlanets_Armor.tier1SpaceSuitHelmet;
+            Item chest = ExtraPlanets_Armor.tier1SpaceSuitChest;
+            Item leggings = ExtraPlanets_Armor.tier1SpaceSuitLegings;
+            Item boots = ExtraPlanets_Armor.tier1SpaceSuitBoots;
+            if (helmet == null || chest == null || leggings == null || boots == null) {
+                return;
+            }
+
+            // Central iron piece surrounded by an aluminum ring: "III", "IAI", "III"
+            // (white = aluminum, A = center iron piece). ShapedOreRecipe is used because it is the
+            // Forge recipe type that understands ore-dictionary string ingredients ("ingotAluminum");
+            // vanilla CraftingManager cannot handle raw String keys and would NullPointerException.
+            GameRegistry.addRecipe(
+                new ShapedOreRecipe(
+                    new ItemStack(helmet),
+                    new Object[] { "III", "IAI", "III", 'I', "ingotAluminum", 'A', new ItemStack(Items.iron_helmet) }));
+            GameRegistry.addRecipe(
+                new ShapedOreRecipe(
+                    new ItemStack(chest),
+                    new Object[] { "III", "IAI", "III", 'I', "ingotAluminum", 'A',
+                        new ItemStack(Items.iron_chestplate) }));
+            GameRegistry.addRecipe(
+                new ShapedOreRecipe(
+                    new ItemStack(leggings),
+                    new Object[] { "III", "IAI", "III", 'I', "ingotAluminum", 'A',
+                        new ItemStack(Items.iron_leggings) }));
+            GameRegistry.addRecipe(
+                new ShapedOreRecipe(
+                    new ItemStack(boots),
+                    new Object[] { "III", "IAI", "III", 'I', "ingotAluminum", 'A', new ItemStack(Items.iron_boots) }));
+        }
     }
 
     private static void registerCompressorRecipes() {

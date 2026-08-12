@@ -6,6 +6,21 @@
 - **Scope decision (agreed):** Gravity boots variant deferred (4 pieces only: helmet, chest, leggings, boots).
 - **Scope decision (agreed):** `IModularArmor` dropped entirely (nothing in 1.7.10 GC invokes `renderHelmetOverlay`).
 
+### Known rendering issues (diagnosed, fix deferred)
+
+- **Textured parts render "fuzzy/noisy" (tanks, pipes, arm piston rods).** Root cause: the original
+  `space_suit.obj` has **zero UV texture coordinates** (`vt`) — all 5580 faces are `v//vn`; it is the
+  only OBJ in the mod with no UVs (the 1.12.2 source asset is identical). The 1.7.10
+  `WavefrontObject` leaves GL texture-coordinate state undefined for UV-less faces, so those parts
+  sample their `blank_rocket_*` textures at uncontrolled coords → shimmering "fuzz" that shifts with
+  camera angle (mipmap LOD). Flat `blank_rocket_white` parts hide the error, which is why they look
+  clean. **Fix options (not yet applied):** render the affected parts as untextured flat colors
+  (disable `GL_TEXTURE_2D` + `glColor3f`), or re-export the model with a UV unwrap. If flat-coloring
+  a specific part does NOT remove its fuzz, that part is additionally Z-fighting (overlapping
+  coplanar faces) and needs a polygon offset.
+- **Helmet glass (HelmetPart3, additive-blend visor) has artifacts.** Same no-UV sampling issue +
+  the `GL_ONE, GL_ONE` additive pass; deferred alongside the above.
+
 ## Executive Summary
 
 The Tier 1 Space Suit from Extra Planets 1.12.2 is a space suit with a custom OBJ-based 3D
@@ -280,8 +295,18 @@ for gravity boots. Since gravity boots aren't implemented yet, these will return
 ### 3a. `src/main/java/com/mjr/extraplanets/armor/ExtraPlanets_Armor.java`
 
 - Add `TIER_1_SPACE_SUIT_ARMOR_MATERIAL` using 1.7.10
-  `EnumHelper.addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[]{3, 8, 6, 3}, 0)` (no
-  SoundEvents/toughness params in 1.7.10)
+  `EnumHelper.addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[]{2, 6, 5, 2}, 9)` (no
+  SoundEvents/toughness params in 1.7.10).
+
+  > **Beta balance decision (2026-08):** Protection lowered from Diamond-tier `{3, 8, 6, 3}`
+  > (= 20, the 1.7.10 armor cap) to **Iron-tier `{2, 6, 5, 2}` (15)** so the suit isn't
+  > best-in-slot combat armor on craft. Enchantability set to Iron's `9` for the interim
+  > (there is no electric charging or module system yet, so 0 enchantability has no reason).
+  > Durability factor kept at `28` (between Iron's 15 and Diamond's 33).
+  > When the pressure + radiation system and armor modules sweep lands, the plan is:
+  > protection modules become the upgrade path (port `Module`/`ModuleHelper`,
+  > `ArmorProperties`-style or `LivingHurtEvent` reduction), and this material's
+  > enchantability returns to `0` alongside `ElectricArmorBase.isEnchantable() == false`.
 - Add static `Item` fields: `tier1SpaceSuitHelmet`, `tier1SpaceSuitChest`,
   `tier1SpaceSuitLegings`, `tier1SpaceSuitBoots`
 - In `init()`: instantiate the 4 armor pieces with appropriate names and slot indices (0, 1, 2, 3)

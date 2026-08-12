@@ -4,7 +4,20 @@ import net.minecraft.block.Block;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.ExtraPlanets;
-import com.mjr.extraplanets.items.slabs.*;
+import com.mjr.extraplanets.items.slabs.CeresStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.ErisStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.JupiterDungeonBrickStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.JupiterStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.MercuryStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.NeptuneDungeonBrickStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.NeptuneStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.PlutoStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.SaturnDungeonBrickStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.SaturnStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.UranusDungeonBrickStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.UranusStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.VenusDungeonBrickStoneItemSlab;
+import com.mjr.extraplanets.items.slabs.VenusStoneItemSlab;
 
 import cpw.mods.fml.common.registry.GameRegistry;
 
