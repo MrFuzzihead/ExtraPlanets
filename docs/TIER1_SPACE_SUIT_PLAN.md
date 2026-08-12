@@ -6,6 +6,21 @@
 - **Scope decision (agreed):** Gravity boots variant deferred (4 pieces only: helmet, chest, leggings, boots).
 - **Scope decision (agreed):** `IModularArmor` dropped entirely (nothing in 1.7.10 GC invokes `renderHelmetOverlay`).
 
+### Known rendering issues (diagnosed, fix deferred)
+
+- **Textured parts render "fuzzy/noisy" (tanks, pipes, arm piston rods).** Root cause: the original
+  `space_suit.obj` has **zero UV texture coordinates** (`vt`) — all 5580 faces are `v//vn`; it is the
+  only OBJ in the mod with no UVs (the 1.12.2 source asset is identical). The 1.7.10
+  `WavefrontObject` leaves GL texture-coordinate state undefined for UV-less faces, so those parts
+  sample their `blank_rocket_*` textures at uncontrolled coords → shimmering "fuzz" that shifts with
+  camera angle (mipmap LOD). Flat `blank_rocket_white` parts hide the error, which is why they look
+  clean. **Fix options (not yet applied):** render the affected parts as untextured flat colors
+  (disable `GL_TEXTURE_2D` + `glColor3f`), or re-export the model with a UV unwrap. If flat-coloring
+  a specific part does NOT remove its fuzz, that part is additionally Z-fighting (overlapping
+  coplanar faces) and needs a polygon offset.
+- **Helmet glass (HelmetPart3, additive-blend visor) has artifacts.** Same no-UV sampling issue +
+  the `GL_ONE, GL_ONE` additive pass; deferred alongside the above.
+
 ## Executive Summary
 
 The Tier 1 Space Suit from Extra Planets 1.12.2 is a space suit with a custom OBJ-based 3D
