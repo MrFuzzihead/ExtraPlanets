@@ -119,6 +119,14 @@ public class Tier1SpaceSuitArmor extends ItemArmor
         model.isSneak = entityLiving.isSneaking();
         model.isRiding = entityLiving.isRiding();
         model.isChild = entityLiving.isChild();
+
+        // Propagate the held-item pose so the suit arms track the player's skin arms.
+        // ModelBiped.setRotationAngles reads heldItemRight to bend the arm forward when holding an
+        // item; without it the suit arm stays at rest while the real arm (driven by the main player
+        // model) bends, so the skin arm protrudes through the suit. 1.7.10 has no offhand slot.
+        ItemStack heldItem = entityLiving.getHeldItem();
+        model.heldItemRight = heldItem != null ? 1 : 0;
+        model.heldItemLeft = 0;
         return model;
     }
 
