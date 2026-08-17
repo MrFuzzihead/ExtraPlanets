@@ -453,25 +453,46 @@ public class ExtraPlanets_Items {
     }
 
     public static void OreDictionaryRegister() {
-        if (Config.mercury) OreDictionary.registerOre("ingotMercury", new ItemStack(ingotMercury));
-        if (Config.venus) OreDictionary.registerOre("ingotCarbon", new ItemStack(tier4Items, 1, 5));
+        if (Config.mercury) {
+            OreDictionary.registerOre("ingotMercury", new ItemStack(ingotMercury));
+            OreDictionary.registerOre("compressedMercury", new ItemStack(compressedMercury));
+        }
+        if (Config.venus) {
+            OreDictionary.registerOre("ingotCarbon", new ItemStack(tier4Items, 1, 5));
+            OreDictionary.registerOre("compressedCarbon", new ItemStack(tier4Items, 1, 4));
+            OreDictionary.registerOre("ingotVolcanic", new ItemStack(tier4Items, 1, 11));
+        }
         if (Config.ceres) OreDictionary.registerOre("ingotUranium", new ItemStack(ingotUranium));
         if (Config.jupiter) {
             OreDictionary.registerOre("ingotPalladium", new ItemStack(tier5Items, 1, 5));
             OreDictionary.registerOre("ingotNickel", new ItemStack(tier5Items, 1, 7));
             OreDictionary.registerOre("gemRedGem", new ItemStack(tier5Items, 1, 8));
+            OreDictionary.registerOre("compressedPalladium", new ItemStack(tier5Items, 1, 4));
+            OreDictionary.registerOre("compressedNickel", new ItemStack(tier5Items, 1, 6));
         }
-        if (Config.saturn) OreDictionary.registerOre("ingotMagnesium", new ItemStack(tier6Items, 1, 5));
+        if (Config.saturn) {
+            OreDictionary.registerOre("ingotMagnesium", new ItemStack(tier6Items, 1, 5));
+            OreDictionary.registerOre("compressedMagnesium", new ItemStack(tier6Items, 1, 4));
+        }
         if (Config.uranus) {
             OreDictionary.registerOre("ingotCrystal", new ItemStack(tier7Items, 1, 5));
             OreDictionary.registerOre("gemWhiteGem", new ItemStack(tier7Items, 1, 7));
+            OreDictionary.registerOre("compressedCrystal", new ItemStack(tier7Items, 1, 4));
+            OreDictionary.registerOre("compressedReinforcedCrystal", new ItemStack(tier7Items, 1, 6));
         }
         if (Config.neptune) {
             OreDictionary.registerOre("ingotZinc", new ItemStack(tier8Items, 1, 5));
             OreDictionary.registerOre("gemBlueGem", new ItemStack(tier8Items, 1, 6));
+            OreDictionary.registerOre("compressedZinc", new ItemStack(tier8Items, 1, 4));
         }
-        if (Config.pluto) OreDictionary.registerOre("ingotTungsten", new ItemStack(tier9Items, 1, 5));
-        if (Config.eris) OreDictionary.registerOre("ingotDarkIron", new ItemStack(tier10Items, 1, 5));
+        if (Config.pluto) {
+            OreDictionary.registerOre("ingotTungsten", new ItemStack(tier9Items, 1, 5));
+            OreDictionary.registerOre("compressedTungsten", new ItemStack(tier9Items, 1, 4));
+        }
+        if (Config.eris) {
+            OreDictionary.registerOre("ingotDarkIron", new ItemStack(tier10Items, 1, 5));
+            OreDictionary.registerOre("compressedDarkIron", new ItemStack(tier10Items, 1, 4));
+        }
         if (Config.kepler22b && Config.keplerSolarSystems) {
             OreDictionary.registerOre("gemBlueDiamond", new ItemStack(tier11Items, 1, 0));
             OreDictionary.registerOre("gemRedDiamond", new ItemStack(tier11Items, 1, 1));
@@ -484,6 +505,8 @@ public class ExtraPlanets_Items {
             OreDictionary.registerOre("stickWood", new ItemStack(tier11Items, 1, 8));
             OreDictionary.registerOre("stickWood", new ItemStack(tier11Items, 1, 9));
             OreDictionary.registerOre("stickWood", new ItemStack(tier11Items, 1, 10));
+            OreDictionary.registerOre("ingotPlatinum", new ItemStack(tier11Items, 1, 11));
+            OreDictionary.registerOre("compressedPlatinum", new ItemStack(tier11Items, 1, 12));
         }
         OreDictionary.registerOre("ingotLead", new ItemStack(ingotLead));
     }
