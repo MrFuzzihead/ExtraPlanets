@@ -11,6 +11,7 @@
 - ✅ **P1 — Biome ID strategy** — resolved via the new `ExtraPlanets_Biomes` registry (collision detection + logging, out-of-range crash protection, no registration for disabled bodies; existing configs/worlds preserved). See the P1 entry below for details.
 - ✅ **P1 — Recipe ore-dict `.get(0)` guards** — resolved in `ExtraPlanets_Recipes.java` (all 65 furnace smelting recipes now route through a guarded `addOreSmelting` helper; missing ore entries are logged once and skipped instead of throwing `IndexOutOfBoundsException` at postInit). See the P1 entry below for details.
 - ✅ **P1 — Packet ordinal validation + MainHandler RNG caching** — resolved in `PacketSimple.java` (`decodeInto` now bounds-checks the buffer length and the packet-type ordinal and discards malformed packets; `handleClientSide`/`handleServerSide` skip packets whose type was discarded) and `MainHandler.java` (`onPlayer` reuses a cached `Random` instead of allocating one every tick, and is explicitly client-side only). See the P1 entries below for details.
+- ✅ **P1 — Fragile shared static render state (Space Suit renderer)** — resolved in `ArmorCustomModel.java`, `Tier1SpaceSuitArmor.java`, `ArmorSpaceSuitModel.java` & `SpaceSuitRenderHandler.java` (per-entity pose registry instead of a single global `poseSource`; per-entity model instances instead of a static slot map; `glPushAttrib`/`glPopAttrib` with `try/finally` so flat-render GL state can never leak; per-player gear-flag snapshots that self-heal a skipped `Post`). See the P1 entry below for details.
 - Remaining P1/P2 items are not yet addressed.
 - ⏸️ **Space suit vs. GC oxygen gear — deferred by design decision (2026-08-17).** Keeping the current fix (full suit replaces the GC mask + gear harness; `canBreathe` requires the full 4-piece suit; GC oxygen tanks are still required and drained via `GCPlayerHandler.checkOxygen`'s `!airEmpty` gate). The concern — the suit is currently cheap and has no power / radiation / pressure cost, so letting it replace GC gear is generous — is acknowledged but shelved until the suit mechanics (electric/power, pressure, radiation, tanks) are fleshed out later.
 
@@ -74,23 +75,34 @@ handled for everything, this is likely exploitable / bypasses the intended "full
 If a self-contained suit is intended, it should check that the chest tank is present / sufficient
 oxygen, not blanket-return `true`.
 
-### P1 — Fragile shared static render state (Space Suit renderer)
+### P1 — Fragile shared static render state (Space Suit renderer) ✅ RESOLVED
 
-- `ArmorCustomModel.poseSource` is a **static** field set in `RenderPlayerEvent.Pre` and cleared in
-  `Post` (`SpaceSuitRenderHandler.java:65,112`).
-- `Tier1SpaceSuitArmor.models` is a **static `HashMap<Integer, ArmorSpaceSuitModel>` shared by all
-  players** (`:33,136`).
-- `SpaceSuitRenderHandler` stores prev-gear flags in **instance fields** (`:55–59`).
-
-This works only because rendering is single-threaded and Pre/Post are strictly paired. It breaks if:
-- a `Pre` fires without a matching `Post` (e.g. a render exception), leaking a stale
-  `poseSource`/gear flags into subsequent renders;
-- any non-player entity renders while `poseSource` is non-null (armor stands, other mods'
-  third-person renders) — the suit then copies *that* pose.
-
-Also `ArmorCustomModel.renderFlatPart/renderFlatOnly/renderFlatGlass` mutate global GL state
-(`glDisable(GL_TEXTURE_2D)`, `glBlendFunc`, `glColor4f`) and only restore some of it — if a part
-throws, blend/texture state leaks and corrupts subsequent rendering.
+> Original finding: `ArmorCustomModel.poseSource` was a **static** field set in `RenderPlayerEvent.Pre`
+> and cleared in `Post`; `Tier1SpaceSuitArmor.models` was a **static `HashMap<Integer,
+> ArmorSpaceSuitModel>` shared by all players**; `SpaceSuitRenderHandler` stored prev-gear flags in
+> **instance fields**. This only worked because rendering is single-threaded and Pre/Post are
+> strictly paired. It broke if a `Pre` fired without a matching `Post` (e.g. a render exception),
+> leaking a stale poseSource/gear flags into subsequent renders, or if any non-player entity rendered
+> while `poseSource` was non-null — the suit then copied that wrong pose. The flat-render helpers
+> also mutated global GL state and restored only part of it.
+>
+> **Fix (all robust against a thrown render `Pre`/part and against cross-entity contamination):**
+> - `ArmorCustomModel`: the single global `poseSource` was replaced with a per-entity pose registry
+>   (`WeakHashMap<Entity, ModelBiped>`, weakly held so it is collected once an entity unloads). The
+>   pose is now looked up by the entity actually being rendered, so a leaked `Pre` can only ever
+>   affect a re-render of that same entity — never a different entity — and non-suit entities never
+>   pick up a foreign pose.
+> - `Tier1SpaceSuitArmor`: the static slot->model map was replaced with per-entity model instances
+>   (`WeakHashMap<EntityLivingBase, ArmorSpaceSuitModel[]>`), so the mutable per-entity pose state on
+>   the shared models is never shared across players.
+> - `ArmorSpaceSuitModel`: `renderFlatPart`/`renderFlatOnly`/`renderFlatGlass` now save the relevant
+>   GL state with `glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT)` and restore it
+>   with `glPopAttrib()` in a `finally` — so even if a part throws, the disabled-texture / blend /
+>   colour state can never leak into subsequent rendering.
+> - `SpaceSuitRenderHandler`: the instance prev-gear fields were replaced with per-player snapshots
+>   (`Map<String, GearFlags>`). Each `Pre` first self-heals any snapshot left by a skipped `Post`,
+>   then captures a fresh baseline before suppressing gear; each `Post` restores and clears it. Gear
+>   flags can therefore no longer be left permanently hidden after a `Pre` without a `Post`.
 
 ### P1 — Biome IDs use positive defaults in 1.7.10's fixed 256-slot list ✅ RESOLVED
 
@@ -244,6 +256,6 @@ dedicated servers).
 5. ~~**P1 – Packet ordinal validation + MainHandler RNG caching.**~~ ✅ **done** — `PacketSimple.decodeInto`
    bounds-checks the buffer length and the type ordinal; `MainHandler.onPlayer` reuses a cached `Random` and
    is explicitly client-side only.
-6. **P2 – Render-state robustness** (`poseSource`, static model sharing, GL state restore).
+6. ~~**P2 – Render-state robustness** (`poseSource`, static model sharing, GL state restore).~~ ✅ **done** — see the resolved P1 entry above.
 7. **P2 – Worldgen copy-paste refactor** (longest-term maintainability win) and log hygiene.
 

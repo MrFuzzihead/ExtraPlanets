@@ -223,19 +223,25 @@ public class ArmorSpaceSuitModel extends ArmorCustomModel {
      * the intended look until then.
      */
     private void renderFlatPart(String group, float r, float g, float b) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor3f(r, g, b);
-        spaceSuitModel.renderPart(group);
-        GL11.glColor3f(1F, 1F, 1F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        saveFlatState();
+        try {
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glColor3f(r, g, b);
+            spaceSuitModel.renderPart(group);
+        } finally {
+            restoreFlatState();
+        }
     }
 
     private void renderFlatOnly(String[] groups, float r, float g, float b) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glColor3f(r, g, b);
-        spaceSuitModel.renderOnly(groups);
-        GL11.glColor3f(1F, 1F, 1F);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        saveFlatState();
+        try {
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glColor3f(r, g, b);
+            spaceSuitModel.renderOnly(groups);
+        } finally {
+            restoreFlatState();
+        }
     }
 
     /**
@@ -253,13 +259,30 @@ public class ArmorSpaceSuitModel extends ArmorCustomModel {
      * (see the comment in {@code partHead()}).
      */
     private void renderFlatGlass(String group, float r, float g, float b, float a) {
-        GL11.glDisable(GL11.GL_TEXTURE_2D);
-        GL11.glEnable(GL11.GL_BLEND);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glColor4f(r, g, b, a);
-        spaceSuitModel.renderPart(group);
-        GL11.glColor4f(1F, 1F, 1F, 1F);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        GL11.glEnable(GL11.GL_TEXTURE_2D);
+        saveFlatState();
+        try {
+            GL11.glDisable(GL11.GL_TEXTURE_2D);
+            GL11.glEnable(GL11.GL_BLEND);
+            GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+            GL11.glColor4f(r, g, b, a);
+            spaceSuitModel.renderPart(group);
+        } finally {
+            restoreFlatState();
+        }
+    }
+
+    /**
+     * Saves the GL state that the flat-render helpers mutate: the texture/color enables
+     * ({@code GL_ENABLE_BIT}), the current colour ({@code GL_CURRENT_BIT}) and the blend
+     * function/enable ({@code GL_COLOR_BUFFER_BIT}). {@link #restoreFlatState()} restores all of it
+     * in a {@code finally}, so even if a part throws mid-render the disabled-texture / blend /
+     * colour state can never leak into subsequent rendering.
+     */
+    private static void saveFlatState() {
+        GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_CURRENT_BIT | GL11.GL_COLOR_BUFFER_BIT);
+    }
+
+    private static void restoreFlatState() {
+        GL11.glPopAttrib();
     }
 }

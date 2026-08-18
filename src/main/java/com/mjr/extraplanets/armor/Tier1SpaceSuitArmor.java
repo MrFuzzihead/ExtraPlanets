@@ -1,7 +1,8 @@
 package com.mjr.extraplanets.armor;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.settings.GameSettings;
@@ -30,7 +31,14 @@ import micdoodle8.mods.galacticraft.core.util.EnumColor;
 public class Tier1SpaceSuitArmor extends ItemArmor
     implements IPressureSuit, IRadiationSuit, IArmorGravity, IBreathableArmor {
 
-    public static HashMap<Integer, ArmorSpaceSuitModel> models = new HashMap<Integer, ArmorSpaceSuitModel>();
+    /**
+     * Per-entity armor models, keyed by the living entity wearing the suit (weakly held so they are
+     * collected once the entity unloads). Each entity owns its own set of 4 models (one per armor
+     * slot), so the mutable {@code isSneak}/{@code isRiding}/{@code isChild}/{@code heldItem} and
+     * pose state on an {@link ArmorSpaceSuitModel} is never shared across players.
+     */
+    private static final Map<EntityLivingBase, ArmorSpaceSuitModel[]> entityModels =
+        new WeakHashMap<EntityLivingBase, ArmorSpaceSuitModel[]>();
     public String name;
 
     public Tier1SpaceSuitArmor(String name, ArmorMaterial material, int placement) {
@@ -162,10 +170,15 @@ public class Tier1SpaceSuitArmor extends ItemArmor
     @Override
     @SideOnly(Side.CLIENT)
     public ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, int armorSlot) {
-        if (models.get(armorSlot) == null) {
-            models.put(armorSlot, new ArmorSpaceSuitModel(armorSlot));
+        ArmorSpaceSuitModel[] slots = entityModels.get(entityLiving);
+        if (slots == null) {
+            slots = new ArmorSpaceSuitModel[4];
+            entityModels.put(entityLiving, slots);
         }
-        ModelBiped armorModel = models.get(armorSlot);
+        if (slots[armorSlot] == null) {
+            slots[armorSlot] = new ArmorSpaceSuitModel(armorSlot);
+        }
+        ModelBiped armorModel = slots[armorSlot];
         if (itemStack.getItem() instanceof Tier1SpaceSuitArmor) {
             armorModel = fillingArmorModel(armorModel, entityLiving);
         }

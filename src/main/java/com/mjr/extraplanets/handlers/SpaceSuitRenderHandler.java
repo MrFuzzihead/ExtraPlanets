@@ -1,5 +1,8 @@
 package com.mjr.extraplanets.handlers;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.RenderPlayerEvent;
@@ -51,31 +54,68 @@ public class SpaceSuitRenderHandler {
         MinecraftForge.EVENT_BUS.register(new SpaceSuitRenderHandler());
     }
 
-    /** Gear render flags for the player currently being rendered (captured in Pre, restored in Post). */
-    private boolean prevRenderMask;
-    private boolean prevRenderGear;
-    private boolean prevRenderLeftTank;
-    private boolean prevRenderRightTank;
-    private final boolean[] prevRenderThermal = new boolean[4];
+    /**
+     * Per-player snapshots of the GC gear render flags this handler temporarily suppresses, keyed
+     * by player name. Captured in {@code Pre} and restored in {@code Post}. A {@code Pre} that never
+     * gets its matching {@code Post} (e.g. after a render exception) leaves a snapshot here, so the
+     * next {@code Pre} for that player can self-heal and restore the flags - gear can never be left
+     * permanently hidden.
+     */
+    private static final Map<String, GearFlags> pendingRestore = new HashMap<String, GearFlags>();
+
+    /**
+     * The subset of {@link PlayerGearData} render flags this handler temporarily toggles off, so
+     * they can be restored exactly afterwards.
+     */
+    private static final class GearFlags {
+        private final boolean mask;
+        private final boolean gear;
+        private final boolean leftTank;
+        private final boolean rightTank;
+        private final boolean[] thermal = new boolean[4];
+
+        GearFlags(PlayerGearData data) {
+            this.mask = data.getRenderMask();
+            this.gear = data.getRenderGear();
+            this.leftTank = data.getRenderLeftTank();
+            this.rightTank = data.getRenderRightTank();
+            for (int slot = 0; slot < 4; slot++) {
+                this.thermal[slot] = data.getRenderThermalPadding(slot);
+            }
+        }
+
+        void applyTo(PlayerGearData data) {
+            data.setRenderMask(this.mask);
+            data.setRenderGear(this.gear);
+            data.setRenderLeftTank(this.leftTank);
+            data.setRenderRightTank(this.rightTank);
+            for (int slot = 0; slot < 4; slot++) {
+                data.setRenderThermalPadding(slot, this.thermal[slot]);
+            }
+        }
+    }
 
     @SubscribeEvent
     public void onRenderPlayerPre(RenderPlayerEvent.Pre event) {
         EntityPlayer player = event.entityPlayer;
         // Capture the player's main model so the suit armor model can mirror its exact pose.
-        ArmorCustomModel.poseSource = event.renderer.modelBipedMain;
+        ArmorCustomModel.setPoseSource(player, event.renderer.modelBipedMain);
         PlayerGearData gearData = gearDataFor(player);
         if (gearData == null) {
             return;
         }
 
-        // Capture the current render flags so Post can restore them exactly.
-        this.prevRenderMask = gearData.getRenderMask();
-        this.prevRenderGear = gearData.getRenderGear();
-        this.prevRenderLeftTank = gearData.getRenderLeftTank();
-        this.prevRenderRightTank = gearData.getRenderRightTank();
-        for (int slot = 0; slot < 4; slot++) {
-            this.prevRenderThermal[slot] = gearData.getRenderThermalPadding(slot);
+        String key = player.getCommandSenderName();
+        // Self-heal: if this player's previous render leaked (a Pre without a matching Post, e.g.
+        // after a render exception), its gear flags are still suppressed. Restore them now so the
+        // snapshot below captures the true pre-suit state instead of already-suppressed values.
+        GearFlags leaked = pendingRestore.remove(key);
+        if (leaked != null) {
+            leaked.applyTo(gearData);
         }
+
+        // Capture the current render flags so Post can restore them exactly.
+        pendingRestore.put(key, new GearFlags(gearData));
 
         // Mask: face-mounted, covered by the helmet (1.7.10 armor slot 3 = HEAD).
         if (wearingSpaceSuitPart(player, 3)) {
@@ -108,18 +148,16 @@ public class SpaceSuitRenderHandler {
 
     @SubscribeEvent
     public void onRenderPlayerPost(RenderPlayerEvent.Post event) {
+        EntityPlayer player = event.entityPlayer;
         // Pose source is only valid for the duration of this player's render.
-        ArmorCustomModel.poseSource = null;
-        PlayerGearData gearData = gearDataFor(event.entityPlayer);
+        ArmorCustomModel.clearPoseSource(player);
+        PlayerGearData gearData = gearDataFor(player);
         if (gearData == null) {
             return;
         }
-        gearData.setRenderMask(this.prevRenderMask);
-        gearData.setRenderGear(this.prevRenderGear);
-        gearData.setRenderLeftTank(this.prevRenderLeftTank);
-        gearData.setRenderRightTank(this.prevRenderRightTank);
-        for (int slot = 0; slot < 4; slot++) {
-            gearData.setRenderThermalPadding(slot, this.prevRenderThermal[slot]);
+        GearFlags snapshot = pendingRestore.remove(player.getCommandSenderName());
+        if (snapshot != null) {
+            snapshot.applyTo(gearData);
         }
     }
 
