@@ -7,6 +7,7 @@ import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.client.model.AdvancedModelLoader;
 import net.minecraftforge.client.model.IModelCustom;
+import net.minecraftforge.common.MinecraftForge;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
@@ -109,7 +110,7 @@ import com.mjr.extraplanets.entities.rockets.EntityTier8Rocket;
 import com.mjr.extraplanets.entities.rockets.EntityTier9Rocket;
 import com.mjr.extraplanets.entities.vehicles.EntityMarsRover;
 import com.mjr.extraplanets.entities.vehicles.EntityVenusRover;
-import com.mjr.extraplanets.handlers.MainHandler;
+import com.mjr.extraplanets.handlers.MainHandlerClient;
 import com.mjr.extraplanets.handlers.SpaceSuitRenderHandler;
 import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.tileEntities.machines.TileEntitySolar;
@@ -169,10 +170,13 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public void postInit(FMLPostInitializationEvent event) {
-        // Register Client Main Handler
-        FMLCommonHandler.instance()
-            .bus()
-            .register(new MainHandler());
+        // Register client-only handlers on the client's FML tick bus (Jupiter fake lightning) and Forge
+        // event bus (custom celestial selection, fog, planetary rings). These clients-only handlers
+        // were previously registered on the common bus, which would also register them on a
+        // dedicated server - see MainHandlerClient.
+        MainHandlerClient clientMainHandler = new MainHandlerClient();
+        FMLCommonHandler.instance().bus().register(clientMainHandler);
+        MinecraftForge.EVENT_BUS.register(clientMainHandler);
 
         // Hide GC Thermal Padding under a full ExtraPlanets space suit (see SpaceSuitRenderHandler)
         SpaceSuitRenderHandler.register();

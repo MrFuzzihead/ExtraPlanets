@@ -13,6 +13,7 @@
 - ✅ **P1 — Packet ordinal validation + MainHandler RNG caching** — resolved in `PacketSimple.java` (`decodeInto` now bounds-checks the buffer length and the packet-type ordinal and discards malformed packets; `handleClientSide`/`handleServerSide` skip packets whose type was discarded) and `MainHandler.java` (`onPlayer` reuses a cached `Random` instead of allocating one every tick, and is explicitly client-side only). See the P1 entries below for details.
 - ✅ **P1 — Fragile shared static render state (Space Suit renderer)** — resolved in `ArmorCustomModel.java`, `Tier1SpaceSuitArmor.java`, `ArmorSpaceSuitModel.java` & `SpaceSuitRenderHandler.java` (per-entity pose registry instead of a single global `poseSource`; per-entity model instances instead of a static slot map; `glPushAttrib`/`glPopAttrib` with `try/finally` so flat-render GL state can never leak; per-player gear-flag snapshots that self-heal a skipped `Post`). See the P1 entry below for details.
 - ✅ **P1 — `getArmorTexture` can return `null`** — resolved in `Tier1SpaceSuitArmor.java` (the fallback branch now always returns a valid existing layer texture — layer 2 for a leggings render slot, layer 1 otherwise — instead of `null`). See the P1 entry below for details.
+- ✅ **P1 — `MainHandler` registered on both Forge & FML buses** — resolved by splitting the mixed handler (`MainHandler.java`, `MainHandlerClient.java`, `ClientProxy.java`): the client-only handlers (fog / celestial-selection / planet-rings) and the client Jupiter tick are now registered only on the client's FML + Forge buses, while the common handler keeps only the server-safe `onThermalArmorEvent` on the shared Forge bus. Dedicated servers can no longer register a client-only handler. See the P1 entry below for details.
 - Remaining P1/P2 items are not yet addressed.
 - ⏸️ **Space suit vs. GC oxygen gear — deferred by design decision (2026-08-17).** Keeping the current fix (full suit replaces the GC mask + gear harness; `canBreathe` requires the full 4-piece suit; GC oxygen tanks are still required and drained via `GCPlayerHandler.checkOxygen`'s `!airEmpty` gate). The concern — the suit is currently cheap and has no power / radiation / pressure cost, so letting it replace GC gear is generous — is acknowledged but shelved until the suit mechanics (electric/power, pressure, radiation, tanks) are fleshed out later.
 
@@ -195,14 +196,25 @@ Dimension IDs, biome IDs, schematic GUI/page IDs, and feature toggles must match
 server but there's no sync/validation. If they differ, players get "dimension mismatch" disconnects or
 chunk desync. (Standard for the era, but the combinatorial config here makes it likely.)
 
-### P1 — `MainHandler` registered on both Forge & FML buses
+### P1 — `MainHandler` registered on both Forge & FML buses ✅ RESOLVED
 
-`ExtraPlanets.java:188` registers it on `MinecraftForge.EVENT_BUS` (both sides), and
-`ClientProxy.java:175` also registers it on `FMLCommonHandler.instance().bus()` (client). The
-client-only `FogDensity` / `GuiOpenEvent` / `CelestialBodyRenderEvent` methods are
-`@SideOnly(Side.CLIENT)`; the `onPlayer`/`onThermalArmorEvent` are fine. It works, but the split
-registration is easy to break (a method without `@SideOnly` referencing a client class would crash
-dedicated servers).
+> Original finding: `ExtraPlanets.java:188` registered `MainHandler` on `MinecraftForge.EVENT_BUS` on
+> *both* sides, and `ClientProxy.java:175` also registered it on `FMLCommonHandler.instance().bus()`
+> (client). The client-only `FogDensity` / `GuiOpenEvent` / `CelestialBodyRenderEvent` methods were
+> `@SideOnly(Side.CLIENT)`, and the `onPlayer`/`onThermalArmorEvent` were fine. It worked, but the
+> split registration was easy to break (a method without `@SideOnly` referencing a client class
+> would crash dedicated servers) and the same handler instance was registered twice.
+>
+> **Fix (side-correct registration):**
+> - `MainHandler` (still registered once on the common `MinecraftForge.EVENT_BUS` in
+>   `ExtraPlanets.preInit`) now contains only the server-safe `onThermalArmorEvent`.
+> - The four client-only handlers — `onPlayer` (Jupiter fake lightning on the FML tick bus) and the
+>   `GuiOpenEvent` / `FogDensity` / `CelestialBodyRenderEvent` Forge events — were moved to a new
+>   `MainHandlerClient` class that is `@SideOnly(CLIENT)` and referenced only from `ClientProxy`
+>   (registered on the client's FML bus and Forge event bus in `postInit`).
+>
+> A dedicated server therefore never registers a client-only event handler, and the common handler
+> only ever deals with the shared thermal-armor event.
 
 ---
 
