@@ -10,6 +10,7 @@
 - ✅ **P0 — Space suit oxygen from any single piece** — resolved in `Tier1SpaceSuitArmor.java` (`handleGearType` restricted per piece; `canBreathe` now requires the full four-piece suit).
 - ✅ **P1 — Biome ID strategy** — resolved via the new `ExtraPlanets_Biomes` registry (collision detection + logging, out-of-range crash protection, no registration for disabled bodies; existing configs/worlds preserved). See the P1 entry below for details.
 - ✅ **P1 — Recipe ore-dict `.get(0)` guards** — resolved in `ExtraPlanets_Recipes.java` (all 65 furnace smelting recipes now route through a guarded `addOreSmelting` helper; missing ore entries are logged once and skipped instead of throwing `IndexOutOfBoundsException` at postInit). See the P1 entry below for details.
+- ✅ **P1 — Packet ordinal validation + MainHandler RNG caching** — resolved in `PacketSimple.java` (`decodeInto` now bounds-checks the buffer length and the packet-type ordinal and discards malformed packets; `handleClientSide`/`handleServerSide` skip packets whose type was discarded) and `MainHandler.java` (`onPlayer` reuses a cached `Random` instead of allocating one every tick, and is explicitly client-side only). See the P1 entries below for details.
 - Remaining P1/P2 items are not yet addressed.
 - ⏸️ **Space suit vs. GC oxygen gear — deferred by design decision (2026-08-17).** Keeping the current fix (full suit replaces the GC mask + gear harness; `canBreathe` requires the full 4-piece suit; GC oxygen tanks are still required and drained via `GCPlayerHandler.checkOxygen`'s `!airEmpty` gate). The concern — the suit is currently cheap and has no power / radiation / pressure cost, so letting it replace GC gear is generous — is acknowledged but shelved until the suit mechanics (electric/power, pressure, radiation, tanks) are fleshed out later.
 
@@ -119,15 +120,21 @@ registry `ExtraPlanets_Biomes.getBiome(...)`, which
   disabled planet/moon never claims a slot.
 
 
-### P1 — `new Random()` allocated every tick + per-tick weather effects
+### P1 — `new Random()` allocated every tick + per-tick weather effects ✅ RESOLVED
 
-`MainHandler.java:33-50`: `onPlayer` (a `PlayerTickEvent`) does `new Random()` **every tick** and has
+`MainHandler.java:33-50`: `onPlayer` (a `PlayerTickEvent`) did a `new Random()` **every tick** and has
 a ~1% chance to `addWeatherEffect(new EntityLightningBolt(...))` **near every player entity** ticking
 in the Jupiter dimension on that client. This is wasteful (RNG + weather-effect allocation per player
 per tick) and only exists client-side.
 
-Related: **`Config.jupiterLightingServer` is loaded but never used anywhere** (dead config — the
-server-side lighting feature was never implemented; only `jupiterLightingClient` is consulted).
+**Fix:** `MainHandler` now caches a single `Random` field (allocated once) instead of constructing a
+new instance every tick, and `onPlayer` early-returns on the server side so this fake lightning can
+never spawn real server-side bolts. The per-tick ~1% spawn chance and bolt offsets are otherwise
+unchanged.
+
+Related (still outstanding): **`Config.jupiterLightingServer` is loaded but never used anywhere** (dead
+config — the server-side lighting feature was never implemented; only `jupiterLightingClient` is
+consulted). **Tracked as an implementation plan** in `docs/JUPITER_LIGHTING_PLAN.md` (see optimization #8).
 
 ### P1 — `getArmorTexture` can return `null`
 
@@ -150,11 +157,16 @@ bodies via a static `Set`) and skips that recipe instead of crashing. Otherwise 
 recipe with `ores.get(0)` exactly as before. The circuit-fabricator silicon lookup
 (`ConfigManagerCore.otherModsSilicon`) already handled the empty-list case and is unchanged.
 
-### P1 — Network packet lacks bounds-checks on packet type
+### P1 — Network packet lacks bounds-checks on packet type ✅ RESOLVED
 
-`PacketSimple.decodeInto` does `EnumSimplePacket.values()[buffer.readInt()]` (`:92`) without
-validating the ordinal. A malformed/offset packet throws `ArrayIndexOutOfBoundsException`; it's
-swallowed by a `try/catch`, but a hostile client can push garbage onto the channel.
+`PacketSimple.decodeInto` did `EnumSimplePacket.values()[buffer.readInt()]` (`:92`) without validating
+the ordinal. A malformed/offset packet throws `ArrayIndexOutOfBoundsException`; it was swallowed by a
+`try/catch`, but a hostile client can push garbage onto the channel.
+
+**Fix:** `decodeInto` now rejects a buffer with fewer than 4 readable bytes and validates the ordinal
+against the enum's range, logging via `GCLog.severe` and discarding the malformed packet (leaving the
+type null) instead of indexing `values()` out of range. `handleClientSide`/`handleServerSide`
+early-return when the type was discarded mid-decode, so a malformed packet is never interpreted.
 
 ### P1 — Client/server config are never synchronized
 
@@ -188,7 +200,8 @@ dedicated servers).
   (`CustomCelestialSelection:669`, `PacketSimple`, etc.) instead of a logger.
 - **`@SuppressWarnings` + raw types** in `ItemMarsRover.onItemRightClick` and many containers — but
   these match GC's own patterns.
-- **Dead/vestigial options:** `jupiterLightingServer` (unused), plus overlapping legacy compat flags
+- **Dead/vestigial options:** `jupiterLightingServer` (unused — implementation now tracked in
+  `docs/JUPITER_LIGHTING_PLAN.md`), plus overlapping legacy compat flags
   (`morePlanetsCompatibility`, `morePlanetsCompatibilityAdv143`, `morePlanetsCompatibilityNew`, etc.)
   which are easy to misconfigure and disable the wrong things.
 - The **`migrate/` tree** (1.12.2 port + vendored `micdoodle8/mods/galacticraft` and `mjrlegendslib`)
@@ -199,21 +212,23 @@ dedicated servers).
 
 ## Optimizations worth doing
 
-1. **Cache one `Random`** in `MainHandler` (or better, gate on the existing per-tick chance + throttle)
-   instead of `new Random()` per tick.
+1. ~~**Cache one `Random`** in `MainHandler` (or better, gate on the existing per-tick chance + throttle)
+   instead of `new Random()` per tick.~~ ✅ **done** — see the resolved P1 entry above.
 2. **Refactor the duplicated village/volcano worldgen** into shared, parameterized templates (big win
    — eliminates ~1 MB+ of copy-paste and the "fix must be applied N times" problem).
 3. **Replace swallowed exceptions / `System.out`** with a proper logger (`GCLog`/`FMLLog`), at least
    under a `Config.debugMode` guard.
 4. ~~**Guard `OreDictionary.getOres(...)`** with `isEmpty()` fallbacks to avoid hard crashes when
    optional mods are absent.~~ ✅ **done** — see the resolved P1 entry above.
-5. **Validate packet type ordinal** before indexing `EnumSimplePacket.values()`.
+5. ~~**Validate packet type ordinal** before indexing `EnumSimplePacket.values()`.~~ ✅ **done** — see the
+   resolved P1 entry above.
 6. **Fix the rover hit threshold** (the `> 2` → `> 40`-style regression) so rovers survive hits
    sensibly.
 7. ~~Reconsider positive biome IDs~~ ✅ **done** — see the resolved P1 entry above. Biome construction is now
    centralised in `ExtraPlanets_Biomes` with collision detection/logging, out-of-range protection, and no
    registration for disabled bodies. (Negative IDs are not a valid option on 1.7.10.)
-8. **Remove dead config keys** (`jupiterLightingServer`) or implement the feature they promise.
+8. **Remove dead config keys** (`jupiterLightingServer`) or implement the feature they promise. — **chosen:
+   implement** (it's a promised gameplay feature) — tracked in `docs/JUPITER_LIGHTING_PLAN.md`.
 
 ---
 
@@ -226,7 +241,9 @@ dedicated servers).
    disabled-body registration — existing configs/worlds preserved).
 4. ~~**P1 – Recipe ore-dict `.get(0)` guards.**~~ ✅ **done** — all 65 furnace smelting recipes now route
    through the guarded `addOreSmelting` helper (missing ores are logged once and skipped, no crash).
-5. **P1 – Packet ordinal validation + MainHandler RNG caching.**
+5. ~~**P1 – Packet ordinal validation + MainHandler RNG caching.**~~ ✅ **done** — `PacketSimple.decodeInto`
+   bounds-checks the buffer length and the type ordinal; `MainHandler.onPlayer` reuses a cached `Random` and
+   is explicitly client-side only.
 6. **P2 – Render-state robustness** (`poseSource`, static model sharing, GL state restore).
 7. **P2 – Worldgen copy-paste refactor** (longest-term maintainability win) and log hygiene.
 

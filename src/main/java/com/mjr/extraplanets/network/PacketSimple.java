@@ -89,7 +89,20 @@ public class PacketSimple extends Packet implements IPacket {
 
     @Override
     public void decodeInto(ChannelHandlerContext context, ByteBuf buffer) {
-        this.type = EnumSimplePacket.values()[buffer.readInt()];
+        if (buffer.readableBytes() < 4) {
+            GCLog.severe(
+                "[ExtraPlanets] Received a simple packet too short to contain a packet type. Discarding it.");
+            return;
+        }
+        int typeOrdinal = buffer.readInt();
+        EnumSimplePacket[] types = EnumSimplePacket.values();
+        if (typeOrdinal < 0 || typeOrdinal >= types.length) {
+            GCLog.severe(
+                "[ExtraPlanets] Received a simple packet with invalid type ordinal " + typeOrdinal
+                    + " (valid range is 0-" + (types.length - 1) + "). Discarding the malformed packet.");
+            return;
+        }
+        this.type = types[typeOrdinal];
 
         try {
             if (this.type.getDecodeClasses().length > 0) {
@@ -109,6 +122,7 @@ public class PacketSimple extends Packet implements IPacket {
     @SideOnly(Side.CLIENT)
     @Override
     public void handleClientSide(EntityPlayer player) {
+        if (this.type == null) return; // a malformed packet was discarded during decoding
         EntityClientPlayerMP playerBaseClient = null;
         GCPlayerStatsClient stats = null;
 
@@ -150,6 +164,7 @@ public class PacketSimple extends Packet implements IPacket {
 
     @Override
     public void handleServerSide(EntityPlayer player) {
+        if (this.type == null) return; // a malformed packet was discarded during decoding
         EntityPlayerMP playerBase = PlayerUtil.getPlayerBaseServerFromPlayer(player, false);
 
         if (playerBase == null) {

@@ -29,18 +29,21 @@ import micdoodle8.mods.galacticraft.planets.asteroids.items.AsteroidsItems;
 
 public class MainHandler {
 
+    /** Cached RNG for the client-only Jupiter fake lighting, allocated once instead of every tick. */
+    private final Random rand = new Random();
+
     @SubscribeEvent
     public void onPlayer(PlayerTickEvent event) {
+        // The fake Jupiter lightning is purely client-side ambiance; never spawn real server bolts.
+        if (event.side == Side.SERVER) return;
         if (Config.jupiterLightingClient && event.player.worldObj.provider.dimensionId == Config.jupiterID) {
-            Random rand = new Random();
-            int addX = rand.nextInt(64);
-            int addZ = rand.nextInt(64);
-            if (rand.nextInt(2) == 1) addX = -addX;
-            if (rand.nextInt(2) == 1) addZ = -addZ;
+            int addX = this.rand.nextInt(64);
+            int addZ = this.rand.nextInt(64);
+            if (this.rand.nextInt(2) == 1) addX = -addX;
+            if (this.rand.nextInt(2) == 1) addZ = -addZ;
             if (addX <= 3) addX = 5;
             if (addZ <= 3) addZ = 5;
-            int lightingSpawnChance = rand.nextInt(100);
-            if (lightingSpawnChance == 10) event.player.worldObj.addWeatherEffect(
+            if (this.rand.nextInt(100) == 10) event.player.worldObj.addWeatherEffect(
                 new EntityLightningBolt(
                     event.player.worldObj,
                     event.player.posX + addX,
