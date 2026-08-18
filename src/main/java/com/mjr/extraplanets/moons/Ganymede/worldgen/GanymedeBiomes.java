@@ -3,13 +3,15 @@ package com.mjr.extraplanets.moons.Ganymede.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class GanymedeBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase ganymede = new BiomeGenGanymede(Config.ganymedeBiomeID).setBiomeName("ganymede");
+    public static final BiomeGenBase ganymede = ExtraPlanets_Biomes.getBiome(
+        "ganymede", Config.ganymedeBiomeID, biomeID -> new BiomeGenGanymede(biomeID).setBiomeName("ganymede"));
 
     @SuppressWarnings("unchecked")
     GanymedeBiomes(int var1) {

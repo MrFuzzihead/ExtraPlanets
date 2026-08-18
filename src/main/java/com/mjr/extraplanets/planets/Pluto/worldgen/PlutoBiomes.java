@@ -3,13 +3,15 @@ package com.mjr.extraplanets.planets.Pluto.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class PlutoBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase pluto = new BiomeGenPluto(Config.plutoBiomeID).setBiomeName("pluto");
+    public static final BiomeGenBase pluto = ExtraPlanets_Biomes.getBiome(
+        "pluto", Config.plutoBiomeID, biomeID -> new BiomeGenPluto(biomeID).setBiomeName("pluto"));
 
     @SuppressWarnings("unchecked")
     PlutoBiomes(int var1) {

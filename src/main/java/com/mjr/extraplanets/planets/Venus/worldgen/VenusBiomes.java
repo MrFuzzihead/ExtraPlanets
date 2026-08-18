@@ -3,13 +3,15 @@ package com.mjr.extraplanets.planets.Venus.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class VenusBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase venus = new BiomeGenVenus(Config.venusBiomeID).setBiomeName("venus");
+    public static final BiomeGenBase venus = ExtraPlanets_Biomes.getBiome(
+        "venus", Config.venusBiomeID, biomeID -> new BiomeGenVenus(biomeID).setBiomeName("venus"));
 
     @SuppressWarnings("unchecked")
     VenusBiomes(int var1) {

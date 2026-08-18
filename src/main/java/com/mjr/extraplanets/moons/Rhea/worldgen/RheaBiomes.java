@@ -3,13 +3,15 @@ package com.mjr.extraplanets.moons.Rhea.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class RheaBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase rhea = new BiomeGenRhea(Config.rheaBiomeID).setBiomeName("rhea");
+    public static final BiomeGenBase rhea = ExtraPlanets_Biomes.getBiome(
+        "rhea", Config.rheaBiomeID, biomeID -> new BiomeGenRhea(biomeID).setBiomeName("rhea"));
 
     @SuppressWarnings("unchecked")
     RheaBiomes(int var1) {

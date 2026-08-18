@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.planets.Saturn.worldgen.biomes.BiomeGenSaturn;
 import com.mjr.extraplanets.planets.Saturn.worldgen.biomes.BiomeGenSaturnHydrocarbonSea;
@@ -20,14 +21,17 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class SaturnBiomes extends BiomeGenBase {
 
-    public static BiomeGenBase saturn = new BiomeGenSaturn(Config.saturnBiomeID).setBiomeName("Saturn")
-        .setHeight(BiomeGenBase.height_LowPlains);
-    public static BiomeGenBase saturnHydrocarbonSea = new BiomeGenSaturnHydrocarbonSea(
-        Config.saturnHydrocarbonSeaBiomeID).setBiomeName("SaturnHydrocarbonSea")
-            .setHeight(BiomeGenBase.height_Oceans);
-    public static BiomeGenBase saturnNuclearLand = new BiomeGenSaturnNuclearLand(Config.saturnNuclearLandBiomeID)
-        .setBiomeName("saturnNuclearLand")
-        .setHeight(BiomeGenBase.height_LowPlains);
+    public static BiomeGenBase saturn = ExtraPlanets_Biomes.getBiome(
+        "saturn", Config.saturnBiomeID, biomeID -> new BiomeGenSaturn(biomeID).setBiomeName("Saturn")
+            .setHeight(BiomeGenBase.height_LowPlains));
+    public static BiomeGenBase saturnHydrocarbonSea = ExtraPlanets_Biomes.getBiome(
+        "saturnHydrocarbonSea", Config.saturnHydrocarbonSeaBiomeID,
+        biomeID -> new BiomeGenSaturnHydrocarbonSea(biomeID).setBiomeName("SaturnHydrocarbonSea")
+            .setHeight(BiomeGenBase.height_Oceans));
+    public static BiomeGenBase saturnNuclearLand = ExtraPlanets_Biomes.getBiome(
+        "saturnNuclearLand", Config.saturnNuclearLandBiomeID,
+        biomeID -> new BiomeGenSaturnNuclearLand(biomeID).setBiomeName("saturnNuclearLand")
+            .setHeight(BiomeGenBase.height_LowPlains));
 
     protected Block stoneBlock;
     protected byte topMeta;

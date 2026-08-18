@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.planets.Neptune.worldgen.biomes.BiomeGenNeptune;
 import com.mjr.extraplanets.planets.Neptune.worldgen.biomes.BiomeGenNeptuneRadioActiveWaterSea;
@@ -19,11 +20,13 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class NeptuneBiomes extends BiomeGenBase {
 
-    public static BiomeGenBase neptune = new BiomeGenNeptune(Config.neptuneBiomeID).setBiomeName("Neptune")
-        .setHeight(BiomeGenBase.height_LowPlains);
-    public static BiomeGenBase neptuneRadioActiveWaterSea = new BiomeGenNeptuneRadioActiveWaterSea(
-        Config.neptuneRadioActiveWaterSeaBiomeID).setBiomeName("NeptuneRadioActiveWaterSea")
-            .setHeight(BiomeGenBase.height_Oceans);
+    public static BiomeGenBase neptune = ExtraPlanets_Biomes.getBiome(
+        "neptune", Config.neptuneBiomeID, biomeID -> new BiomeGenNeptune(biomeID).setBiomeName("Neptune")
+            .setHeight(BiomeGenBase.height_LowPlains));
+    public static BiomeGenBase neptuneRadioActiveWaterSea = ExtraPlanets_Biomes.getBiome(
+        "neptuneRadioActiveWaterSea", Config.neptuneRadioActiveWaterSeaBiomeID,
+        biomeID -> new BiomeGenNeptuneRadioActiveWaterSea(biomeID).setBiomeName("NeptuneRadioActiveWaterSea")
+            .setHeight(BiomeGenBase.height_Oceans));
 
     protected Block stoneBlock;
     protected byte topMeta;

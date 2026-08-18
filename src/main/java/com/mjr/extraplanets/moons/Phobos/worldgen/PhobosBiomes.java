@@ -3,13 +3,15 @@ package com.mjr.extraplanets.moons.Phobos.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class PhobosBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase phobos = new BiomeGenPhobos(Config.phobosBiomeID).setBiomeName("phobos");
+    public static final BiomeGenBase phobos = ExtraPlanets_Biomes.getBiome(
+        "phobos", Config.phobosBiomeID, biomeID -> new BiomeGenPhobos(biomeID).setBiomeName("phobos"));
 
     @SuppressWarnings("unchecked")
     PhobosBiomes(int var1) {

@@ -11,15 +11,14 @@ import net.minecraft.entity.passive.EntityCow;
 import net.minecraft.entity.passive.EntityPig;
 import net.minecraft.entity.passive.EntitySheep;
 
-import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.planets.Kepler22b.worldgen.Kepler22bBiomes;
 
 public class BiomeGenKepler22bIronPlains extends Kepler22bBiomes {
 
     @SuppressWarnings("unchecked")
-    public BiomeGenKepler22bIronPlains() {
-        super(Config.kepler22bIronPlainsBiomeID);
+    public BiomeGenKepler22bIronPlains(int biomeID) {
+        super(biomeID);
         this.enableRain = true;
         this.enableSnow = true;
         this.setTemperatureRainfall(0.8F, 0.9F);

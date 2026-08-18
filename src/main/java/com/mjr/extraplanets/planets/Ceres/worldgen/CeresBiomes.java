@@ -3,13 +3,15 @@ package com.mjr.extraplanets.planets.Ceres.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class CeresBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase ceres = new BiomeGenCeres(Config.ceresBiomeID).setBiomeName("ceres");
+    public static final BiomeGenBase ceres = ExtraPlanets_Biomes.getBiome(
+        "ceres", Config.ceresBiomeID, biomeID -> new BiomeGenCeres(biomeID).setBiomeName("ceres"));
 
     @SuppressWarnings("unchecked")
     CeresBiomes(int var1) {

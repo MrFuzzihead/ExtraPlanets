@@ -8,6 +8,7 @@
 
 - ✅ **P0 — Rover damage threshold bug** — resolved in `EntityVehicleBase.java` & `EntityPoweredVehicleBase.java` (threshold `> 2` → `> 40`, matching vanilla `EntityBoat`).
 - ✅ **P0 — Space suit oxygen from any single piece** — resolved in `Tier1SpaceSuitArmor.java` (`handleGearType` restricted per piece; `canBreathe` now requires the full four-piece suit).
+- ✅ **P1 — Biome ID strategy** — resolved via the new `ExtraPlanets_Biomes` registry (collision detection + logging, out-of-range crash protection, no registration for disabled bodies; existing configs/worlds preserved). See the P1 entry below for details.
 - Remaining P1/P2 items are not yet addressed.
 - ⏸️ **Space suit vs. GC oxygen gear — deferred by design decision (2026-08-17).** Keeping the current fix (full suit replaces the GC mask + gear harness; `canBreathe` requires the full 4-piece suit; GC oxygen tanks are still required and drained via `GCPlayerHandler.checkOxygen`'s `!airEmpty` gate). The concern — the suit is currently cheap and has no power / radiation / pressure cost, so letting it replace GC gear is generous — is acknowledged but shelved until the suit mechanics (electric/power, pressure, radiation, tanks) are fleshed out later.
 
@@ -89,18 +90,32 @@ Also `ArmorCustomModel.renderFlatPart/renderFlatOnly/renderFlatGlass` mutate glo
 (`glDisable(GL_TEXTURE_2D)`, `glBlendFunc`, `glColor4f`) and only restore some of it — if a part
 throws, blend/texture state leaks and corrupts subsequent rendering.
 
-### P1 — Biome IDs use positive defaults in 1.7.10's fixed 256-slot list
+### P1 — Biome IDs use positive defaults in 1.7.10's fixed 256-slot list ✅ RESOLVED
 
-`Config.java` defaults such as:
-```
-"Venus Biome ID", 145   "Mercury Biome ID", 148   "Jupiter Biome ID", 150 ...
-```
-And the biomes are created as `public static final ... = new BiomeGenVenus(Config.venusBiomeID)` —
-i.e. **initialized on class load even when the planet is disabled in config**. In 1.7.10
-`BiomeGenBase.biomeList` is a fixed array; positive IDs here risk colliding with other mods' biomes
-(many use 128+). If a user disables Venus but the class loads anyway, the biome still claims slot 145.
-Forge supports negative biome IDs for mod biomes (which is what Galacticraft itself uses); using fixed
-positive IDs is a real-world corruption risk.
+> Original finding: `Config.java` default biome IDs are positive (`"Venus Biome ID"`, 145; `"Mercury"`, 148;
+> `"Jupiter"`, 150; …), and biomes were created inline as `new BiomeGenVenus(Config.venusBiomeID)`, risking
+> silent collisions with other mods' biomes (many use 128+).
+>
+> **Two claims in the original finding were incorrect for the active 1.7.10 tree (verified):**
+> - *"biome initialized on class load even when the planet is disabled"* — false. Every `*Biomes` class is
+>   only referenced from worldgen (`WorldChunkManager*`, `ChunkProvider*`, `GenLayer*`,
+>   `MapGenVillageJupiter`), which is only reached when a body's dimension is actually used, and dimension
+>   registration is already gated on `Config.mercury`, `Config.venus`, etc. Disabled bodies never load biomes.
+> - *"Forge supports negative biome IDs"* — false on 1.7.10. `BiomeGenBase.biomeList` is a fixed `[256]` array
+>   and the constructor does `biomeList[id] = this` with no bounds check, so a negative (or >255) ID throws
+>   `ArrayIndexOutOfBoundsException` (verified from the official Forge 1.7.10 patch). Negative biome IDs only
+>   became valid in 1.8's registry-based biomes. Galacticraft 1.7.10 itself uses a positive `biomeIDbase = 102`.
+
+**Fix (conservative — existing worlds preserved):** all biome construction now routes through the new central
+registry `ExtraPlanets_Biomes.getBiome(...)`, which
+- **never remaps an existing in-range (0-255) config value** — so existing configs, and the numeric biome IDs
+  already baked into generated chunk data, are left untouched (existing worlds stay intact),
+- **detects and loudly logs** (`GCLog.severe`) any collision with another mod's biome or an ExtraPlanets
+  internal duplicate, naming the conflicting slot and the biome occupying it, so it can be fixed by hand,
+- **prevents the out-of-range crash** by relocating any ID outside 0-255 to the first free slot and logging
+  the required config change,
+- only registers a biome the first time it is actually requested (i.e. when the body's dimension loads), so a
+  disabled planet/moon never claims a slot.
 
 
 ### P1 — `new Random()` allocated every tick + per-tick weather effects
@@ -186,9 +201,9 @@ dedicated servers).
 5. **Validate packet type ordinal** before indexing `EnumSimplePacket.values()`.
 6. **Fix the rover hit threshold** (the `> 2` → `> 40`-style regression) so rovers survive hits
    sensibly.
-7. **Reconsider positive biome IDs** — move to negative IDs (GC convention) or at least document /
-   reserve against the `BiomeGenBase` 256-slot limit, and don't register biomes for planets that are
-   disabled.
+7. ~~Reconsider positive biome IDs~~ ✅ **done** — see the resolved P1 entry above. Biome construction is now
+   centralised in `ExtraPlanets_Biomes` with collision detection/logging, out-of-range protection, and no
+   registration for disabled bodies. (Negative IDs are not a valid option on 1.7.10.)
 8. **Remove dead config keys** (`jupiterLightingServer`) or implement the feature they promise.
 
 ---
@@ -198,7 +213,8 @@ dedicated servers).
 1. **P0 – Rover durability bug** (gameplay-breaking and clearly a regression).
 2. **P0 – Space suit `canBreathe`/`handleGearType` logic** (intended suit mechanics; decide & enforce
    "full suit" vs. piece-carrying-oxygen).
-3. **P1 – Biome ID strategy** (collision/corruption risk) + don't load disabled-planet biomes.
+3. ~~**P1 – Biome ID strategy**~~ ✅ **done** (collision detection/logging, out-of-range protection, no
+   disabled-body registration — existing configs/worlds preserved).
 4. **P1 – Recipe ore-dict `.get(0)` guards.**
 5. **P1 – Packet ordinal validation + MainHandler RNG caching.**
 6. **P2 – Render-state robustness** (`poseSource`, static model sharing, GL state restore).
