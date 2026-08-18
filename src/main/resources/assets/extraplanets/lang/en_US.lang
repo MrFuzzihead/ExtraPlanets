@@ -841,6 +841,15 @@ item.ingot_uranium.name=Uranium Ingot
 item.tier9_items.ingot_tungsten.name=Tungsten Ingot
 item.tier10_items.ingot_dark_iron.name=Dark Iron Ingot
 item.ingot_lead.name=Lead Ingot
+#IC2 Ore Processing Chain (matches IndustrialCraft 2 naming, US spelling)
+item.crushed_aluminum_ore.name=Crushed Aluminum Ore
+item.purified_aluminum_ore.name=Purified Crushed Aluminum Ore
+item.aluminum_dust.name=Aluminum Dust
+item.aluminum_tiny_dust.name=Tiny Pile of Aluminum Dust
+item.crushed_titanium_ore.name=Crushed Titanium Ore
+item.purified_titanium_ore.name=Purified Crushed Titanium Ore
+item.titanium_dust.name=Titanium Dust
+item.titanium_tiny_dust.name=Tiny Pile of Titanium Dust
 item.tier5_items.ingot_volcanic.name=Volcanic Ingot
 item.tier11_items.ingot_platinum.name=Platinum Ingot
 
