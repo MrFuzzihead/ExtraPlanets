@@ -11,6 +11,7 @@ import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 
+import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.client.gui.vehicles.GuiPoweredVehicleBase;
 import com.mjr.extraplanets.client.gui.vehicles.GuiVehicleBase;
 import com.mjr.extraplanets.entities.vehicles.EntityPoweredVehicleBase;
@@ -38,7 +39,9 @@ public class PacketSimple extends Packet implements IPacket {
         S_OPEN_POWER_GUI(Side.SERVER, String.class),
 
         // CLIENT
-        C_OPEN_PARACHEST_GUI(Side.CLIENT, Integer.class, Integer.class, Integer.class);
+        C_OPEN_PARACHEST_GUI(Side.CLIENT, Integer.class, Integer.class, Integer.class),
+        // P1: server pushes its authoritative Dimension/Biome/Schematic GUI/Page IDs
+        C_UPDATE_CONFIGS(Side.CLIENT, Config.getConfigSyncDecodeClasses());
 
         private Side targetSide;
         private Class<?>[] decodeAs;
@@ -156,6 +159,10 @@ public class PacketSimple extends Packet implements IPacket {
                         }
                         break;
                 }
+                break;
+            case C_UPDATE_CONFIGS:
+                Config.saveClientConfigOverrideable();
+                Config.setConfigOverride(this.data);
                 break;
             default:
                 break;

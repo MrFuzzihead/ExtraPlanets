@@ -49,6 +49,7 @@ import com.mjr.extraplanets.entities.vehicles.EntityVenusRover;
 import com.mjr.extraplanets.handlers.BoneMealHandler;
 import com.mjr.extraplanets.handlers.BucketHandler;
 import com.mjr.extraplanets.handlers.GalacticraftVersionChecker;
+import com.mjr.extraplanets.handlers.ConfigSyncHandler;
 import com.mjr.extraplanets.handlers.MainHandler;
 import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.items.tools.ExtraPlanets_Tools;
@@ -186,6 +187,11 @@ public class ExtraPlanets {
 
         // Main Events
         MinecraftForge.EVENT_BUS.register(new MainHandler());
+
+        // Config sync: FML-bus events (server->client IDs + client restore on disconnect)
+        FMLCommonHandler.instance()
+            .bus()
+            .register(new ConfigSyncHandler());
 
         // Planets Events
         if (Config.mercury) MinecraftForge.EVENT_BUS.register(new MercuryEvents());
