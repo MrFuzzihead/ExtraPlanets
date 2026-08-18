@@ -22,15 +22,19 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class TitanBiomes extends BiomeGenBase {
 
     public static final BiomeGenBase titan = ExtraPlanets_Biomes.getBiome(
-        "titan", Config.titanBiomeID, biomeID -> new BiomeGenTitan(biomeID).setBiomeName("titan")
+        "titan",
+        Config.titanBiomeID,
+        biomeID -> new BiomeGenTitan(biomeID).setBiomeName("titan")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase titanMethaneSea = ExtraPlanets_Biomes.getBiome(
-        "titanMethaneSea", Config.titanSeaBiomeID, biomeID -> new BiomeGenTitanMethaneSea(biomeID)
-            .setBiomeName("titanMethaneSea")
+        "titanMethaneSea",
+        Config.titanSeaBiomeID,
+        biomeID -> new BiomeGenTitanMethaneSea(biomeID).setBiomeName("titanMethaneSea")
             .setHeight(new Height(-1.0F, 0.0F)));
     public static final BiomeGenBase titanMethaneHills = ExtraPlanets_Biomes.getBiome(
-        "titanMethaneHills", Config.titanMethaneHillsBiomeID, biomeID -> new BiomeGenTitanMethaneHills(biomeID)
-            .setBiomeName("titanMethaneHills")
+        "titanMethaneHills",
+        Config.titanMethaneHillsBiomeID,
+        biomeID -> new BiomeGenTitanMethaneHills(biomeID).setBiomeName("titanMethaneHills")
             .setHeight(new Height(0.125F, 0.55F)));
 
     protected Block stoneBlock;

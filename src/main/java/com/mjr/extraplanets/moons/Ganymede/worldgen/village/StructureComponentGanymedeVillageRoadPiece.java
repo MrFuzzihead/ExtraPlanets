@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.moons.Ganymede.worldgen.village;
 
-public abstract class StructureComponentGanymedeVillageRoadPiece extends StructureComponentGanymedeVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentGanymedeVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentGanymedeVillageRoadPiece() {}
 
     protected StructureComponentGanymedeVillageRoadPiece(
-        StructureComponentGanymedeVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

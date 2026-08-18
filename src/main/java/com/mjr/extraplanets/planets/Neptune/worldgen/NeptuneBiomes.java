@@ -21,10 +21,13 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class NeptuneBiomes extends BiomeGenBase {
 
     public static BiomeGenBase neptune = ExtraPlanets_Biomes.getBiome(
-        "neptune", Config.neptuneBiomeID, biomeID -> new BiomeGenNeptune(biomeID).setBiomeName("Neptune")
+        "neptune",
+        Config.neptuneBiomeID,
+        biomeID -> new BiomeGenNeptune(biomeID).setBiomeName("Neptune")
             .setHeight(BiomeGenBase.height_LowPlains));
     public static BiomeGenBase neptuneRadioActiveWaterSea = ExtraPlanets_Biomes.getBiome(
-        "neptuneRadioActiveWaterSea", Config.neptuneRadioActiveWaterSeaBiomeID,
+        "neptuneRadioActiveWaterSea",
+        Config.neptuneRadioActiveWaterSeaBiomeID,
         biomeID -> new BiomeGenNeptuneRadioActiveWaterSea(biomeID).setBiomeName("NeptuneRadioActiveWaterSea")
             .setHeight(BiomeGenBase.height_Oceans));
 

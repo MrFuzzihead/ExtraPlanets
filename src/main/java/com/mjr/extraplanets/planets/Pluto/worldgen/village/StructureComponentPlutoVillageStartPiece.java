@@ -1,46 +1,61 @@
 package com.mjr.extraplanets.planets.Pluto.worldgen.village;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
-import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.biome.WorldChunkManager;
+import net.minecraft.world.gen.structure.StructureBoundingBox;
+import net.minecraft.world.gen.structure.StructureComponent;
 
-public class StructureComponentPlutoVillageStartPiece extends StructureComponentPlutoVillageWell {
+import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillage;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillagePathGen;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageTorch;
+import com.mjr.extraplanets.worldgen.village.StructureVillagePieceWeight;
 
-    public WorldChunkManager worldChunkMngr;
-    public int terrainType;
-    public StructureVillagePieceWeightPluto structVillagePieceWeight;
-    public ArrayList<StructureVillagePieceWeightPluto> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
+public class StructureComponentPlutoVillageStartPiece extends StructureComponentVillageStartPiece {
 
-    public StructureComponentPlutoVillageStartPiece() {}
+    public StructureComponentPlutoVillageStartPiece() {
+        this.planetBlock = ExtraPlanets_Blocks.plutoBlocks;
+    }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public StructureComponentPlutoVillageStartPiece(WorldChunkManager par1WorldChunkManager, int par2,
         Random par3Random, int par4, int par5, ArrayList<StructureVillagePieceWeightPluto> par6ArrayList, int par7) {
-        super((StructureComponentPlutoVillageStartPiece) null, 0, par3Random, par4, par5);
-        this.worldChunkMngr = par1WorldChunkManager;
-        this.structureVillageWeightedPieceList = par6ArrayList;
-        this.terrainType = par7;
-        this.startPiece = this;
+        super(par1WorldChunkManager, par2, par3Random, par4, par5, (ArrayList) par6ArrayList, par7);
+        this.planetBlock = ExtraPlanets_Blocks.plutoBlocks;
     }
 
     @Override
-    protected void func_143012_a(NBTTagCompound nbt) {
-        super.func_143012_a(nbt);
+    public StructureComponentVillage constructComponent(StructureVillagePieceWeight par1StructureVillagePieceWeight,
+        List<StructureComponent> par2List, Random par3Random, int par4, int par5, int par6, int par7, int par8) {
+        final Class<?> var9 = par1StructureVillagePieceWeight.villagePieceClass;
 
-        nbt.setInteger("TerrainType", this.terrainType);
+        if (var9 == StructureComponentPlutoVillageWoodHut.class) {
+            return StructureComponentPlutoVillageWoodHut
+                .func_74908_a(this, par2List, par3Random, par4, par5, par6, par7, par8);
+        } else if (var9 == StructureComponentPlutoVillageField.class) {
+            return StructureComponentPlutoVillageField
+                .func_74900_a(this, par2List, par3Random, par4, par5, par6, par7, par8);
+        } else if (var9 == StructureComponentPlutoVillageHouse.class) {
+            return StructureComponentPlutoVillageHouse
+                .func_74921_a(this, par2List, par3Random, par4, par5, par6, par7, par8);
+        }
+
+        return null;
     }
 
     @Override
-    protected void func_143011_b(NBTTagCompound nbt) {
-        super.func_143011_b(nbt);
-
-        this.terrainType = nbt.getInteger("TerrainType");
+    public StructureComponentVillageTorch constructTorch(int par1, Random par2Random,
+        StructureBoundingBox par3StructureBoundingBox, int par4) {
+        return new StructureComponentPlutoVillageTorch(this, par1, par2Random, par3StructureBoundingBox, par4);
     }
 
-    public WorldChunkManager getWorldChunkManager() {
-        return this.worldChunkMngr;
+    @Override
+    public StructureComponentVillagePathGen constructPath(int par1, Random par2Random,
+        StructureBoundingBox par3StructureBoundingBox, int par4) {
+        return new StructureComponentPlutoVillagePathGen(this, par1, par2Random, par3StructureBoundingBox, par4);
     }
 }

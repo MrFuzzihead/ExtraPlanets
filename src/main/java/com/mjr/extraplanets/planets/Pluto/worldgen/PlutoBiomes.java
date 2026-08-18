@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class PlutoBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase pluto = ExtraPlanets_Biomes.getBiome(
-        "pluto", Config.plutoBiomeID, biomeID -> new BiomeGenPluto(biomeID).setBiomeName("pluto"));
+    public static final BiomeGenBase pluto = ExtraPlanets_Biomes
+        .getBiome("pluto", Config.plutoBiomeID, biomeID -> new BiomeGenPluto(biomeID).setBiomeName("pluto"));
 
     @SuppressWarnings("unchecked")
     PlutoBiomes(int var1) {

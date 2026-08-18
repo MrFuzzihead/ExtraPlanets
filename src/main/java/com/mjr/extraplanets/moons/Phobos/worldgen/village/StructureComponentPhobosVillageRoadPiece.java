@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.moons.Phobos.worldgen.village;
 
-public abstract class StructureComponentPhobosVillageRoadPiece extends StructureComponentPhobosVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentPhobosVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentPhobosVillageRoadPiece() {}
 
     protected StructureComponentPhobosVillageRoadPiece(
-        StructureComponentPhobosVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

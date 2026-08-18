@@ -22,15 +22,19 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class OberonBiomes extends BiomeGenBase {
 
     public static final BiomeGenBase oberon = ExtraPlanets_Biomes.getBiome(
-        "oberon", Config.oberonBiomeID, biomeID -> new BiomeGenOberon(biomeID).setBiomeName("oberon")
+        "oberon",
+        Config.oberonBiomeID,
+        biomeID -> new BiomeGenOberon(biomeID).setBiomeName("oberon")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase oberonLargeMountain = ExtraPlanets_Biomes.getBiome(
-        "oberonLargeMountain", Config.oberonLargeMountainBiomeID, biomeID -> new BiomeGenLargeMountain(biomeID)
-            .setBiomeName("oberonLargeMountain")
+        "oberonLargeMountain",
+        Config.oberonLargeMountainBiomeID,
+        biomeID -> new BiomeGenLargeMountain(biomeID).setBiomeName("oberonLargeMountain")
             .setHeight(new Height(3.0F, 2.5F)));
     public static final BiomeGenBase oberonValleys = ExtraPlanets_Biomes.getBiome(
-        "oberonValleys", Config.oberonValleysBiomeID, biomeID -> new BiomeGenValleys(biomeID)
-            .setBiomeName("oberonValleys")
+        "oberonValleys",
+        Config.oberonValleysBiomeID,
+        biomeID -> new BiomeGenValleys(biomeID).setBiomeName("oberonValleys")
             .setHeight(new Height(-0.4F, 0.2F)));
 
     protected Block stoneBlock;

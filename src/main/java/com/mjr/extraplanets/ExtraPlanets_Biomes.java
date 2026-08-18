@@ -18,15 +18,15 @@ import micdoodle8.mods.galacticraft.core.util.GCLog;
  * Because of that, {@link #getBiome} deliberately never remaps an existing config value:
  * <ul>
  * <li>It KEEPS the configured ID whenever it is within the valid 0-255 range - even if it collides
- *     with another mod's biome - so existing configs and worlds are never remapped.</li>
+ * with another mod's biome - so existing configs and worlds are never remapped.</li>
  * <li>It DETECTS and loudly LOGS any collision with another mod's biome, naming the slot and the
- *     biome currently occupying it, so the user can fix the value in their config by hand.</li>
+ * biome currently occupying it, so the user can fix the value in their config by hand.</li>
  * <li>It only relocates an ID that is OUT of the 0-255 range (which would otherwise crash
- *     <code>biomeList[id] = ...</code> with an {@link ArrayIndexOutOfBoundsException}), as a last
- *     resort to keep the game running, and logs a clear message to fix the config.</li>
+ * <code>biomeList[id] = ...</code> with an {@link ArrayIndexOutOfBoundsException}), as a last
+ * resort to keep the game running, and logs a clear message to fix the config.</li>
  * <li>It never constructs a biome until the first time it is actually requested, which for
- *     ExtraPlanets only happens when a planet/moon's dimension is used. Disabled bodies therefore
- *     never claim a biome slot.</li>
+ * ExtraPlanets only happens when a planet/moon's dimension is used. Disabled bodies therefore
+ * never claim a biome slot.</li>
  * </ul>
  */
 public class ExtraPlanets_Biomes {
@@ -40,8 +40,7 @@ public class ExtraPlanets_Biomes {
     /** Registry keyed by the biome name used in the config, e.g. {@code "venus"}. */
     private static final Map<String, BiomeGenBase> BIOMES = new HashMap<String, BiomeGenBase>();
 
-    private ExtraPlanets_Biomes() {
-    }
+    private ExtraPlanets_Biomes() {}
 
     /**
      * Returns (creating it on first use) the biome registered for {@code biomeName}.
@@ -67,10 +66,13 @@ public class ExtraPlanets_Biomes {
             int fallbackID = findFreeBiomeID();
             GCLog.severe(
                 "[ExtraPlanets] The Biome ID for '" + biomeName
-                    + "' is " + configuredID
+                    + "' is "
+                    + configuredID
                     + ", which is outside the valid 0-255 range for Minecraft 1.7.10, so it would crash. "
-                    + "Using the unused ID " + fallbackID
-                    + " instead. Please set the '" + biomeName
+                    + "Using the unused ID "
+                    + fallbackID
+                    + " instead. Please set the '"
+                    + biomeName
                     + " Biome ID' value in config/ExtraPlanets.cfg to an unused number in the range 0-255 and restart.");
             return fallbackID;
         }
@@ -82,18 +84,26 @@ public class ExtraPlanets_Biomes {
             if (BIOMES.containsValue(occupant)) {
                 String owner = findOwnerName(occupant);
                 GCLog.severe(
-                    "[ExtraPlanets] BIOME ID CONFLICT: the '" + biomeName + "' biome is set to ID " + configuredID
+                    "[ExtraPlanets] BIOME ID CONFLICT: the '" + biomeName
+                        + "' biome is set to ID "
+                        + configuredID
                         + " in config/ExtraPlanets.cfg, but that slot is already used by the ExtraPlanets biome '"
-                        + owner + "'. Both share the same ID, which will corrupt generated terrain. "
+                        + owner
+                        + "'. Both share the same ID, which will corrupt generated terrain. "
                         + "To resolve this, change one of the two '... Biome ID' values in config/ExtraPlanets.cfg "
                         + "to an unused number in the range 0-255 and restart.");
             } else {
-                String occupantName = occupant.getClass().getSimpleName();
+                String occupantName = occupant.getClass()
+                    .getSimpleName();
                 GCLog.severe(
-                    "[ExtraPlanets] BIOME ID CONFLICT: the '" + biomeName + "' biome is set to ID " + configuredID
+                    "[ExtraPlanets] BIOME ID CONFLICT: the '" + biomeName
+                        + "' biome is set to ID "
+                        + configuredID
                         + " in config/ExtraPlanets.cfg, but that slot is already used by the biome '"
-                        + occupantName + "'. Both share the same ID, which can corrupt generated terrain. "
-                        + "To resolve this, change the '" + biomeName
+                        + occupantName
+                        + "'. Both share the same ID, which can corrupt generated terrain. "
+                        + "To resolve this, change the '"
+                        + biomeName
                         + " Biome ID' value in config/ExtraPlanets.cfg to an unused number in the range 0-255 and restart.");
             }
         }

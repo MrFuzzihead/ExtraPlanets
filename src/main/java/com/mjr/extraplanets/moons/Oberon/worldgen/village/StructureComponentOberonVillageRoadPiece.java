@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.moons.Oberon.worldgen.village;
 
-public abstract class StructureComponentOberonVillageRoadPiece extends StructureComponentOberonVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentOberonVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentOberonVillageRoadPiece() {}
 
     protected StructureComponentOberonVillageRoadPiece(
-        StructureComponentOberonVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

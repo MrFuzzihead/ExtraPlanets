@@ -11,7 +11,9 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class GanymedeBiomes extends BiomeGenBase {
 
     public static final BiomeGenBase ganymede = ExtraPlanets_Biomes.getBiome(
-        "ganymede", Config.ganymedeBiomeID, biomeID -> new BiomeGenGanymede(biomeID).setBiomeName("ganymede"));
+        "ganymede",
+        Config.ganymedeBiomeID,
+        biomeID -> new BiomeGenGanymede(biomeID).setBiomeName("ganymede"));
 
     @SuppressWarnings("unchecked")
     GanymedeBiomes(int var1) {

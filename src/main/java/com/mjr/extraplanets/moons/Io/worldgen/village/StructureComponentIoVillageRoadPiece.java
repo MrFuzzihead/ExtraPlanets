@@ -1,10 +1,13 @@
 package com.mjr.extraplanets.moons.Io.worldgen.village;
 
-public abstract class StructureComponentIoVillageRoadPiece extends StructureComponentIoVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentIoVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentIoVillageRoadPiece() {}
 
-    protected StructureComponentIoVillageRoadPiece(StructureComponentIoVillageStartPiece par1ComponentVillageStartPiece,
+    protected StructureComponentIoVillageRoadPiece(StructureComponentVillageStartPiece par1ComponentVillageStartPiece,
         int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }

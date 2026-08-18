@@ -100,7 +100,7 @@ oxygen, not blanket-return `true`.
 > - `ArmorSpaceSuitModel`: `renderFlatPart`/`renderFlatOnly`/`renderFlatGlass` now save the relevant
 >   GL state with `glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT)` and restore it
 >   with `glPopAttrib()` in a `finally` — so even if a part throws, the disabled-texture / blend /
->   colour state can never leak into subsequent rendering.
+> color state can never leak into subsequent rendering.
 > - `SpaceSuitRenderHandler`: the instance prev-gear fields were replaced with per-player snapshots
 >   (`Map<String, GearFlags>`). Each `Pre` first self-heals any snapshot left by a skipped `Post`,
 >   then captures a fresh baseline before suppressing gear; each `Post` restores and clears it. Gear
@@ -189,7 +189,7 @@ against the enum's range, logging via `GCLog.severe` and discarding the malforme
 type null) instead of indexing `values()` out of range. `handleClientSide`/`handleServerSide`
 early-return when the type was discarded mid-decode, so a malformed packet is never interpreted.
 
-### P1 — Client/server config are never synchronized
+### P1 — Client/server config are never synchronized ✅ RESOLVED
 
 `Config.init()` reads the **local** `config/ExtraPlanets.cfg` on both sides (`ExtraPlanets.java:185`).
 Dimension IDs, biome IDs, schematic GUI/page IDs, and feature toggles must match between client and
@@ -257,7 +257,7 @@ chunk desync. (Standard for the era, but the combinatorial config here makes it 
 6. **Fix the rover hit threshold** (the `> 2` → `> 40`-style regression) so rovers survive hits
    sensibly.
 7. ~~Reconsider positive biome IDs~~ ✅ **done** — see the resolved P1 entry above. Biome construction is now
-   centralised in `ExtraPlanets_Biomes` with collision detection/logging, out-of-range protection, and no
+   centralized in `ExtraPlanets_Biomes` with collision detection/logging, out-of-range protection, and no
    registration for disabled bodies. (Negative IDs are not a valid option on 1.7.10.)
 8. **Remove dead config keys** (`jupiterLightingServer`) or implement the feature they promise. — **chosen:
    implement** (it's a promised gameplay feature) — tracked in `docs/JUPITER_LIGHTING_PLAN.md`.

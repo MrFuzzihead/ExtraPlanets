@@ -68,6 +68,7 @@ public class SpaceSuitRenderHandler {
      * they can be restored exactly afterwards.
      */
     private static final class GearFlags {
+
         private final boolean mask;
         private final boolean gear;
         private final boolean leftTank;

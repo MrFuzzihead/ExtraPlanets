@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.planets.Pluto.worldgen.village;
 
-public abstract class StructureComponentPlutoVillageRoadPiece extends StructureComponentPlutoVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentPlutoVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentPlutoVillageRoadPiece() {}
 
     protected StructureComponentPlutoVillageRoadPiece(
-        StructureComponentPlutoVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

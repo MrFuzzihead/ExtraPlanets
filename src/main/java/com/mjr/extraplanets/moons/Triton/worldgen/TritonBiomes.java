@@ -22,15 +22,19 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class TritonBiomes extends BiomeGenBase {
 
     public static final BiomeGenBase triton = ExtraPlanets_Biomes.getBiome(
-        "triton", Config.tritonBiomeID, biomeID -> new BiomeGenTriton(biomeID).setBiomeName("triton")
+        "triton",
+        Config.tritonBiomeID,
+        biomeID -> new BiomeGenTriton(biomeID).setBiomeName("triton")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase tritonMethaneSea = ExtraPlanets_Biomes.getBiome(
-        "tritonSea", Config.tritonIceSeaBiomeID, biomeID -> new BiomeGenTritonIceSea(biomeID)
-            .setBiomeName("tritonIceSea")
+        "tritonSea",
+        Config.tritonIceSeaBiomeID,
+        biomeID -> new BiomeGenTritonIceSea(biomeID).setBiomeName("tritonIceSea")
             .setHeight(new Height(-1.0F, 0.0F)));
     public static final BiomeGenBase tritonMethaneHills = ExtraPlanets_Biomes.getBiome(
-        "tritonIceLands", Config.tritonIceLandsBiomeID, biomeID -> new BiomeGenTritonIceLands(biomeID)
-            .setBiomeName("tritonIceLands")
+        "tritonIceLands",
+        Config.tritonIceLandsBiomeID,
+        biomeID -> new BiomeGenTritonIceLands(biomeID).setBiomeName("tritonIceLands")
             .setHeight(new Height(2.5F, 0.4F)));
 
     protected Block stoneBlock;

@@ -22,13 +22,19 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class JupiterBiomes extends BiomeGenBase {
 
     public static BiomeGenBase jupiter = ExtraPlanets_Biomes.getBiome(
-        "jupiter", Config.jupiterBiomeID, biomeID -> new BiomeGenJupiter(biomeID).setBiomeName("Jupiter")
+        "jupiter",
+        Config.jupiterBiomeID,
+        biomeID -> new BiomeGenJupiter(biomeID).setBiomeName("Jupiter")
             .setHeight(BiomeGenBase.height_LowPlains));
     public static BiomeGenBase jupiterMagma = ExtraPlanets_Biomes.getBiome(
-        "jupiterMagma", Config.jupiterSeaBiomeID, biomeID -> new BiomeGenJupiterMagmaSea(biomeID).setBiomeName("JupiterMagma")
+        "jupiterMagma",
+        Config.jupiterSeaBiomeID,
+        biomeID -> new BiomeGenJupiterMagmaSea(biomeID).setBiomeName("JupiterMagma")
             .setHeight(BiomeGenBase.height_Oceans));
     public static BiomeGenBase jupiterSands = ExtraPlanets_Biomes.getBiome(
-        "jupiterSands", Config.jupiterSandsBiomeID, biomeID -> new BiomeGenJupiterSands(biomeID).setBiomeName("JupiterSands")
+        "jupiterSands",
+        Config.jupiterSandsBiomeID,
+        biomeID -> new BiomeGenJupiterSands(biomeID).setBiomeName("JupiterSands")
             .setHeight(new Height(1.0F, 0.5F)));
 
     protected Block stoneBlock;

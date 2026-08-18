@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.moons.Callisto.worldgen.village;
 
-public abstract class StructureComponentCallistoVillageRoadPiece extends StructureComponentCallistoVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentCallistoVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentCallistoVillageRoadPiece() {}
 
     protected StructureComponentCallistoVillageRoadPiece(
-        StructureComponentCallistoVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

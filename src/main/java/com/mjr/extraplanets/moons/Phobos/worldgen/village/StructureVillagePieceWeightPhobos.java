@@ -1,24 +1,11 @@
 package com.mjr.extraplanets.moons.Phobos.worldgen.village;
 
-public class StructureVillagePieceWeightPhobos {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillage;
+import com.mjr.extraplanets.worldgen.village.StructureVillagePieceWeight;
 
-    public Class<? extends StructureComponentPhobosVillage> villagePieceClass;
-    public final int villagePieceWeight;
-    public int villagePiecesSpawned;
-    public int villagePiecesLimit;
+public class StructureVillagePieceWeightPhobos extends StructureVillagePieceWeight {
 
-    public StructureVillagePieceWeightPhobos(Class<? extends StructureComponentPhobosVillage> par1Class, int par2,
-        int par3) {
-        this.villagePieceClass = par1Class;
-        this.villagePieceWeight = par2;
-        this.villagePiecesLimit = (int) (par3 / 1.5D);
-    }
-
-    public boolean canSpawnMoreVillagePiecesOfType(int par1) {
-        return this.villagePiecesLimit == 0 || this.villagePiecesSpawned < this.villagePiecesLimit;
-    }
-
-    public boolean canSpawnMoreVillagePieces() {
-        return this.villagePiecesLimit == 0 || this.villagePiecesSpawned < this.villagePiecesLimit;
+    public StructureVillagePieceWeightPhobos(Class<? extends StructureComponentVillage> par1Class, int par2, int par3) {
+        super(par1Class, par2, par3);
     }
 }

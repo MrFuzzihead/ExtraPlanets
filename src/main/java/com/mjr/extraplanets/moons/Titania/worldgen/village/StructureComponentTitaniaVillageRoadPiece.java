@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.moons.Titania.worldgen.village;
 
-public abstract class StructureComponentTitaniaVillageRoadPiece extends StructureComponentTitaniaVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentTitaniaVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentTitaniaVillageRoadPiece() {}
 
     protected StructureComponentTitaniaVillageRoadPiece(
-        StructureComponentTitaniaVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

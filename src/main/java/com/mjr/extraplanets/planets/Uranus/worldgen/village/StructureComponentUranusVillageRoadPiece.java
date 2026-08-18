@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.planets.Uranus.worldgen.village;
 
-public abstract class StructureComponentUranusVillageRoadPiece extends StructureComponentUranusVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentUranusVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentUranusVillageRoadPiece() {}
 
     protected StructureComponentUranusVillageRoadPiece(
-        StructureComponentUranusVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+        StructureComponentVillageStartPiece par1ComponentVillageStartPiece, int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }

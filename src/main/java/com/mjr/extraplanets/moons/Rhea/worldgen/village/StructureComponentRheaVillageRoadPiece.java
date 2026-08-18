@@ -1,11 +1,14 @@
 package com.mjr.extraplanets.moons.Rhea.worldgen.village;
 
-public abstract class StructureComponentRheaVillageRoadPiece extends StructureComponentRheaVillage {
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageRoadPiece;
+import com.mjr.extraplanets.worldgen.village.StructureComponentVillageStartPiece;
+
+public abstract class StructureComponentRheaVillageRoadPiece extends StructureComponentVillageRoadPiece {
 
     public StructureComponentRheaVillageRoadPiece() {}
 
-    protected StructureComponentRheaVillageRoadPiece(
-        StructureComponentRheaVillageStartPiece par1ComponentVillageStartPiece, int par2) {
+    protected StructureComponentRheaVillageRoadPiece(StructureComponentVillageStartPiece par1ComponentVillageStartPiece,
+        int par2) {
         super(par1ComponentVillageStartPiece, par2);
     }
 }
