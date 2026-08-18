@@ -82,11 +82,40 @@ public class Tier1SpaceSuitArmor extends ItemArmor
 
     @Override
     public boolean handleGearType(IBreathableArmor.EnumGearType gearType) {
-        return true;
+        // Which GC oxygen component this suit piece replaces. Each piece only declares the
+        // component(s) it actually carries, so a single stray piece cannot satisfy the whole
+        // oxygen setup (and cannot replace the mask/gear/tanks on its own).
+        // ItemArmor.armorType: 0 = helmet, 1 = chest, 2 = legs, 3 = boots.
+        switch (gearType) {
+            case HELMET:
+                // The helmet replaces the oxygen mask.
+                return this.armorType == 0;
+            case GEAR:
+            case TANK1:
+            case TANK2:
+                // The chestpiece carries the oxygen harness and the integrated tanks.
+                return this.armorType == 1;
+            default:
+                return false;
+        }
     }
 
     @Override
     public boolean canBreathe(ItemStack helmetInSlot, EntityPlayer playerWearing, IBreathableArmor.EnumGearType type) {
+        // The suit is a single, sealed pressure garment. Breathing is only possible while the
+        // full four-piece set is worn; a lone helmet (or any single piece) has no sealed body
+        // to supply air to.
+        return isFullSuitWorn(playerWearing);
+    }
+
+    private static boolean isFullSuitWorn(EntityPlayer player) {
+        // 1.7.10 armor slots: 0 = boots, 1 = legs, 2 = chest, 3 = head.
+        for (int slot = 0; slot < 4; slot++) {
+            ItemStack stack = player.inventory.armorItemInSlot(slot);
+            if (stack == null || !(stack.getItem() instanceof Tier1SpaceSuitArmor)) {
+                return false;
+            }
+        }
         return true;
     }
 

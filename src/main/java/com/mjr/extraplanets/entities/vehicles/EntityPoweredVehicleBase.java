@@ -210,7 +210,7 @@ public abstract class EntityPoweredVehicleBase extends Entity
                     this.dataWatcher.updateObject(this.currentDamage, 100);
                 }
 
-                if (flag || this.dataWatcher.getWatchableObjectInt(this.currentDamage) > 2) {
+                if (flag || this.dataWatcher.getWatchableObjectInt(this.currentDamage) > 40) {
                     if (this.riddenByEntity != null) {
                         this.riddenByEntity.mountEntity(this);
                     }
