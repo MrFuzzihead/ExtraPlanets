@@ -9,6 +9,7 @@
 - ✅ **P0 — Rover damage threshold bug** — resolved in `EntityVehicleBase.java` & `EntityPoweredVehicleBase.java` (threshold `> 2` → `> 40`, matching vanilla `EntityBoat`).
 - ✅ **P0 — Space suit oxygen from any single piece** — resolved in `Tier1SpaceSuitArmor.java` (`handleGearType` restricted per piece; `canBreathe` now requires the full four-piece suit).
 - ✅ **P1 — Biome ID strategy** — resolved via the new `ExtraPlanets_Biomes` registry (collision detection + logging, out-of-range crash protection, no registration for disabled bodies; existing configs/worlds preserved). See the P1 entry below for details.
+- ✅ **P1 — Recipe ore-dict `.get(0)` guards** — resolved in `ExtraPlanets_Recipes.java` (all 65 furnace smelting recipes now route through a guarded `addOreSmelting` helper; missing ore entries are logged once and skipped instead of throwing `IndexOutOfBoundsException` at postInit). See the P1 entry below for details.
 - Remaining P1/P2 items are not yet addressed.
 - ⏸️ **Space suit vs. GC oxygen gear — deferred by design decision (2026-08-17).** Keeping the current fix (full suit replaces the GC mask + gear harness; `canBreathe` requires the full 4-piece suit; GC oxygen tanks are still required and drained via `GCPlayerHandler.checkOxygen`'s `!airEmpty` gate). The concern — the suit is currently cheap and has no power / radiation / pressure cost, so letting it replace GC gear is generous — is acknowledged but shelved until the suit mechanics (electric/power, pressure, radiation, tanks) are fleshed out later.
 
@@ -134,12 +135,20 @@ server-side lighting feature was never implemented; only `jupiterLightingClient`
 `getArmorTexture(...)`; a `null` return can NPE / hit the missing-texture path. In practice only the
 four suit pieces reach this method, so low risk — but it's a latent crash.
 
-### P1 — `OreDictionary.getOres("ingotCopper").get(0)` without an empty-check
+### P1 — `OreDictionary.getOres("ingotCopper").get(0)` without an empty-check ✅ RESOLVED
 
 `ExtraPlanets_Recipes.java` furnace recipes (e.g. `:64-65`) call `.get(0)` on ore-dict lists. If
 "ingotCopper"/"ingotTin" aren't registered by another mod, this throws `IndexOutOfBoundsException` at
 postInit and crashes the game. GC normally registers these, so it works in practice, but it's fragile
 against config options that disable GC ore registration.
+
+**Fix:** all 65 ore-dict smelting recipes in `ExtraPlanets_Recipes.registerFurnaceRecipes` (for
+`ingotCopper`/`ingotTin`/`ingotIron`/`ingotLead`) now route through a single guarded helper
+`addOreSmelting(input, oreName, xp)`. The helper checks `OreDictionary.getOres(oreName)`; if the list
+is empty it logs a single `GCLog.severe` message naming the missing ore (deduplicated across all
+bodies via a static `Set`) and skips that recipe instead of crashing. Otherwise it registers the
+recipe with `ores.get(0)` exactly as before. The circuit-fabricator silicon lookup
+(`ConfigManagerCore.otherModsSilicon`) already handled the empty-list case and is unchanged.
 
 ### P1 — Network packet lacks bounds-checks on packet type
 
@@ -196,8 +205,8 @@ dedicated servers).
    — eliminates ~1 MB+ of copy-paste and the "fix must be applied N times" problem).
 3. **Replace swallowed exceptions / `System.out`** with a proper logger (`GCLog`/`FMLLog`), at least
    under a `Config.debugMode` guard.
-4. **Guard `OreDictionary.getOres(...)`** with `isEmpty()` fallbacks to avoid hard crashes when
-   optional mods are absent.
+4. ~~**Guard `OreDictionary.getOres(...)`** with `isEmpty()` fallbacks to avoid hard crashes when
+   optional mods are absent.~~ ✅ **done** — see the resolved P1 entry above.
 5. **Validate packet type ordinal** before indexing `EnumSimplePacket.values()`.
 6. **Fix the rover hit threshold** (the `> 2` → `> 40`-style regression) so rovers survive hits
    sensibly.
@@ -215,7 +224,8 @@ dedicated servers).
    "full suit" vs. piece-carrying-oxygen).
 3. ~~**P1 – Biome ID strategy**~~ ✅ **done** (collision detection/logging, out-of-range protection, no
    disabled-body registration — existing configs/worlds preserved).
-4. **P1 – Recipe ore-dict `.get(0)` guards.**
+4. ~~**P1 – Recipe ore-dict `.get(0)` guards.**~~ ✅ **done** — all 65 furnace smelting recipes now route
+   through the guarded `addOreSmelting` helper (missing ores are logged once and skipped, no crash).
 5. **P1 – Packet ordinal validation + MainHandler RNG caching.**
 6. **P2 – Render-state robustness** (`poseSource`, static model sharing, GL state restore).
 7. **P2 – Worldgen copy-paste refactor** (longest-term maintainability win) and log hygiene.
