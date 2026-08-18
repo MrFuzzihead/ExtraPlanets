@@ -412,8 +412,6 @@ public class ExtraPlanets_Items {
         GameRegistry.registerItem(wafers, wafers.getUnlocalizedName());
         GameRegistry.registerItem(ingotLead, "item.ingotLead");
 
-        GameRegistry.registerItem(tier4EquipmentKit, tier4EquipmentKit.getUnlocalizedName());
-
         if (Loader.isModLoaded("IC2")) {
             GameRegistry.registerItem(crushedAluminumOre, "crushed_aluminum_ore");
             GameRegistry.registerItem(purifiedAluminumOre, "purified_aluminum_ore");
