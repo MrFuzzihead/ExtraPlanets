@@ -64,9 +64,14 @@ public class Tier1SpaceSuitArmor extends ItemArmor
             return Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_1.png";
         } else if (stack.getItem() == ExtraPlanets_Armor.tier1SpaceSuitLegings) {
             return Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_2.png";
-        } else {
-            return null;
         }
+        // Never return null: RenderBiped binds whatever this returns, and a null can NPE / hit the
+        // missing-texture path. This branch is effectively unreachable for the four suit pieces
+        // (they are all matched above), so fall back to the correct layer for the render slot
+        // (2 = leggings use layer 2; every other slot uses layer 1).
+        return slot == 2
+            ? Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_2.png"
+            : Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_1.png";
     }
 
     @Override
