@@ -40,4 +40,5 @@ dependencies {
     implementation("com.github.GTNewHorizons:CodeChickenCore:1.4.17:dev")
     devOnlyNonPublishable("curse.maven:cofh-core-69162:2388751")
     compileOnly("curse.maven:mekanism-268560:2475797")
+    compileOnly("net.industrial-craft:industrialcraft-2:2.2.828-experimental:dev")
 }

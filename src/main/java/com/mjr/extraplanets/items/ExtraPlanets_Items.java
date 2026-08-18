@@ -61,6 +61,7 @@ import com.mjr.extraplanets.items.thermalPadding.ItemTier4ThermalPadding;
 import com.mjr.extraplanets.items.vehicles.ItemMarsRover;
 import com.mjr.extraplanets.items.vehicles.ItemVenusRover;
 
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.registry.GameRegistry;
 
 public class ExtraPlanets_Items {
@@ -151,6 +152,17 @@ public class ExtraPlanets_Items {
     public static Item tier2EquipmentKit;
     public static Item tier3EquipmentKit;
     public static Item tier4EquipmentKit;
+
+    // IC2 ore processing chain (Macerator / Ore Washer / Thermal Centrifuge) for Aluminum and
+    // Titanium. These mirror Galacticraft's IndustrialCraft 2 compat in our own item registry.
+    public static Item crushedAluminumOre;
+    public static Item purifiedAluminumOre;
+    public static Item aluminumDust;
+    public static Item aluminumTinyDust;
+    public static Item crushedTitaniumOre;
+    public static Item purifiedTitaniumOre;
+    public static Item titaniumDust;
+    public static Item titaniumTinyDust;
 
     public static void init() {
         initializeItems();
@@ -266,6 +278,19 @@ public class ExtraPlanets_Items {
 
         wafers = new ItemWafers("wafer");
         ingotLead = new ItemBasicItem("ingot_lead");
+
+        // IC2 ore processing chain items are only useful alongside IC2, so only register them when
+        // IndustrialCraft 2 is installed.
+        if (Loader.isModLoaded("IC2")) {
+            crushedAluminumOre = new ItemBasicItem("crushed_aluminum_ore");
+            purifiedAluminumOre = new ItemBasicItem("purified_aluminum_ore");
+            aluminumDust = new ItemBasicItem("aluminum_dust");
+            aluminumTinyDust = new ItemBasicItem("aluminum_tiny_dust");
+            crushedTitaniumOre = new ItemBasicItem("crushed_titanium_ore");
+            purifiedTitaniumOre = new ItemBasicItem("purified_titanium_ore");
+            titaniumDust = new ItemBasicItem("titanium_dust");
+            titaniumTinyDust = new ItemBasicItem("titanium_tiny_dust");
+        }
 
         tier1EquipmentKit = new ItemBasicKit("tier1_kit", 1);
         tier2EquipmentKit = new ItemBasicKit("tier2_kit", 2);
@@ -386,6 +411,19 @@ public class ExtraPlanets_Items {
 
         GameRegistry.registerItem(wafers, wafers.getUnlocalizedName());
         GameRegistry.registerItem(ingotLead, "item.ingotLead");
+
+        GameRegistry.registerItem(tier4EquipmentKit, tier4EquipmentKit.getUnlocalizedName());
+
+        if (Loader.isModLoaded("IC2")) {
+            GameRegistry.registerItem(crushedAluminumOre, "crushed_aluminum_ore");
+            GameRegistry.registerItem(purifiedAluminumOre, "purified_aluminum_ore");
+            GameRegistry.registerItem(aluminumDust, "aluminum_dust");
+            GameRegistry.registerItem(aluminumTinyDust, "aluminum_tiny_dust");
+            GameRegistry.registerItem(crushedTitaniumOre, "crushed_titanium_ore");
+            GameRegistry.registerItem(purifiedTitaniumOre, "purified_titanium_ore");
+            GameRegistry.registerItem(titaniumDust, "titanium_dust");
+            GameRegistry.registerItem(titaniumTinyDust, "titanium_tiny_dust");
+        }
 
         GameRegistry.registerItem(tier1EquipmentKit, tier1EquipmentKit.getUnlocalizedName());
         GameRegistry.registerItem(tier2EquipmentKit, tier2EquipmentKit.getUnlocalizedName());
@@ -509,5 +547,19 @@ public class ExtraPlanets_Items {
             OreDictionary.registerOre("compressedPlatinum", new ItemStack(tier11Items, 1, 12));
         }
         OreDictionary.registerOre("ingotLead", new ItemStack(ingotLead));
+
+        // IC2 ore processing chain items. These use IndustrialCraft 2's own ore dictionary names
+        // (crushedX / crushedPurifiedX / dustX / dustTinyX), with US spelling for aluminum. Only set
+        // up when IC2 is installed (the items only make sense for the IC2 machines).
+        if (Loader.isModLoaded("IC2")) {
+            OreDictionary.registerOre("crushedAluminum", new ItemStack(crushedAluminumOre));
+            OreDictionary.registerOre("crushedPurifiedAluminum", new ItemStack(purifiedAluminumOre));
+            OreDictionary.registerOre("dustAluminum", new ItemStack(aluminumDust));
+            OreDictionary.registerOre("dustTinyAluminum", new ItemStack(aluminumTinyDust));
+            OreDictionary.registerOre("crushedTitanium", new ItemStack(crushedTitaniumOre));
+            OreDictionary.registerOre("crushedPurifiedTitanium", new ItemStack(purifiedTitaniumOre));
+            OreDictionary.registerOre("dustTitanium", new ItemStack(titaniumDust));
+            OreDictionary.registerOre("dustTinyTitanium", new ItemStack(titaniumTinyDust));
+        }
     }
 }
