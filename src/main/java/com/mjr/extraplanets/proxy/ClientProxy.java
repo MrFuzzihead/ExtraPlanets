@@ -175,7 +175,9 @@ public class ClientProxy extends CommonProxy {
         // were previously registered on the common bus, which would also register them on a
         // dedicated server - see MainHandlerClient.
         MainHandlerClient clientMainHandler = new MainHandlerClient();
-        FMLCommonHandler.instance().bus().register(clientMainHandler);
+        FMLCommonHandler.instance()
+            .bus()
+            .register(clientMainHandler);
         MinecraftForge.EVENT_BUS.register(clientMainHandler);
 
         // Hide GC Thermal Padding under a full ExtraPlanets space suit (see SpaceSuitRenderHandler)

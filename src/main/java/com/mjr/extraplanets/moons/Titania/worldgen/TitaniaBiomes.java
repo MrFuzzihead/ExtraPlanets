@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class TitaniaBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase titania = ExtraPlanets_Biomes.getBiome(
-        "titania", Config.titaniaBiomeID, biomeID -> new BiomeGenTitania(biomeID).setBiomeName("titania"));
+    public static final BiomeGenBase titania = ExtraPlanets_Biomes
+        .getBiome("titania", Config.titaniaBiomeID, biomeID -> new BiomeGenTitania(biomeID).setBiomeName("titania"));
 
     @SuppressWarnings("unchecked")
     TitaniaBiomes(int var1) {

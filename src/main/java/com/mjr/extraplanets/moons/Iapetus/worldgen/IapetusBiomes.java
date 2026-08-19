@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class IapetusBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase iapetus = ExtraPlanets_Biomes.getBiome(
-        "iapetus", Config.iapetusBiomeID, biomeID -> new BiomeGenIapetus(biomeID).setBiomeName("iapetus"));
+    public static final BiomeGenBase iapetus = ExtraPlanets_Biomes
+        .getBiome("iapetus", Config.iapetusBiomeID, biomeID -> new BiomeGenIapetus(biomeID).setBiomeName("iapetus"));
 
     @SuppressWarnings("unchecked")
     IapetusBiomes(int var1) {

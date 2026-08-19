@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class PhobosBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase phobos = ExtraPlanets_Biomes.getBiome(
-        "phobos", Config.phobosBiomeID, biomeID -> new BiomeGenPhobos(biomeID).setBiomeName("phobos"));
+    public static final BiomeGenBase phobos = ExtraPlanets_Biomes
+        .getBiome("phobos", Config.phobosBiomeID, biomeID -> new BiomeGenPhobos(biomeID).setBiomeName("phobos"));
 
     @SuppressWarnings("unchecked")
     PhobosBiomes(int var1) {

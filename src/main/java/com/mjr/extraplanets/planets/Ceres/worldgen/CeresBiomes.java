@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class CeresBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase ceres = ExtraPlanets_Biomes.getBiome(
-        "ceres", Config.ceresBiomeID, biomeID -> new BiomeGenCeres(biomeID).setBiomeName("ceres"));
+    public static final BiomeGenBase ceres = ExtraPlanets_Biomes
+        .getBiome("ceres", Config.ceresBiomeID, biomeID -> new BiomeGenCeres(biomeID).setBiomeName("ceres"));
 
     @SuppressWarnings("unchecked")
     CeresBiomes(int var1) {

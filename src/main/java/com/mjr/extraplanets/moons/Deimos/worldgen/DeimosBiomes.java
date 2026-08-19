@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class DeimosBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase deimos = ExtraPlanets_Biomes.getBiome(
-        "deimos", Config.deimosBiomeID, biomeID -> new BiomeGenDeimos(biomeID).setBiomeName("deimos"));
+    public static final BiomeGenBase deimos = ExtraPlanets_Biomes
+        .getBiome("deimos", Config.deimosBiomeID, biomeID -> new BiomeGenDeimos(biomeID).setBiomeName("deimos"));
 
     @SuppressWarnings("unchecked")
     DeimosBiomes(int var1) {

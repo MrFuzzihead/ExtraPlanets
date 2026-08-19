@@ -22,14 +22,18 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class SaturnBiomes extends BiomeGenBase {
 
     public static BiomeGenBase saturn = ExtraPlanets_Biomes.getBiome(
-        "saturn", Config.saturnBiomeID, biomeID -> new BiomeGenSaturn(biomeID).setBiomeName("Saturn")
+        "saturn",
+        Config.saturnBiomeID,
+        biomeID -> new BiomeGenSaturn(biomeID).setBiomeName("Saturn")
             .setHeight(BiomeGenBase.height_LowPlains));
     public static BiomeGenBase saturnHydrocarbonSea = ExtraPlanets_Biomes.getBiome(
-        "saturnHydrocarbonSea", Config.saturnHydrocarbonSeaBiomeID,
+        "saturnHydrocarbonSea",
+        Config.saturnHydrocarbonSeaBiomeID,
         biomeID -> new BiomeGenSaturnHydrocarbonSea(biomeID).setBiomeName("SaturnHydrocarbonSea")
             .setHeight(BiomeGenBase.height_Oceans));
     public static BiomeGenBase saturnNuclearLand = ExtraPlanets_Biomes.getBiome(
-        "saturnNuclearLand", Config.saturnNuclearLandBiomeID,
+        "saturnNuclearLand",
+        Config.saturnNuclearLandBiomeID,
         biomeID -> new BiomeGenSaturnNuclearLand(biomeID).setBiomeName("saturnNuclearLand")
             .setHeight(BiomeGenBase.height_LowPlains));
 

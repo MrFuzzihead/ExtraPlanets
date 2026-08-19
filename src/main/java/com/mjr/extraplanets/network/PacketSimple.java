@@ -93,8 +93,7 @@ public class PacketSimple extends Packet implements IPacket {
     @Override
     public void decodeInto(ChannelHandlerContext context, ByteBuf buffer) {
         if (buffer.readableBytes() < 4) {
-            GCLog.severe(
-                "[ExtraPlanets] Received a simple packet too short to contain a packet type. Discarding it.");
+            GCLog.severe("[ExtraPlanets] Received a simple packet too short to contain a packet type. Discarding it.");
             return;
         }
         int typeOrdinal = buffer.readInt();
@@ -102,7 +101,9 @@ public class PacketSimple extends Packet implements IPacket {
         if (typeOrdinal < 0 || typeOrdinal >= types.length) {
             GCLog.severe(
                 "[ExtraPlanets] Received a simple packet with invalid type ordinal " + typeOrdinal
-                    + " (valid range is 0-" + (types.length - 1) + "). Discarding the malformed packet.");
+                    + " (valid range is 0-"
+                    + (types.length - 1)
+                    + "). Discarding the malformed packet.");
             return;
         }
         this.type = types[typeOrdinal];

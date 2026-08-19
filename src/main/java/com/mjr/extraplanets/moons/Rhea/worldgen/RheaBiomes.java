@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class RheaBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase rhea = ExtraPlanets_Biomes.getBiome(
-        "rhea", Config.rheaBiomeID, biomeID -> new BiomeGenRhea(biomeID).setBiomeName("rhea"));
+    public static final BiomeGenBase rhea = ExtraPlanets_Biomes
+        .getBiome("rhea", Config.rheaBiomeID, biomeID -> new BiomeGenRhea(biomeID).setBiomeName("rhea"));
 
     @SuppressWarnings("unchecked")
     RheaBiomes(int var1) {

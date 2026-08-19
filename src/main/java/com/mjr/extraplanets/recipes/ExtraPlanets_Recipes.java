@@ -311,7 +311,8 @@ public class ExtraPlanets_Recipes {
             if (MISSING_ORE_DICT_WARNED.add(oreName)) {
                 GCLog.severe(
                     "[ExtraPlanets] The OreDictionary has no entries for '" + oreName
-                        + "', so the furnace recipe for " + input.getDisplayName()
+                        + "', so the furnace recipe for "
+                        + input.getDisplayName()
                         + " was skipped. Is the mod that provides this ore (e.g. Galacticraft) installed "
                         + "with its ore registration enabled?");
             }

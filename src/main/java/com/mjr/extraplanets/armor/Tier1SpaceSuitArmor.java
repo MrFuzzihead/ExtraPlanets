@@ -37,8 +37,7 @@ public class Tier1SpaceSuitArmor extends ItemArmor
      * slot), so the mutable {@code isSneak}/{@code isRiding}/{@code isChild}/{@code heldItem} and
      * pose state on an {@link ArmorSpaceSuitModel} is never shared across players.
      */
-    private static final Map<EntityLivingBase, ArmorSpaceSuitModel[]> entityModels =
-        new WeakHashMap<EntityLivingBase, ArmorSpaceSuitModel[]>();
+    private static final Map<EntityLivingBase, ArmorSpaceSuitModel[]> entityModels = new WeakHashMap<EntityLivingBase, ArmorSpaceSuitModel[]>();
     public String name;
 
     public Tier1SpaceSuitArmor(String name, ArmorMaterial material, int placement) {
@@ -69,8 +68,7 @@ public class Tier1SpaceSuitArmor extends ItemArmor
         // missing-texture path. This branch is effectively unreachable for the four suit pieces
         // (they are all matched above), so fall back to the correct layer for the render slot
         // (2 = leggings use layer 2; every other slot uses layer 1).
-        return slot == 2
-            ? Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_2.png"
+        return slot == 2 ? Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_2.png"
             : Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_1.png";
     }
 

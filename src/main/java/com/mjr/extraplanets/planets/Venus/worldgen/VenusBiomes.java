@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class VenusBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase venus = ExtraPlanets_Biomes.getBiome(
-        "venus", Config.venusBiomeID, biomeID -> new BiomeGenVenus(biomeID).setBiomeName("venus"));
+    public static final BiomeGenBase venus = ExtraPlanets_Biomes
+        .getBiome("venus", Config.venusBiomeID, biomeID -> new BiomeGenVenus(biomeID).setBiomeName("venus"));
 
     @SuppressWarnings("unchecked")
     VenusBiomes(int var1) {

@@ -22,15 +22,19 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class UranusBiomes extends BiomeGenBase {
 
     public static BiomeGenBase uranus = ExtraPlanets_Biomes.getBiome(
-        "uranus", Config.uranusBiomeID, biomeID -> new BiomeGenUranus(biomeID).setBiomeName("Uranus")
+        "uranus",
+        Config.uranusBiomeID,
+        biomeID -> new BiomeGenUranus(biomeID).setBiomeName("Uranus")
             .setHeight(BiomeGenBase.height_LowPlains));
     public static BiomeGenBase uranusFrozenSea = ExtraPlanets_Biomes.getBiome(
-        "uranusFrozenSea", Config.uranusFrozenSeaBiomeID, biomeID -> new BiomeGenUranusFrozenSea(biomeID)
-            .setBiomeName("UranusFrozenSea")
+        "uranusFrozenSea",
+        Config.uranusFrozenSeaBiomeID,
+        biomeID -> new BiomeGenUranusFrozenSea(biomeID).setBiomeName("UranusFrozenSea")
             .setHeight(BiomeGenBase.height_Oceans));
     public static BiomeGenBase uranusSnowLands = ExtraPlanets_Biomes.getBiome(
-        "uranusSnowLands", Config.uranusSnowLandsBiomeID, biomeID -> new BiomeGenUranusSnowLands(biomeID)
-            .setBiomeName("UranusSnowLands")
+        "uranusSnowLands",
+        Config.uranusSnowLandsBiomeID,
+        biomeID -> new BiomeGenUranusSnowLands(biomeID).setBiomeName("UranusSnowLands")
             .setHeight(new Height(0.825F, 0.25F)));
 
     protected Block stoneBlock;

@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class MercuryBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase mercury = ExtraPlanets_Biomes.getBiome(
-        "mercury", Config.mercuryBiomeID, biomeID -> new BiomeGenMercury(biomeID).setBiomeName("mercury"));
+    public static final BiomeGenBase mercury = ExtraPlanets_Biomes
+        .getBiome("mercury", Config.mercuryBiomeID, biomeID -> new BiomeGenMercury(biomeID).setBiomeName("mercury"));
 
     @SuppressWarnings("unchecked")
     MercuryBiomes(int var1) {

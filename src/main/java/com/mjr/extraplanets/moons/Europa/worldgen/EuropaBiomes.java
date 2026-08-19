@@ -10,8 +10,8 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class EuropaBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase europa = ExtraPlanets_Biomes.getBiome(
-        "europa", Config.europaBiomeID, biomeID -> new BiomeGenEuropa(biomeID).setBiomeName("europa"));
+    public static final BiomeGenBase europa = ExtraPlanets_Biomes
+        .getBiome("europa", Config.europaBiomeID, biomeID -> new BiomeGenEuropa(biomeID).setBiomeName("europa"));
 
     @SuppressWarnings("unchecked")
     EuropaBiomes(int var1) {

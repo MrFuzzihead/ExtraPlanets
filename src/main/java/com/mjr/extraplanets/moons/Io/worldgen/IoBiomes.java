@@ -22,15 +22,19 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 public class IoBiomes extends BiomeGenBase {
 
     public static final BiomeGenBase io = ExtraPlanets_Biomes.getBiome(
-        "io", Config.ioBiomeID, biomeID -> new BiomeGenIo(biomeID).setBiomeName("io")
+        "io",
+        Config.ioBiomeID,
+        biomeID -> new BiomeGenIo(biomeID).setBiomeName("io")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase ioAshLands = ExtraPlanets_Biomes.getBiome(
-        "ioAshLands", Config.ioAshLandsBiomeID, biomeID -> new BiomeGenIoAshLands(biomeID)
-            .setBiomeName("ioAshLands")
+        "ioAshLands",
+        Config.ioAshLandsBiomeID,
+        biomeID -> new BiomeGenIoAshLands(biomeID).setBiomeName("ioAshLands")
             .setHeight(new Height(2.0F, 2.0F)));
     public static final BiomeGenBase ioBurningPlains = ExtraPlanets_Biomes.getBiome(
-        "ioBurningPlains", Config.ioBurningPlainsBiomeID, biomeID -> new BiomeGenIoBurningPlains(biomeID)
-            .setBiomeName("ioBurningPlains")
+        "ioBurningPlains",
+        Config.ioBurningPlainsBiomeID,
+        biomeID -> new BiomeGenIoBurningPlains(biomeID).setBiomeName("ioBurningPlains")
             .setHeight(new Height(0.125F, 0.015F)));
 
     protected Block stoneBlock;

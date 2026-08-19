@@ -28,51 +28,70 @@ import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.BiomeGenKepler22bYe
 public class Kepler22bBiomes extends BiomeGenBase {
 
     public static final BiomeGenBase kepler22bPlains = ExtraPlanets_Biomes.getBiome(
-        "kepler22bPlains", Config.kepler22bPlainsBiomeID,
-        biomeID -> new BiomeGenKepler22bPlains(biomeID).setColor(112).setBiomeName("Kepler22b Plains")
+        "kepler22bPlains",
+        Config.kepler22bPlainsBiomeID,
+        biomeID -> new BiomeGenKepler22bPlains(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Plains")
             .setHeight(height_LowPlains));
     public static final BiomeGenBase kepler22bBlueForest = ExtraPlanets_Biomes.getBiome(
-        "kepler22bBlueForest", Config.kepler22bBlueForestBiomeID,
-        biomeID -> new BiomeGenKepler22bBlueMapleForest(biomeID).setColor(112).setBiomeName("Kepler22b Blue Maple Forest")
+        "kepler22bBlueForest",
+        Config.kepler22bBlueForestBiomeID,
+        biomeID -> new BiomeGenKepler22bBlueMapleForest(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Blue Maple Forest")
             .setHeight(height_LowPlains));
     public static final BiomeGenBase kepler22bPurpleForest = ExtraPlanets_Biomes.getBiome(
-        "kepler22bPurpleForest", Config.kepler22bPurpleForestBiomeID,
-        biomeID -> new BiomeGenKepler22bPurpleMapleForest(biomeID).setColor(112).setBiomeName("Kepler22b Purple Maple Forest")
+        "kepler22bPurpleForest",
+        Config.kepler22bPurpleForestBiomeID,
+        biomeID -> new BiomeGenKepler22bPurpleMapleForest(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Purple Maple Forest")
             .setHeight(height_LowPlains));
     public static final BiomeGenBase kepler22bRedForest = ExtraPlanets_Biomes.getBiome(
-        "kepler22bRedForest", Config.kepler22bRedForestBiomeID,
-        biomeID -> new BiomeGenKepler22bRedMapleForest(biomeID).setColor(112).setBiomeName("Kepler22b Red Maple Forest")
+        "kepler22bRedForest",
+        Config.kepler22bRedForestBiomeID,
+        biomeID -> new BiomeGenKepler22bRedMapleForest(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Red Maple Forest")
             .setHeight(height_LowPlains));
     public static final BiomeGenBase kepler22bYellowForest = ExtraPlanets_Biomes.getBiome(
-        "kepler22bYellowForest", Config.kepler22bYellowForestBiomeID,
-        biomeID -> new BiomeGenKepler22bYellowMapleForest(biomeID).setColor(112).setBiomeName("Kepler22b Yellow Maple Forest")
+        "kepler22bYellowForest",
+        Config.kepler22bYellowForestBiomeID,
+        biomeID -> new BiomeGenKepler22bYellowMapleForest(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Yellow Maple Forest")
             .setHeight(height_LowPlains));
     public static final BiomeGenBase kepler22bRedDesert = ExtraPlanets_Biomes.getBiome(
-        "kepler22bRedDesert", Config.kepler22bRedDesertBiomeID,
-        biomeID -> new BiomeGenKepler22bRedDesert(biomeID).setColor(112).setBiomeName("Kepler22b Red Desert")
+        "kepler22bRedDesert",
+        Config.kepler22bRedDesertBiomeID,
+        biomeID -> new BiomeGenKepler22bRedDesert(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Red Desert")
             .setHeight(height_MidHills));
     public static final BiomeGenBase kepler22bWasteLands = ExtraPlanets_Biomes.getBiome(
-        "kepler22bWasteLands", Config.kepler22bWasteLandsBiomeID,
-        biomeID -> new BiomeGenKepler22bWasteLands(biomeID).setColor(112).setBiomeName("Kepler22b Waste Lands")
+        "kepler22bWasteLands",
+        Config.kepler22bWasteLandsBiomeID,
+        biomeID -> new BiomeGenKepler22bWasteLands(biomeID).setColor(112)
+            .setBiomeName("Kepler22b Waste Lands")
             .setHeight(new Height(-0.2F, 0.1F)));
     public static final BiomeGenBase kepler22bDiamondPlains = ExtraPlanets_Biomes.getBiome(
-        "kepler22bDiamondPlains", Config.kepler22bDiamondPlainsBiomeID,
+        "kepler22bDiamondPlains",
+        Config.kepler22bDiamondPlainsBiomeID,
         biomeID -> new BiomeGenKepler22bDiamondPlains(biomeID).setBiomeName("Kepler22b Diamond Plains")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase kepler22bCoalPlains = ExtraPlanets_Biomes.getBiome(
-        "kepler22bCoalPlains", Config.kepler22bCoalPlainsBiomeID,
+        "kepler22bCoalPlains",
+        Config.kepler22bCoalPlainsBiomeID,
         biomeID -> new BiomeGenKepler22bCoalPlains(biomeID).setBiomeName("Kepler22b Coal Plains")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase kepler22bIronPlains = ExtraPlanets_Biomes.getBiome(
-        "kepler22bIronPlains", Config.kepler22bIronPlainsBiomeID,
+        "kepler22bIronPlains",
+        Config.kepler22bIronPlainsBiomeID,
         biomeID -> new BiomeGenKepler22bIronPlains(biomeID).setBiomeName("Kepler22b Iron Plains")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase kepler22bGoldPlains = ExtraPlanets_Biomes.getBiome(
-        "kepler22bGoldPlains", Config.kepler22bGoldPlainsBiomeID,
+        "kepler22bGoldPlains",
+        Config.kepler22bGoldPlainsBiomeID,
         biomeID -> new BiomeGenKepler22bGoldPlains(biomeID).setBiomeName("Kepler22b Gold Plains")
             .setHeight(new Height(0.125F, 0.05F)));
     public static final BiomeGenBase kepler22bEmeraldPlains = ExtraPlanets_Biomes.getBiome(
-        "kepler22bEmeraldPlains", Config.kepler22bEmeraldPlainsBiomeID,
+        "kepler22bEmeraldPlains",
+        Config.kepler22bEmeraldPlainsBiomeID,
         biomeID -> new BiomeGenKepler22bEmeraldPlains(biomeID).setBiomeName("Kepler22b Emerald Plains")
             .setHeight(new Height(0.125F, 0.05F)));
 

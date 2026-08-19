@@ -2188,7 +2188,8 @@ public class Config {
             ExtraPlanets_Planets.ceresOverride = true;
         }
     }
-// -------------------------------------------------------------
+
+    // -------------------------------------------------------------
     // P1 — Server/client config synchronization (IDs only)
     // -------------------------------------------------------------
     // Canonical, ordered list of the server-authoritative numeric config values the
@@ -2200,54 +2201,42 @@ public class Config {
     // options (e.g. useCustomCelestialSelection, jupiterLightingClient, customFog,
     // jupiterClouds*, neiSupport, debugMode) are NOT included and are never sent.
     private static final String[] SYNC_CONFIG_FIELD_NAMES = new String[] {
-            // Dimension IDs
-            "mercuryID", "venusID", "ceresID", "jupiterID", "saturnID", "uranusID",
-            "neptuneID", "plutoID", "erisID",
-            "tritonID", "europaID", "ioID", "deimosID", "phobosID",
-            "callistoID", "ganymedeID", "rheaID", "titanID", "oberonID",
-            "titaniaID", "iapetusID", "kepler22bID",
-            // Space-station IDs (normal + static)
-            "mercurySpaceStationID", "mercurySpaceStationStaticID",
-            "venusSpaceStationID", "venusSpaceStationStaticID",
-            "ceresSpaceStationID", "ceresSpaceStationStaticID",
-            "marsSpaceStationID", "marsSpaceStationStaticID",
-            "jupiterSpaceStationID", "jupiterSpaceStationStaticID",
-            "saturnSpaceStationID", "saturnSpaceStationStaticID",
-            "uranusSpaceStationID", "uranusSpaceStationStaticID",
-            "neptuneSpaceStationID", "neptuneSpaceStationStaticID",
-            "plutoSpaceStationID", "plutoSpaceStationStaticID",
-            "erisSpaceStationID", "erisSpaceStationStaticID",
-            "kepler22bSpaceStationID", "kepler22bSpaceStationStaticID",
-            // Biome IDs
-            "mercuryBiomeID", "venusBiomeID", "ceresBiomeID",
-            "jupiterBiomeID", "jupiterSeaBiomeID", "jupiterSandsBiomeID",
-            "saturnBiomeID", "saturnHydrocarbonSeaBiomeID", "saturnNuclearLandBiomeID",
-            "uranusBiomeID", "uranusFrozenSeaBiomeID", "uranusSnowLandsBiomeID",
-            "neptuneBiomeID", "neptuneRadioActiveWaterSeaBiomeID", "neptuneLayeredHillsBiomeID",
-            "plutoBiomeID", "erisBiomeID",
-            "tritonBiomeID", "tritonIceLandsBiomeID", "tritonIceSeaBiomeID",
-            "europaBiomeID", "ioBiomeID", "ioAshLandsBiomeID", "ioBurningPlainsBiomeID",
-            "deimosBiomeID", "phobosBiomeID", "callistoBiomeID", "ganymedeBiomeID",
-            "rheaBiomeID", "titanBiomeID", "titanSeaBiomeID", "titanMethaneHillsBiomeID",
-            "oberonBiomeID", "oberonValleysBiomeID", "oberonLargeMountainBiomeID",
-            "titaniaBiomeID", "iapetusBiomeID",
-            "kepler22bPlainsBiomeID", "kepler22bBlueForestBiomeID", "kepler22bPurpleForestBiomeID",
-            "kepler22bRedForestBiomeID", "kepler22bYellowForestBiomeID", "kepler22bRedDesertBiomeID",
-            "kepler22bWasteLandsBiomeID", "kepler22bDiamondPlainsBiomeID", "kepler22bCoalPlainsBiomeID",
-            "kepler22bIronPlainsBiomeID", "kepler22bGoldPlainsBiomeID", "kepler22bEmeraldPlainsBiomeID",
-            // Schematic GUI IDs
-            "schematicTier4GUIID", "schematicTier5GUIID", "schematicTier6GUIID",
-            "schematicTier7GUIID", "schematicTier8GUIID", "schematicTier9GUIID",
-            "schematicTier10GUIID", "schematicMarsRoverGUIID", "schematicVenusRoverGUIID",
-            // Schematic page IDs
-            "schematicTier4PageID", "schematicTier5PageID", "schematicTier6PageID",
-            "schematicTier7PageID", "schematicTier8PageID", "schematicTier9PageID",
-            "schematicTier10PageID", "schematicMarsRoverPageID", "schematicVenusRoverPageID",
-    };
+        // Dimension IDs
+        "mercuryID", "venusID", "ceresID", "jupiterID", "saturnID", "uranusID", "neptuneID", "plutoID", "erisID",
+        "tritonID", "europaID", "ioID", "deimosID", "phobosID", "callistoID", "ganymedeID", "rheaID", "titanID",
+        "oberonID", "titaniaID", "iapetusID", "kepler22bID",
+        // Space-station IDs (normal + static)
+        "mercurySpaceStationID", "mercurySpaceStationStaticID", "venusSpaceStationID", "venusSpaceStationStaticID",
+        "ceresSpaceStationID", "ceresSpaceStationStaticID", "marsSpaceStationID", "marsSpaceStationStaticID",
+        "jupiterSpaceStationID", "jupiterSpaceStationStaticID", "saturnSpaceStationID", "saturnSpaceStationStaticID",
+        "uranusSpaceStationID", "uranusSpaceStationStaticID", "neptuneSpaceStationID", "neptuneSpaceStationStaticID",
+        "plutoSpaceStationID", "plutoSpaceStationStaticID", "erisSpaceStationID", "erisSpaceStationStaticID",
+        "kepler22bSpaceStationID", "kepler22bSpaceStationStaticID",
+        // Biome IDs
+        "mercuryBiomeID", "venusBiomeID", "ceresBiomeID", "jupiterBiomeID", "jupiterSeaBiomeID", "jupiterSandsBiomeID",
+        "saturnBiomeID", "saturnHydrocarbonSeaBiomeID", "saturnNuclearLandBiomeID", "uranusBiomeID",
+        "uranusFrozenSeaBiomeID", "uranusSnowLandsBiomeID", "neptuneBiomeID", "neptuneRadioActiveWaterSeaBiomeID",
+        "neptuneLayeredHillsBiomeID", "plutoBiomeID", "erisBiomeID", "tritonBiomeID", "tritonIceLandsBiomeID",
+        "tritonIceSeaBiomeID", "europaBiomeID", "ioBiomeID", "ioAshLandsBiomeID", "ioBurningPlainsBiomeID",
+        "deimosBiomeID", "phobosBiomeID", "callistoBiomeID", "ganymedeBiomeID", "rheaBiomeID", "titanBiomeID",
+        "titanSeaBiomeID", "titanMethaneHillsBiomeID", "oberonBiomeID", "oberonValleysBiomeID",
+        "oberonLargeMountainBiomeID", "titaniaBiomeID", "iapetusBiomeID", "kepler22bPlainsBiomeID",
+        "kepler22bBlueForestBiomeID", "kepler22bPurpleForestBiomeID", "kepler22bRedForestBiomeID",
+        "kepler22bYellowForestBiomeID", "kepler22bRedDesertBiomeID", "kepler22bWasteLandsBiomeID",
+        "kepler22bDiamondPlainsBiomeID", "kepler22bCoalPlainsBiomeID", "kepler22bIronPlainsBiomeID",
+        "kepler22bGoldPlainsBiomeID", "kepler22bEmeraldPlainsBiomeID",
+        // Schematic GUI IDs
+        "schematicTier4GUIID", "schematicTier5GUIID", "schematicTier6GUIID", "schematicTier7GUIID",
+        "schematicTier8GUIID", "schematicTier9GUIID", "schematicTier10GUIID", "schematicMarsRoverGUIID",
+        "schematicVenusRoverGUIID",
+        // Schematic page IDs
+        "schematicTier4PageID", "schematicTier5PageID", "schematicTier6PageID", "schematicTier7PageID",
+        "schematicTier8PageID", "schematicTier9PageID", "schematicTier10PageID", "schematicMarsRoverPageID",
+        "schematicVenusRoverPageID", };
 
     private static ArrayList<Object> clientConfigOverrideSave;
 
-/**
+    /**
      * Decode-class array for the C_UPDATE_CONFIGS packet. Every synced value is an int.
      */
     public static Class<?>[] getConfigSyncDecodeClasses() {
@@ -2265,7 +2254,9 @@ public class Config {
         ArrayList<Object> data = new ArrayList<Object>();
         for (String name : Config.SYNC_CONFIG_FIELD_NAMES) {
             try {
-                data.add(Config.class.getField(name).getInt(null));
+                data.add(
+                    Config.class.getField(name)
+                        .getInt(null));
             } catch (Exception e) {
                 GCLog.severe("[ExtraPlanets] Config sync: cannot read field '" + name + "': " + e.getMessage());
             }
@@ -2300,7 +2291,12 @@ public class Config {
                 int newValue = ((Number) configs.get(i)).intValue();
                 int oldValue = field.getInt(null);
                 if (oldValue != newValue) {
-                    GCLog.info("[ExtraPlanets] Config override (" + name + "): " + oldValue + " -> " + newValue
+                    GCLog.info(
+                        "[ExtraPlanets] Config override (" + name
+                            + "): "
+                            + oldValue
+                            + " -> "
+                            + newValue
                             + " (server is authoritative; adjust config/ExtraPlanets.cfg to match)");
                 }
                 field.setInt(null, newValue);
