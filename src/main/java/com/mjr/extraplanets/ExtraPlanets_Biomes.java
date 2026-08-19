@@ -77,10 +77,12 @@ public class ExtraPlanets_Biomes {
             return fallbackID;
         }
 
-        // BiomeGenBase.getBiome returns the biome occupying a slot, or ocean (ID 0) if the slot is
-        // empty. The ocean biome itself owns slot 0, so ID 0 is never treated as a conflict here.
+        // BiomeGenBase.getBiome returns the biome occupying a slot when that ID is in range, or null
+        // if the slot is empty (only out-of-bounds IDs fall back to ocean). A null occupant therefore
+        // means the slot is genuinely unused -> no conflict, use the configured ID as-is.
+        // The ocean biome itself owns slot 0, so ID 0 is never treated as a conflict here either.
         BiomeGenBase occupant = BiomeGenBase.getBiome(configuredID);
-        if (configuredID != 0 && occupant != BiomeGenBase.ocean) {
+        if (configuredID != 0 && occupant != null && occupant != BiomeGenBase.ocean) {
             if (BIOMES.containsValue(occupant)) {
                 String owner = findOwnerName(occupant);
                 GCLog.severe(
@@ -120,9 +122,11 @@ public class ExtraPlanets_Biomes {
     }
 
     private static int findFreeBiomeID() {
-        // IDs 1-255; slot 0 always belongs to the vanilla ocean biome.
+        // IDs 1-255; slot 0 always belongs to the vanilla ocean biome. A slot is free only when
+        // biomeList[id] is null (BiomeGenBase.getBiome returns null for an in-range empty slot).
+        // Slots that already hold a real biome - including ocean, which owns slot 0 - are taken.
         for (int id = 1; id <= 255; id++) {
-            if (BiomeGenBase.getBiome(id) == BiomeGenBase.ocean) {
+            if (BiomeGenBase.getBiome(id) == null) {
                 return id;
             }
         }

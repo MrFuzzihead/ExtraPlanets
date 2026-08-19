@@ -12,6 +12,7 @@ import com.mjr.extraplanets.blocks.ExtraPlanets_SlabsStairsBlocks;
 import com.mjr.extraplanets.blocks.fluid.ExtraPlanets_Fluids;
 import com.mjr.extraplanets.blocks.machines.ExtraPlanets_Machines;
 import com.mjr.extraplanets.client.gui.GuiHandler;
+import com.mjr.extraplanets.compatibility.ic2.IC2MachineRecipes;
 import com.mjr.extraplanets.entities.EntityFireBombPrimed;
 import com.mjr.extraplanets.entities.EntityNuclearBombPrimed;
 import com.mjr.extraplanets.entities.bosses.EntityEvolvedFireBatBoss;
@@ -289,6 +290,10 @@ public class ExtraPlanets {
 
         // Register Recipes
         ExtraPlanets_Recipes.init();
+
+        // Register IndustrialCraft 2 machine recipes for the aluminum/titanium ore processing chain
+        // (no-op when IC2 is not installed).
+        IC2MachineRecipes.init();
 
         // Initialize/Register Achievements
         if (Config.achievements) ExtraPlanets_Achievements.init();
