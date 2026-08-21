@@ -15,13 +15,19 @@ import micdoodle8.mods.galacticraft.core.util.GCLog;
  * numeric biome ID in their biome data, so a biome's ID is effectively part of every world's save
  * format.
  * <p>
+ * Some modpacks use {@code EndlessIDs} (or similar ASM patchers) to extend the biome array well
+ * beyond the vanilla 256 slots. This registry detects that at runtime by reading
+ * {@link BiomeGenBase#getBiomeGenArray() getBiomeGenArray()}{@code .length} and uses the actual
+ * dynamic bound instead of the hardcoded 255, so it works seamlessly with or without an array
+ * extender.
+ * <p>
  * Because of that, {@link #getBiome} deliberately never remaps an existing config value:
  * <ul>
  * <li>It KEEPS the configured ID whenever it is within the valid 0-255 range - even if it collides
  * with another mod's biome - so existing configs and worlds are never remapped.</li>
  * <li>It DETECTS and loudly LOGS any collision with another mod's biome, naming the slot and the
  * biome currently occupying it, so the user can fix the value in their config by hand.</li>
- * <li>It only relocates an ID that is OUT of the 0-255 range (which would otherwise crash
+ * <li>It only relocates an ID that is OUT of the valid range (which would otherwise crash
  * <code>biomeList[id] = ...</code> with an {@link ArrayIndexOutOfBoundsException}), as a last
  * resort to keep the game running, and logs a clear message to fix the config.</li>
  * <li>It never constructs a biome until the first time it is actually requested, which for
@@ -62,18 +68,25 @@ public class ExtraPlanets_Biomes {
     }
 
     private static int resolveBiomeID(String biomeName, int configuredID) {
-        if (configuredID < 0 || configuredID > 255) {
+        final int maxID = BiomeGenBase.getBiomeGenArray().length - 1;
+        if (configuredID < 0 || configuredID > maxID) {
             int fallbackID = findFreeBiomeID();
             GCLog.severe(
                 "[ExtraPlanets] The Biome ID for '" + biomeName
                     + "' is "
                     + configuredID
-                    + ", which is outside the valid 0-255 range for Minecraft 1.7.10, so it would crash. "
+                    + ", which is outside the valid 0-"
+                    + maxID
+                    + " range on this instance"
+                    + (maxID == 255 ? "" : " (EndlessIDs or similar extends the array)")
+                    + ", so it would crash. "
                     + "Using the unused ID "
                     + fallbackID
                     + " instead. Please set the '"
                     + biomeName
-                    + " Biome ID' value in config/ExtraPlanets.cfg to an unused number in the range 0-255 and restart.");
+                    + " Biome ID' value in config/ExtraPlanets.cfg to an unused number in the range 0-"
+                    + maxID
+                    + " and restart.");
             return fallbackID;
         }
 
@@ -93,7 +106,9 @@ public class ExtraPlanets_Biomes {
                         + owner
                         + "'. Both share the same ID, which will corrupt generated terrain. "
                         + "To resolve this, change one of the two '... Biome ID' values in config/ExtraPlanets.cfg "
-                        + "to an unused number in the range 0-255 and restart.");
+                        + "to an unused number in the range 0-"
+                        + maxID
+                        + " and restart.");
             } else {
                 String occupantName = occupant.getClass()
                     .getSimpleName();
@@ -106,7 +121,9 @@ public class ExtraPlanets_Biomes {
                         + "'. Both share the same ID, which can corrupt generated terrain. "
                         + "To resolve this, change the '"
                         + biomeName
-                        + " Biome ID' value in config/ExtraPlanets.cfg to an unused number in the range 0-255 and restart.");
+                        + " Biome ID' value in config/ExtraPlanets.cfg to an unused number in the range 0-"
+                        + maxID
+                        + " and restart.");
             }
         }
         return configuredID;
@@ -122,16 +139,18 @@ public class ExtraPlanets_Biomes {
     }
 
     private static int findFreeBiomeID() {
-        // IDs 1-255; slot 0 always belongs to the vanilla ocean biome. A slot is free only when
-        // biomeList[id] is null (BiomeGenBase.getBiome returns null for an in-range empty slot).
-        // Slots that already hold a real biome - including ocean, which owns slot 0 - are taken.
-        for (int id = 1; id <= 255; id++) {
+        final int arrayLen = BiomeGenBase.getBiomeGenArray().length;
+        // Skip slot 0 (vanilla ocean biome). A slot is free only when biomeList[id] is null
+        // (BiomeGenBase.getBiome returns null for an in-range empty slot). After EndlessIDs (or
+        // similar extenders) patching the array, there may be thousands of free slots > 255.
+        for (int id = 1; id < arrayLen; id++) {
             if (BiomeGenBase.getBiome(id) == null) {
                 return id;
             }
         }
         GCLog.severe(
-            "[ExtraPlanets] No free biome IDs remain in the entire 0-255 range! This indicates a severe "
+            "[ExtraPlanets] No free biome IDs remain in the entire 0-" + (arrayLen - 1)
+                + " range! This indicates a severe "
                 + "biome conflict with other mods. Falling back to ID 0 (the ocean biome) so the game can continue, "
                 + "but this world will have corrupted biomes.");
         return 0;
