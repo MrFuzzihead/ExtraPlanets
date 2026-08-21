@@ -1085,12 +1085,12 @@ item.tier0_space_suit_chest.name=Temporary Space Suit Chestplate ##NEEDS TRANSLA
 item.tier0_space_suit_legings.name=Temporary Space Suit Leggings ##NEEDS TRANSLATE##
 item.tier0_space_suit_boots.name=Temporary Space Suit Boots ##NEEDS TRANSLATE##item.green_diamond_boots.name=Bottes en diamant vert
 
-item.tier1_space_suit_helmet.name=Casque de combinaison spatiale Niveau 1
-item.tier1_space_suit_chest.name=Plastron de combinaison spatiale Niveau 1
-item.tier1_space_suit_jetpack_chest.name=Plastron jetpack de combinaison spatiale Niveau 1
-item.tier1_space_suit_legings.name=Jambières de combinaison spatiale Niveau 1
-item.tier1_space_suit_boots.name=Bottes de combinaison spatiale Niveau 1
-item.tier1_space_suit_gravity_boots.name=Bottes de garvité de combinaison spatiale Niveau 1
+item.space_suit_helmet.name=Casque de combinaison spatiale Niveau 1
+item.space_suit_chest.name=Plastron de combinaison spatiale Niveau 1
+item.space_suit_jetpack_chest.name=Plastron jetpack de combinaison spatiale Niveau 1
+item.space_suit_legings.name=Jambières de combinaison spatiale Niveau 1
+item.space_suit_boots.name=Bottes de combinaison spatiale Niveau 1
+item.space_suit_gravity_boots.name=Bottes de garvité de combinaison spatiale Niveau 1
 item.tier2_space_suit_helmet.name=Casque de combinaison spatiale Niveau 2
 item.tier2_space_suit_chest.name=Plastron de combinaison spatiale Niveau 2
 item.tier2_space_suit_jetpack_chest.name=Plastron jetpack de combinaison spatiale Niveau 2

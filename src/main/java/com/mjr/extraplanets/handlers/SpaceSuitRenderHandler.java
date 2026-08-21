@@ -8,7 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraftforge.client.event.RenderPlayerEvent;
 import net.minecraftforge.common.MinecraftForge;
 
-import com.mjr.extraplanets.armor.Tier1SpaceSuitArmor;
+import com.mjr.extraplanets.armor.SpaceSuitArmor;
 import com.mjr.extraplanets.client.model.ArmorCustomModel;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -175,6 +175,6 @@ public class SpaceSuitRenderHandler {
             return false;
         }
         ItemStack stack = player.inventory.armorItemInSlot(armorSlot);
-        return stack != null && stack.getItem() instanceof Tier1SpaceSuitArmor;
+        return stack != null && stack.getItem() instanceof SpaceSuitArmor;
     }
 }

@@ -2421,10 +2421,10 @@ public class ExtraPlanets_Recipes {
      */
     private static void registerSpaceSuitRecipes() {
         if (Config.pressure || Config.radiation) {
-            Item helmet = ExtraPlanets_Armor.tier1SpaceSuitHelmet;
-            Item chest = ExtraPlanets_Armor.tier1SpaceSuitChest;
-            Item leggings = ExtraPlanets_Armor.tier1SpaceSuitLegings;
-            Item boots = ExtraPlanets_Armor.tier1SpaceSuitBoots;
+            Item helmet = ExtraPlanets_Armor.spaceSuitHelmet;
+            Item chest = ExtraPlanets_Armor.spaceSuitChest;
+            Item leggings = ExtraPlanets_Armor.spaceSuitLegings;
+            Item boots = ExtraPlanets_Armor.spaceSuitBoots;
             if (helmet == null || chest == null || leggings == null || boots == null) {
                 return;
             }

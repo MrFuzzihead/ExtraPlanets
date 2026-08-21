@@ -46,17 +46,16 @@ public class ExtraPlanets_Armor {
     private static ArmorMaterial green_diamond_ArmorMaterial = EnumHelper
         .addArmorMaterial("Green__diamond_Armor", 28, new int[] { 3, 8, 6, 3 }, 7);
 
-    // Beta balance: Iron-tier protection {2, 6, 5, 2} (down from Diamond-tier {3, 8, 6, 3}).
-    // Enchantable now (9 = Iron) because nothing replaces enchanting yet; when the electric
-    // charging + module sweep lands, protection modules become the upgrade path and this
-    // material's enchantability goes back to 0.
-    private static ArmorMaterial TIER_1_SPACE_SUIT_ARMOR_MATERIAL = EnumHelper
-        .addArmorMaterial("Tier1_SpaceSuit_Armor", 28, new int[] { 2, 6, 5, 2 }, 9);
+    // Single suit: ElectricArmorBase handles the enchantability (0 — upgrades via modules).
+    // Protection values are Iron-tier {2, 6, 5, 2}.
+    private static ArmorMaterial SPACE_SUIT_ARMOR_MATERIAL = EnumHelper
+        .addArmorMaterial("SpaceSuit_Armor", 28, new int[] { 2, 6, 5, 2 }, 0);
 
-    public static Item tier1SpaceSuitHelmet;
-    public static Item tier1SpaceSuitChest;
-    public static Item tier1SpaceSuitLegings;
-    public static Item tier1SpaceSuitBoots;
+    public static Item spaceSuitHelmet;
+    public static Item spaceSuitChest;
+    public static Item spaceSuitLegings;
+    public static Item spaceSuitBoots;
+    public static Item spaceSuitGravityBoots;
 
     public static Item carbonHelmet;
     public static Item carbonChest;
@@ -286,14 +285,16 @@ public class ExtraPlanets_Armor {
                 .setUnlocalizedName("green_diamond_boots");
         }
         if (Config.pressure || Config.radiation) {
-            tier1SpaceSuitHelmet = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 0)
-                .setUnlocalizedName("tier1_space_suit_helmet");
-            tier1SpaceSuitChest = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 1)
-                .setUnlocalizedName("tier1_space_suit_chest");
-            tier1SpaceSuitLegings = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 2)
-                .setUnlocalizedName("tier1_space_suit_legings");
-            tier1SpaceSuitBoots = new Tier1SpaceSuitArmor("tier1_space_suit", TIER_1_SPACE_SUIT_ARMOR_MATERIAL, 3)
-                .setUnlocalizedName("tier1_space_suit_boots");
+            spaceSuitHelmet = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 0)
+                .setUnlocalizedName("space_suit_helmet");
+            spaceSuitChest = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 1)
+                .setUnlocalizedName("space_suit_chest");
+            spaceSuitLegings = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 2)
+                .setUnlocalizedName("space_suit_legings");
+            spaceSuitBoots = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 3)
+                .setUnlocalizedName("space_suit_boots");
+            spaceSuitGravityBoots = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 3)
+                .setUnlocalizedName("space_suit_gravity_boots");
         }
     }
 
@@ -397,10 +398,11 @@ public class ExtraPlanets_Armor {
             GameRegistry.registerItem(greenDiamondBoots, "greenDiamondBoots");
         }
         if (Config.pressure || Config.radiation) {
-            GameRegistry.registerItem(tier1SpaceSuitHelmet, "tier1SpaceSuitHelmet");
-            GameRegistry.registerItem(tier1SpaceSuitChest, "tier1SpaceSuitChest");
-            GameRegistry.registerItem(tier1SpaceSuitLegings, "tier1SpaceSuitLegings");
-            GameRegistry.registerItem(tier1SpaceSuitBoots, "tier1SpaceSuitBoots");
+            GameRegistry.registerItem(spaceSuitHelmet, "spaceSuitHelmet");
+            GameRegistry.registerItem(spaceSuitChest, "spaceSuitChest");
+            GameRegistry.registerItem(spaceSuitLegings, "spaceSuitLegings");
+            GameRegistry.registerItem(spaceSuitBoots, "spaceSuitBoots");
+            GameRegistry.registerItem(spaceSuitGravityBoots, "spaceSuitGravityBoots");
         }
     }
 }
