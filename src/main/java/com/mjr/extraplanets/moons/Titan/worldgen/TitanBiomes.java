@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.moons.Titan.worldgen.biomes.BiomeGenTitan;
 import com.mjr.extraplanets.moons.Titan.worldgen.biomes.BiomeGenTitanMethaneHills;
@@ -20,14 +21,21 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class TitanBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase titan = new BiomeGenTitan(Config.titanBiomeID).setBiomeName("titan")
-        .setHeight(new Height(0.125F, 0.05F));
-    public static final BiomeGenBase titanMethaneSea = new BiomeGenTitanMethaneSea(Config.titanSeaBiomeID)
-        .setBiomeName("titanMethaneSea")
-        .setHeight(new Height(-1.0F, 0.0F));
-    public static final BiomeGenBase titanMethaneHills = new BiomeGenTitanMethaneHills(Config.titanMethaneHillsBiomeID)
-        .setBiomeName("titanMethaneHills")
-        .setHeight(new Height(0.125F, 0.55F));
+    public static final BiomeGenBase titan = ExtraPlanets_Biomes.getBiome(
+        "titan",
+        Config.titanBiomeID,
+        biomeID -> new BiomeGenTitan(biomeID).setBiomeName("titan")
+            .setHeight(new Height(0.125F, 0.05F)));
+    public static final BiomeGenBase titanMethaneSea = ExtraPlanets_Biomes.getBiome(
+        "titanMethaneSea",
+        Config.titanSeaBiomeID,
+        biomeID -> new BiomeGenTitanMethaneSea(biomeID).setBiomeName("titanMethaneSea")
+            .setHeight(new Height(-1.0F, 0.0F)));
+    public static final BiomeGenBase titanMethaneHills = ExtraPlanets_Biomes.getBiome(
+        "titanMethaneHills",
+        Config.titanMethaneHillsBiomeID,
+        biomeID -> new BiomeGenTitanMethaneHills(biomeID).setBiomeName("titanMethaneHills")
+            .setHeight(new Height(0.125F, 0.55F)));
 
     protected Block stoneBlock;
     protected byte topMeta;

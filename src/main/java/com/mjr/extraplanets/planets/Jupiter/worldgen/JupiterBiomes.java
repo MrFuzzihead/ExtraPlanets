@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.planets.Jupiter.worldgen.biomes.BiomeGenJupiter;
 import com.mjr.extraplanets.planets.Jupiter.worldgen.biomes.BiomeGenJupiterMagmaSea;
@@ -20,14 +21,21 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class JupiterBiomes extends BiomeGenBase {
 
-    public static BiomeGenBase jupiter = new BiomeGenJupiter(Config.jupiterBiomeID).setBiomeName("Jupiter")
-        .setHeight(BiomeGenBase.height_LowPlains);
-    public static BiomeGenBase jupiterMagma = new BiomeGenJupiterMagmaSea(Config.jupiterSeaBiomeID)
-        .setBiomeName("JupiterMagma")
-        .setHeight(BiomeGenBase.height_Oceans);
-    public static BiomeGenBase jupiterSands = new BiomeGenJupiterSands(Config.jupiterSandsBiomeID)
-        .setBiomeName("JupiterSands")
-        .setHeight(new Height(1.0F, 0.5F));
+    public static BiomeGenBase jupiter = ExtraPlanets_Biomes.getBiome(
+        "jupiter",
+        Config.jupiterBiomeID,
+        biomeID -> new BiomeGenJupiter(biomeID).setBiomeName("Jupiter")
+            .setHeight(BiomeGenBase.height_LowPlains));
+    public static BiomeGenBase jupiterMagma = ExtraPlanets_Biomes.getBiome(
+        "jupiterMagma",
+        Config.jupiterSeaBiomeID,
+        biomeID -> new BiomeGenJupiterMagmaSea(biomeID).setBiomeName("JupiterMagma")
+            .setHeight(BiomeGenBase.height_Oceans));
+    public static BiomeGenBase jupiterSands = ExtraPlanets_Biomes.getBiome(
+        "jupiterSands",
+        Config.jupiterSandsBiomeID,
+        biomeID -> new BiomeGenJupiterSands(biomeID).setBiomeName("JupiterSands")
+            .setHeight(new Height(1.0F, 0.5F)));
 
     protected Block stoneBlock;
     protected byte topMeta;

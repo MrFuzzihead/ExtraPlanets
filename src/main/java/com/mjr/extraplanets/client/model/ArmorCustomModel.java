@@ -1,5 +1,8 @@
 package com.mjr.extraplanets.client.model;
 
+import java.util.Map;
+import java.util.WeakHashMap;
+
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.model.ModelRenderer;
 import net.minecraft.entity.Entity;
@@ -19,13 +22,38 @@ public abstract class ArmorCustomModel extends ModelBiped {
     public int color = -1;
 
     /**
-     * The player's main {@link ModelBiped} for the entity currently being rendered, captured in
-     * {@code RenderPlayerEvent.Pre}. The suit model mirrors this model's exact limb angles in
-     * {@link #setRotationAngles} so the suit geometry stays attached to the body in every pose
-     * (held item, bow aim, blocking, sword swing, sneak, ride, etc.). Null when no player is being
-     * rendered, in which case the model falls back to computing its pose from its own fields.
+     * Per-entity pose sources, captured in {@code RenderPlayerEvent.Pre} and cleared in
+     * {@code Post} (see {@code SpaceSuitRenderHandler}). {@link #setRotationAngles} mirrors the
+     * captured main {@link ModelBiped}'s exact limb angles so the suit geometry stays attached to
+     * the body in every pose (held item, bow aim, blocking, sword swing, sneak, ride, etc.). When
+     * no pose source is registered for the entity being rendered, the model falls back to
+     * computing its pose from its own fields.
+     *
+     * <p>
+     * The poses are keyed by the <em>entity being rendered</em> rather than a single process-global
+     * so that a {@code Pre} which never gets a matching {@code Post} (e.g. after a render
+     * exception) can only ever influence a later re-render of that same entity - never a different
+     * entity's render. Entries are weakly held so they are collected once the entity unloads.
      */
-    public static ModelBiped poseSource;
+    private static final Map<Entity, ModelBiped> POSE_SOURCES = new WeakHashMap<Entity, ModelBiped>();
+
+    /** Records the main model for {@code entity} to mirror for the duration of its render. */
+    public static void setPoseSource(Entity entity, ModelBiped source) {
+        if (entity != null && source != null) {
+            POSE_SOURCES.put(entity, source);
+        }
+    }
+
+    /** Clears the mirrored model for {@code entity} once its render has finished. */
+    public static void clearPoseSource(Entity entity) {
+        if (entity != null) {
+            POSE_SOURCES.remove(entity);
+        }
+    }
+
+    private static ModelBiped getPoseSource(Entity entity) {
+        return entity == null ? null : POSE_SOURCES.get(entity);
+    }
 
     public abstract void pre();
 
@@ -46,7 +74,7 @@ public abstract class ArmorCustomModel extends ModelBiped {
     @Override
     public void setRotationAngles(float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw,
         float headPitch, float scale, Entity entity) {
-        final ModelBiped source = ArmorCustomModel.poseSource;
+        final ModelBiped source = getPoseSource(entity);
         if (source != null) {
             // Mirror the exact pose of the player's main model so the suit stays attached to the
             // body in every pose (held item, bow aim, blocking, swing, sneak, ride, etc.).

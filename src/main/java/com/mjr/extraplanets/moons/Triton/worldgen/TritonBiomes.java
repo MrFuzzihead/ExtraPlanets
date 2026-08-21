@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.moons.Triton.worldgen.biomes.BiomeGenTriton;
 import com.mjr.extraplanets.moons.Triton.worldgen.biomes.BiomeGenTritonIceLands;
@@ -20,14 +21,21 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class TritonBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase triton = new BiomeGenTriton(Config.tritonBiomeID).setBiomeName("triton")
-        .setHeight(new Height(0.125F, 0.05F));
-    public static final BiomeGenBase tritonMethaneSea = new BiomeGenTritonIceSea(Config.tritonIceSeaBiomeID)
-        .setBiomeName("tritonIceSea")
-        .setHeight(new Height(-1.0F, 0.0F));
-    public static final BiomeGenBase tritonMethaneHills = new BiomeGenTritonIceLands(Config.tritonIceLandsBiomeID)
-        .setBiomeName("tritonIceLands")
-        .setHeight(new Height(2.5F, 0.4F));
+    public static final BiomeGenBase triton = ExtraPlanets_Biomes.getBiome(
+        "triton",
+        Config.tritonBiomeID,
+        biomeID -> new BiomeGenTriton(biomeID).setBiomeName("triton")
+            .setHeight(new Height(0.125F, 0.05F)));
+    public static final BiomeGenBase tritonMethaneSea = ExtraPlanets_Biomes.getBiome(
+        "tritonSea",
+        Config.tritonIceSeaBiomeID,
+        biomeID -> new BiomeGenTritonIceSea(biomeID).setBiomeName("tritonIceSea")
+            .setHeight(new Height(-1.0F, 0.0F)));
+    public static final BiomeGenBase tritonMethaneHills = ExtraPlanets_Biomes.getBiome(
+        "tritonIceLands",
+        Config.tritonIceLandsBiomeID,
+        biomeID -> new BiomeGenTritonIceLands(biomeID).setBiomeName("tritonIceLands")
+            .setHeight(new Height(2.5F, 0.4F)));
 
     protected Block stoneBlock;
     protected byte topMeta;

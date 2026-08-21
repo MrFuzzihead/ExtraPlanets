@@ -3,13 +3,17 @@ package com.mjr.extraplanets.moons.Callisto.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class CallistoBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase callisto = new BiomeGenCallisto(Config.callistoBiomeID).setBiomeName("callisto");
+    public static final BiomeGenBase callisto = ExtraPlanets_Biomes.getBiome(
+        "callisto",
+        Config.callistoBiomeID,
+        biomeID -> new BiomeGenCallisto(biomeID).setBiomeName("callisto"));
 
     @SuppressWarnings("unchecked")
     CallistoBiomes(int var1) {

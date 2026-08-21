@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.moons.Io.worldgen.biomes.BiomeGenIo;
 import com.mjr.extraplanets.moons.Io.worldgen.biomes.BiomeGenIoAshLands;
@@ -20,14 +21,21 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class IoBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase io = new BiomeGenIo(Config.ioBiomeID).setBiomeName("io")
-        .setHeight(new Height(0.125F, 0.05F));
-    public static final BiomeGenBase ioAshLands = new BiomeGenIoAshLands(Config.ioAshLandsBiomeID)
-        .setBiomeName("ioAshLands")
-        .setHeight(new Height(2.0F, 2.0F));
-    public static final BiomeGenBase ioBurningPlains = new BiomeGenIoBurningPlains(Config.ioBurningPlainsBiomeID)
-        .setBiomeName("ioBurningPlains")
-        .setHeight(new Height(0.125F, 0.015F));
+    public static final BiomeGenBase io = ExtraPlanets_Biomes.getBiome(
+        "io",
+        Config.ioBiomeID,
+        biomeID -> new BiomeGenIo(biomeID).setBiomeName("io")
+            .setHeight(new Height(0.125F, 0.05F)));
+    public static final BiomeGenBase ioAshLands = ExtraPlanets_Biomes.getBiome(
+        "ioAshLands",
+        Config.ioAshLandsBiomeID,
+        biomeID -> new BiomeGenIoAshLands(biomeID).setBiomeName("ioAshLands")
+            .setHeight(new Height(2.0F, 2.0F)));
+    public static final BiomeGenBase ioBurningPlains = ExtraPlanets_Biomes.getBiome(
+        "ioBurningPlains",
+        Config.ioBurningPlainsBiomeID,
+        biomeID -> new BiomeGenIoBurningPlains(biomeID).setBiomeName("ioBurningPlains")
+            .setHeight(new Height(0.125F, 0.015F)));
 
     protected Block stoneBlock;
     protected byte topMeta;

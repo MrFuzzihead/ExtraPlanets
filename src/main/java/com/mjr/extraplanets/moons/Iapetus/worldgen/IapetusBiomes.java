@@ -3,13 +3,15 @@ package com.mjr.extraplanets.moons.Iapetus.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class IapetusBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase iapetus = new BiomeGenIapetus(Config.iapetusBiomeID).setBiomeName("iapetus");
+    public static final BiomeGenBase iapetus = ExtraPlanets_Biomes
+        .getBiome("iapetus", Config.iapetusBiomeID, biomeID -> new BiomeGenIapetus(biomeID).setBiomeName("iapetus"));
 
     @SuppressWarnings("unchecked")
     IapetusBiomes(int var1) {

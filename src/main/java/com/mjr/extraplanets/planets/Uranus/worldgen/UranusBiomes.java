@@ -10,6 +10,7 @@ import net.minecraft.world.biome.BiomeDecorator;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.planets.Uranus.worldgen.biomes.BiomeGenUranus;
 import com.mjr.extraplanets.planets.Uranus.worldgen.biomes.BiomeGenUranusFrozenSea;
@@ -20,14 +21,21 @@ import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class UranusBiomes extends BiomeGenBase {
 
-    public static BiomeGenBase uranus = new BiomeGenUranus(Config.uranusBiomeID).setBiomeName("Uranus")
-        .setHeight(BiomeGenBase.height_LowPlains);
-    public static BiomeGenBase uranusFrozenSea = new BiomeGenUranusFrozenSea(Config.uranusFrozenSeaBiomeID)
-        .setBiomeName("UranusFrozenSea")
-        .setHeight(BiomeGenBase.height_Oceans);
-    public static BiomeGenBase uranusSnowLands = new BiomeGenUranusSnowLands(Config.uranusSnowLandsBiomeID)
-        .setBiomeName("UranusSnowLands")
-        .setHeight(new Height(0.825F, 0.25F));
+    public static BiomeGenBase uranus = ExtraPlanets_Biomes.getBiome(
+        "uranus",
+        Config.uranusBiomeID,
+        biomeID -> new BiomeGenUranus(biomeID).setBiomeName("Uranus")
+            .setHeight(BiomeGenBase.height_LowPlains));
+    public static BiomeGenBase uranusFrozenSea = ExtraPlanets_Biomes.getBiome(
+        "uranusFrozenSea",
+        Config.uranusFrozenSeaBiomeID,
+        biomeID -> new BiomeGenUranusFrozenSea(biomeID).setBiomeName("UranusFrozenSea")
+            .setHeight(BiomeGenBase.height_Oceans));
+    public static BiomeGenBase uranusSnowLands = ExtraPlanets_Biomes.getBiome(
+        "uranusSnowLands",
+        Config.uranusSnowLandsBiomeID,
+        biomeID -> new BiomeGenUranusSnowLands(biomeID).setBiomeName("UranusSnowLands")
+            .setHeight(new Height(0.825F, 0.25F)));
 
     protected Block stoneBlock;
     protected byte topMeta;

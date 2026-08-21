@@ -11,6 +11,7 @@ import net.minecraft.network.INetHandler;
 import net.minecraft.network.Packet;
 import net.minecraft.network.PacketBuffer;
 
+import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.client.gui.vehicles.GuiPoweredVehicleBase;
 import com.mjr.extraplanets.client.gui.vehicles.GuiVehicleBase;
 import com.mjr.extraplanets.entities.vehicles.EntityPoweredVehicleBase;
@@ -38,7 +39,9 @@ public class PacketSimple extends Packet implements IPacket {
         S_OPEN_POWER_GUI(Side.SERVER, String.class),
 
         // CLIENT
-        C_OPEN_PARACHEST_GUI(Side.CLIENT, Integer.class, Integer.class, Integer.class);
+        C_OPEN_PARACHEST_GUI(Side.CLIENT, Integer.class, Integer.class, Integer.class),
+        // P1: server pushes its authoritative Dimension/Biome/Schematic GUI/Page IDs
+        C_UPDATE_CONFIGS(Side.CLIENT, Config.getConfigSyncDecodeClasses());
 
         private Side targetSide;
         private Class<?>[] decodeAs;
@@ -89,7 +92,21 @@ public class PacketSimple extends Packet implements IPacket {
 
     @Override
     public void decodeInto(ChannelHandlerContext context, ByteBuf buffer) {
-        this.type = EnumSimplePacket.values()[buffer.readInt()];
+        if (buffer.readableBytes() < 4) {
+            GCLog.severe("[ExtraPlanets] Received a simple packet too short to contain a packet type. Discarding it.");
+            return;
+        }
+        int typeOrdinal = buffer.readInt();
+        EnumSimplePacket[] types = EnumSimplePacket.values();
+        if (typeOrdinal < 0 || typeOrdinal >= types.length) {
+            GCLog.severe(
+                "[ExtraPlanets] Received a simple packet with invalid type ordinal " + typeOrdinal
+                    + " (valid range is 0-"
+                    + (types.length - 1)
+                    + "). Discarding the malformed packet.");
+            return;
+        }
+        this.type = types[typeOrdinal];
 
         try {
             if (this.type.getDecodeClasses().length > 0) {
@@ -109,6 +126,7 @@ public class PacketSimple extends Packet implements IPacket {
     @SideOnly(Side.CLIENT)
     @Override
     public void handleClientSide(EntityPlayer player) {
+        if (this.type == null) return; // a malformed packet was discarded during decoding
         EntityClientPlayerMP playerBaseClient = null;
         GCPlayerStatsClient stats = null;
 
@@ -143,6 +161,10 @@ public class PacketSimple extends Packet implements IPacket {
                         break;
                 }
                 break;
+            case C_UPDATE_CONFIGS:
+                Config.saveClientConfigOverrideable();
+                Config.setConfigOverride(this.data);
+                break;
             default:
                 break;
         }
@@ -150,6 +172,7 @@ public class PacketSimple extends Packet implements IPacket {
 
     @Override
     public void handleServerSide(EntityPlayer player) {
+        if (this.type == null) return; // a malformed packet was discarded during decoding
         EntityPlayerMP playerBase = PlayerUtil.getPlayerBaseServerFromPlayer(player, false);
 
         if (playerBase == null) {

@@ -3,13 +3,15 @@ package com.mjr.extraplanets.moons.Titania.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class TitaniaBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase titania = new BiomeGenTitania(Config.titaniaBiomeID).setBiomeName("titania");
+    public static final BiomeGenBase titania = ExtraPlanets_Biomes
+        .getBiome("titania", Config.titaniaBiomeID, biomeID -> new BiomeGenTitania(biomeID).setBiomeName("titania"));
 
     @SuppressWarnings("unchecked")
     TitaniaBiomes(int var1) {

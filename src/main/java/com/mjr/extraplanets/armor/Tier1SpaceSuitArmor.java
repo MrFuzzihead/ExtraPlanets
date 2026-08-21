@@ -1,7 +1,8 @@
 package com.mjr.extraplanets.armor;
 
-import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import net.minecraft.client.model.ModelBiped;
 import net.minecraft.client.settings.GameSettings;
@@ -30,7 +31,13 @@ import micdoodle8.mods.galacticraft.core.util.EnumColor;
 public class Tier1SpaceSuitArmor extends ItemArmor
     implements IPressureSuit, IRadiationSuit, IArmorGravity, IBreathableArmor {
 
-    public static HashMap<Integer, ArmorSpaceSuitModel> models = new HashMap<Integer, ArmorSpaceSuitModel>();
+    /**
+     * Per-entity armor models, keyed by the living entity wearing the suit (weakly held so they are
+     * collected once the entity unloads). Each entity owns its own set of 4 models (one per armor
+     * slot), so the mutable {@code isSneak}/{@code isRiding}/{@code isChild}/{@code heldItem} and
+     * pose state on an {@link ArmorSpaceSuitModel} is never shared across players.
+     */
+    private static final Map<EntityLivingBase, ArmorSpaceSuitModel[]> entityModels = new WeakHashMap<EntityLivingBase, ArmorSpaceSuitModel[]>();
     public String name;
 
     public Tier1SpaceSuitArmor(String name, ArmorMaterial material, int placement) {
@@ -56,9 +63,13 @@ public class Tier1SpaceSuitArmor extends ItemArmor
             return Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_1.png";
         } else if (stack.getItem() == ExtraPlanets_Armor.tier1SpaceSuitLegings) {
             return Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_2.png";
-        } else {
-            return null;
         }
+        // Never return null: RenderBiped binds whatever this returns, and a null can NPE / hit the
+        // missing-texture path. This branch is effectively unreachable for the four suit pieces
+        // (they are all matched above), so fall back to the correct layer for the render slot
+        // (2 = leggings use layer 2; every other slot uses layer 1).
+        return slot == 2 ? Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_2.png"
+            : Constants.TEXTURE_PREFIX + "textures/model/armor/tier1_space_suit_layer_1.png";
     }
 
     @Override
@@ -82,11 +93,40 @@ public class Tier1SpaceSuitArmor extends ItemArmor
 
     @Override
     public boolean handleGearType(IBreathableArmor.EnumGearType gearType) {
-        return true;
+        // Which GC oxygen component this suit piece replaces. Each piece only declares the
+        // component(s) it actually carries, so a single stray piece cannot satisfy the whole
+        // oxygen setup (and cannot replace the mask/gear/tanks on its own).
+        // ItemArmor.armorType: 0 = helmet, 1 = chest, 2 = legs, 3 = boots.
+        switch (gearType) {
+            case HELMET:
+                // The helmet replaces the oxygen mask.
+                return this.armorType == 0;
+            case GEAR:
+            case TANK1:
+            case TANK2:
+                // The chestpiece carries the oxygen harness and the integrated tanks.
+                return this.armorType == 1;
+            default:
+                return false;
+        }
     }
 
     @Override
     public boolean canBreathe(ItemStack helmetInSlot, EntityPlayer playerWearing, IBreathableArmor.EnumGearType type) {
+        // The suit is a single, sealed pressure garment. Breathing is only possible while the
+        // full four-piece set is worn; a lone helmet (or any single piece) has no sealed body
+        // to supply air to.
+        return isFullSuitWorn(playerWearing);
+    }
+
+    private static boolean isFullSuitWorn(EntityPlayer player) {
+        // 1.7.10 armor slots: 0 = boots, 1 = legs, 2 = chest, 3 = head.
+        for (int slot = 0; slot < 4; slot++) {
+            ItemStack stack = player.inventory.armorItemInSlot(slot);
+            if (stack == null || !(stack.getItem() instanceof Tier1SpaceSuitArmor)) {
+                return false;
+            }
+        }
         return true;
     }
 
@@ -133,10 +173,15 @@ public class Tier1SpaceSuitArmor extends ItemArmor
     @Override
     @SideOnly(Side.CLIENT)
     public ModelBiped getArmorModel(EntityLivingBase entityLiving, ItemStack itemStack, int armorSlot) {
-        if (models.get(armorSlot) == null) {
-            models.put(armorSlot, new ArmorSpaceSuitModel(armorSlot));
+        ArmorSpaceSuitModel[] slots = entityModels.get(entityLiving);
+        if (slots == null) {
+            slots = new ArmorSpaceSuitModel[4];
+            entityModels.put(entityLiving, slots);
         }
-        ModelBiped armorModel = models.get(armorSlot);
+        if (slots[armorSlot] == null) {
+            slots[armorSlot] = new ArmorSpaceSuitModel(armorSlot);
+        }
+        ModelBiped armorModel = slots[armorSlot];
         if (itemStack.getItem() instanceof Tier1SpaceSuitArmor) {
             armorModel = fillingArmorModel(armorModel, entityLiving);
         }

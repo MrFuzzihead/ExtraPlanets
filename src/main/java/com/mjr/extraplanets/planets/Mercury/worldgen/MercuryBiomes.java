@@ -3,13 +3,15 @@ package com.mjr.extraplanets.planets.Mercury.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class MercuryBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase mercury = new BiomeGenMercury(Config.mercuryBiomeID).setBiomeName("mercury");
+    public static final BiomeGenBase mercury = ExtraPlanets_Biomes
+        .getBiome("mercury", Config.mercuryBiomeID, biomeID -> new BiomeGenMercury(biomeID).setBiomeName("mercury"));
 
     @SuppressWarnings("unchecked")
     MercuryBiomes(int var1) {

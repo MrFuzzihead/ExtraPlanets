@@ -3,13 +3,15 @@ package com.mjr.extraplanets.planets.Eris.worldgen;
 import net.minecraft.world.biome.BiomeGenBase;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.ExtraPlanets_Biomes;
 
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedSpider;
 import micdoodle8.mods.galacticraft.core.entities.EntityEvolvedZombie;
 
 public class ErisBiomes extends BiomeGenBase {
 
-    public static final BiomeGenBase eris = new BiomeGenEris(Config.erisBiomeID).setBiomeName("eris");
+    public static final BiomeGenBase eris = ExtraPlanets_Biomes
+        .getBiome("eris", Config.erisBiomeID, biomeID -> new BiomeGenEris(biomeID).setBiomeName("eris"));
 
     @SuppressWarnings("unchecked")
     ErisBiomes(int var1) {

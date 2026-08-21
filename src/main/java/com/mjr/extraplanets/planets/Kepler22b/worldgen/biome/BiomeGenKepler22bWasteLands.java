@@ -2,14 +2,13 @@ package com.mjr.extraplanets.planets.Kepler22b.worldgen.biome;
 
 import net.minecraft.entity.monster.EntityCaveSpider;
 
-import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.planets.Kepler22b.worldgen.Kepler22bBiomes;
 
 public class BiomeGenKepler22bWasteLands extends Kepler22bBiomes {
 
-    public BiomeGenKepler22bWasteLands() {
-        super(Config.kepler22bWasteLandsBiomeID);
+    public BiomeGenKepler22bWasteLands(int biomeID) {
+        super(biomeID);
         this.enableRain = true;
         this.enableSnow = true;
         this.setTemperatureRainfall(0.8F, 0.9F);

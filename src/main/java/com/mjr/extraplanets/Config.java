@@ -1,11 +1,19 @@
 package com.mjr.extraplanets;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 import net.minecraftforge.common.config.Configuration;
 
 import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
 import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
+
+import cpw.mods.fml.relauncher.Side;
+import cpw.mods.fml.relauncher.SideOnly;
+import micdoodle8.mods.galacticraft.core.util.GCLog;
 
 public class Config {
 
@@ -2181,4 +2189,131 @@ public class Config {
         }
     }
 
+    // -------------------------------------------------------------
+    // P1 — Server/client config synchronization (IDs only)
+    // -------------------------------------------------------------
+    // Canonical, ordered list of the server-authoritative numeric config values the
+    // client MUST agree with (dimension IDs, space-station IDs, biome IDs, schematic
+    // GUI/page IDs). Both the server-side serialisation and the client-side apply are
+    // driven by THIS ONE list, so their ordering can never drift apart.
+    //
+    // It is intentionally the *IDs only* subset. Client-only rendering / preference
+    // options (e.g. useCustomCelestialSelection, jupiterLightingClient, customFog,
+    // jupiterClouds*, neiSupport, debugMode) are NOT included and are never sent.
+    private static final String[] SYNC_CONFIG_FIELD_NAMES = new String[] {
+        // Dimension IDs
+        "mercuryID", "venusID", "ceresID", "jupiterID", "saturnID", "uranusID", "neptuneID", "plutoID", "erisID",
+        "tritonID", "europaID", "ioID", "deimosID", "phobosID", "callistoID", "ganymedeID", "rheaID", "titanID",
+        "oberonID", "titaniaID", "iapetusID", "kepler22bID",
+        // Space-station IDs (normal + static)
+        "mercurySpaceStationID", "mercurySpaceStationStaticID", "venusSpaceStationID", "venusSpaceStationStaticID",
+        "ceresSpaceStationID", "ceresSpaceStationStaticID", "marsSpaceStationID", "marsSpaceStationStaticID",
+        "jupiterSpaceStationID", "jupiterSpaceStationStaticID", "saturnSpaceStationID", "saturnSpaceStationStaticID",
+        "uranusSpaceStationID", "uranusSpaceStationStaticID", "neptuneSpaceStationID", "neptuneSpaceStationStaticID",
+        "plutoSpaceStationID", "plutoSpaceStationStaticID", "erisSpaceStationID", "erisSpaceStationStaticID",
+        "kepler22bSpaceStationID", "kepler22bSpaceStationStaticID",
+        // Biome IDs
+        "mercuryBiomeID", "venusBiomeID", "ceresBiomeID", "jupiterBiomeID", "jupiterSeaBiomeID", "jupiterSandsBiomeID",
+        "saturnBiomeID", "saturnHydrocarbonSeaBiomeID", "saturnNuclearLandBiomeID", "uranusBiomeID",
+        "uranusFrozenSeaBiomeID", "uranusSnowLandsBiomeID", "neptuneBiomeID", "neptuneRadioActiveWaterSeaBiomeID",
+        "neptuneLayeredHillsBiomeID", "plutoBiomeID", "erisBiomeID", "tritonBiomeID", "tritonIceLandsBiomeID",
+        "tritonIceSeaBiomeID", "europaBiomeID", "ioBiomeID", "ioAshLandsBiomeID", "ioBurningPlainsBiomeID",
+        "deimosBiomeID", "phobosBiomeID", "callistoBiomeID", "ganymedeBiomeID", "rheaBiomeID", "titanBiomeID",
+        "titanSeaBiomeID", "titanMethaneHillsBiomeID", "oberonBiomeID", "oberonValleysBiomeID",
+        "oberonLargeMountainBiomeID", "titaniaBiomeID", "iapetusBiomeID", "kepler22bPlainsBiomeID",
+        "kepler22bBlueForestBiomeID", "kepler22bPurpleForestBiomeID", "kepler22bRedForestBiomeID",
+        "kepler22bYellowForestBiomeID", "kepler22bRedDesertBiomeID", "kepler22bWasteLandsBiomeID",
+        "kepler22bDiamondPlainsBiomeID", "kepler22bCoalPlainsBiomeID", "kepler22bIronPlainsBiomeID",
+        "kepler22bGoldPlainsBiomeID", "kepler22bEmeraldPlainsBiomeID",
+        // Schematic GUI IDs
+        "schematicTier4GUIID", "schematicTier5GUIID", "schematicTier6GUIID", "schematicTier7GUIID",
+        "schematicTier8GUIID", "schematicTier9GUIID", "schematicTier10GUIID", "schematicMarsRoverGUIID",
+        "schematicVenusRoverGUIID",
+        // Schematic page IDs
+        "schematicTier4PageID", "schematicTier5PageID", "schematicTier6PageID", "schematicTier7PageID",
+        "schematicTier8PageID", "schematicTier9PageID", "schematicTier10PageID", "schematicMarsRoverPageID",
+        "schematicVenusRoverPageID", };
+
+    private static ArrayList<Object> clientConfigOverrideSave;
+
+    /**
+     * Decode-class array for the C_UPDATE_CONFIGS packet. Every synced value is an int.
+     */
+    public static Class<?>[] getConfigSyncDecodeClasses() {
+        int n = Config.SYNC_CONFIG_FIELD_NAMES.length;
+        Class<?>[] classes = new Class<?>[n];
+        Arrays.fill(classes, Integer.class);
+        return classes;
+    }
+
+    /**
+     * Ordered, server-authoritative values to push to a connecting client. Mirrored by
+     * {@link #setConfigOverride(List)} and driven by the same shared name list.
+     */
+    public static List<Object> getServerConfigOverride() {
+        ArrayList<Object> data = new ArrayList<Object>();
+        for (String name : Config.SYNC_CONFIG_FIELD_NAMES) {
+            try {
+                data.add(
+                    Config.class.getField(name)
+                        .getInt(null));
+            } catch (Exception e) {
+                GCLog.severe("[ExtraPlanets] Config sync: cannot read field '" + name + "': " + e.getMessage());
+            }
+        }
+        return data;
+    }
+
+    /**
+     * Snapshot the client's current values before they are overridden, so they can be
+     * restored when the player leaves the (remote) server.
+     */
+    public static void saveClientConfigOverrideable() {
+        if (Config.clientConfigOverrideSave == null) {
+            Config.clientConfigOverrideSave = (ArrayList<Object>) Config.getServerConfigOverride();
+        }
+    }
+
+    /**
+     * Apply the server's authoritative ID values on the client. Any value that differs
+     * from the client's locally-configured one is logged by name so the mismatch is
+     * visible (the file itself is NOT modified).
+     */
+    @SideOnly(Side.CLIENT)
+    public static void setConfigOverride(List<Object> configs) {
+        if (configs == null) return;
+        int i = 0;
+        for (String name : Config.SYNC_CONFIG_FIELD_NAMES) {
+            if (i >= configs.size()) break;
+            try {
+                Field field = Config.class.getField(name);
+                field.setAccessible(true);
+                int newValue = ((Number) configs.get(i)).intValue();
+                int oldValue = field.getInt(null);
+                if (oldValue != newValue) {
+                    GCLog.info(
+                        "[ExtraPlanets] Config override (" + name
+                            + "): "
+                            + oldValue
+                            + " -> "
+                            + newValue
+                            + " (server is authoritative; adjust config/ExtraPlanets.cfg to match)");
+                }
+                field.setInt(null, newValue);
+            } catch (Exception e) {
+                GCLog.severe("[ExtraPlanets] Config sync: cannot apply field '" + name + "': " + e.getMessage());
+            }
+            i++;
+        }
+    }
+
+    /**
+     * Restore the client's own config values after leaving a remote server.
+     */
+    public static void restoreClientConfigOverrideable() {
+        if (Config.clientConfigOverrideSave != null) {
+            Config.setConfigOverride(Config.clientConfigOverrideSave);
+            Config.clientConfigOverrideSave = null;
+        }
+    }
 }
