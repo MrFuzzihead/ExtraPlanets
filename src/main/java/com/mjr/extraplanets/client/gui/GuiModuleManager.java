@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemArmor;
 import net.minecraft.util.StatCollector;
 
+import com.cleanroommc.modularui.api.GuiAxis;
 import com.cleanroommc.modularui.api.IGuiHolder;
 import com.cleanroommc.modularui.api.drawable.IKey;
 import com.cleanroommc.modularui.drawable.GuiTextures;
@@ -16,12 +17,11 @@ import com.cleanroommc.modularui.factory.SimpleGuiFactory;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
 import com.cleanroommc.modularui.utils.Alignment;
-import com.cleanroommc.modularui.value.DoubleValue;
 import com.cleanroommc.modularui.value.sync.InteractionSyncHandler;
 import com.cleanroommc.modularui.value.sync.PanelSyncManager;
+import com.cleanroommc.modularui.widget.scroll.ScrollData;
 import com.cleanroommc.modularui.widgets.ButtonWidget;
-import com.cleanroommc.modularui.widgets.ProgressWidget;
-import com.cleanroommc.modularui.widgets.layout.Column;
+import com.cleanroommc.modularui.widgets.ListWidget;
 import com.cleanroommc.modularui.widgets.layout.Flow;
 import com.cleanroommc.modularui.widgets.layout.Row;
 import com.mjr.extraplanets.armor.bases.ElectricArmorBase;
@@ -54,6 +54,17 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
         return sb.toString();
     }
 
+    private static InteractionSyncHandler makeHandler(Runnable action, EntityPlayer player) {
+        InteractionSyncHandler handler = new InteractionSyncHandler();
+        handler.setOnMouseTapped(mouseData -> {
+            action.run();
+            if (player instanceof EntityPlayerMP) {
+                openForPlayer((EntityPlayerMP) player);
+            }
+        });
+        return handler;
+    }
+
     @Override
     public ModularPanel buildUI(GuiData data, PanelSyncManager syncManager, UISettings settings) {
         final EntityPlayer player = data.getPlayer();
@@ -63,7 +74,7 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                     .getItem()).armorType
                 : -1;
 
-        ModularPanel panel = ModularPanel.defaultPanel("module_manager", 240, 185);
+        ModularPanel panel = ModularPanel.defaultPanel("module_manager", 240, 200);
         panel.bindPlayerInventory();
 
         // Title
@@ -75,94 +86,104 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                 .pos(8, 6)
                 .color(0xFF404040));
 
-        // Energy bar
+        // Energy bar + usage estimate
         if (player.getHeldItem()
             .getItem() instanceof ElectricArmorBase) {
             ElectricArmorBase electric = (ElectricArmorBase) player.getHeldItem()
                 .getItem();
             final float maxE = electric.getMaxElectricityStored(player.getHeldItem());
             final float storedE = electric.getElectricityStored(player.getHeldItem());
+            float drainPerSec = 0.25F / 9F * 20F;
+            for (Module mod : ModuleHelper.getModules(player.getHeldItem())) {
+                if (mod.isActive()) drainPerSec += mod.getPassivePowerCost();
+            }
+            final float drain = drainPerSec;
             panel.child(
-                new ProgressWidget().value(new DoubleValue(maxE > 0 ? storedE / maxE : 0))
-                    .direction(ProgressWidget.Direction.RIGHT)
-                    .texture(GuiTextures.PROGRESS_ARROW, 20)
-                    .pos(8, 22)
-                    .size(120, 10)
-                    .background(GuiTextures.SLOT_FLUID)
-                    .overlay(
-                        IKey.str(String.format("%.0f/%.0f gJ", storedE, maxE))
-                            .alignment(Alignment.Center)));
+                IKey.str(
+                    String.format("\u00a7e%.0f\u00a77/\u00a7e%.0f\u00a77 gJ  \u00a78~%.1f gJ/s", storedE, maxE, drain))
+                    .asWidget()
+                    .pos(8, 22));
         }
 
         // Module data
         List<Module> installed = ModuleHelper.getModules(player.getHeldItem());
-        List<String> installedNames = new ArrayList<String>();
+        final List<String> installedNames = new ArrayList<String>();
         for (Module m : installed) installedNames.add(
             m.getName()
                 .toLowerCase());
 
-        // Installed column
+        // Installed list
         panel.child(
             IKey.str("\u00a7nInstalled")
                 .asWidget()
                 .pos(8, 40));
-
-        Flow installedCol = new Column().pos(8, 52)
-            .size(115, 100);
+        ListWidget installedList = new ListWidget();
+        installedList.pos(8, 52)
+            .size(115, 60);
+        installedList.scrollDirection(ScrollData.of(GuiAxis.Y));
         for (Module m : installed) {
             final boolean active = m.isActive();
             final String mName = m.getName();
 
-            InteractionSyncHandler toggleHandler = new InteractionSyncHandler();
-            toggleHandler.setOnMouseTapped(mouseData -> {
-                if (player.worldObj.isRemote) return;
-                ModuleHelper.updateModuleActiveState(
+            InteractionSyncHandler toggleHandler = makeHandler(
+                () -> ModuleHelper.updateModuleActiveState(
                     player.getHeldItem(),
                     ExtraPlanets_Modules.getModuleByName(mName)
                         .copy(),
-                    !active);
-                openForPlayer((EntityPlayerMP) player);
-            });
-
-            InteractionSyncHandler removeHandler = new InteractionSyncHandler();
-            removeHandler.setOnMouseTapped(mouseData -> {
-                if (player.worldObj.isRemote) return;
-                ModuleHelper.uninstallModule(
+                    !active),
+                player);
+            InteractionSyncHandler removeHandler = makeHandler(
+                () -> ModuleHelper.uninstallModule(
                     player.getHeldItem(),
                     ExtraPlanets_Modules.getModuleByName(mName)
                         .copy(),
-                    player);
-                openForPlayer((EntityPlayerMP) player);
-            });
+                    player),
+                player);
 
-            installedCol.child(
-                new Row().height(14)
-                    .margin(0, 1)
-                    .child(
-                        IKey.str((active ? "\u00a7a" : "\u00a77") + localizeModule(mName))
-                            .asWidget()
-                            .width(76)
-                            .alignment(Alignment.CenterLeft))
-                    .child(
-                        new ButtonWidget<>().size(22, 12)
-                            .overlay(IKey.str(active ? "ON" : "OFF"))
-                            .onMouseTapped(b -> false)
-                            .syncHandler(toggleHandler))
-                    .child(
-                        new ButtonWidget<>().size(12, 12)
-                            .overlay(GuiTextures.REMOVE)
-                            .onMouseTapped(b -> false)
-                            .syncHandler(removeHandler)));
+            Flow row = new Row().height(16)
+                .margin(0, 2);
+            row.child(
+                IKey.str((active ? "\u00a7a" : "\u00a77") + localizeModule(mName))
+                    .asWidget()
+                    .width(72)
+                    .alignment(Alignment.CenterLeft));
+            row.child(
+                new ButtonWidget<>().size(22, 12)
+                    .overlay(IKey.str(active ? "ON" : "OFF"))
+                    .onMouseTapped(b -> {
+                        ModuleHelper.updateModuleActiveState(
+                            player.getHeldItem(),
+                            ExtraPlanets_Modules.getModuleByName(mName)
+                                .copy(),
+                            !active);
+                        return false;
+                    })
+                    .syncHandler(toggleHandler));
+            row.child(
+                new ButtonWidget<>().size(12, 12)
+                    .overlay(GuiTextures.REMOVE)
+                    .onMouseTapped(b -> {
+                        ModuleHelper.uninstallModule(
+                            player.getHeldItem(),
+                            ExtraPlanets_Modules.getModuleByName(mName)
+                                .copy(),
+                            player);
+                        return false;
+                    })
+                    .syncHandler(removeHandler));
+            installedList.child(row);
         }
-        panel.child(installedCol);
+        panel.child(installedList);
 
-        // Available column
+        // Available list
         panel.child(
             IKey.str("\u00a7nAvailable")
                 .asWidget()
                 .pos(130, 40));
-        Flow availCol = new Column().pos(130, 52)
-            .size(105, 100);
+        ListWidget availList = new ListWidget();
+        availList.pos(130, 52)
+            .size(105, 60);
+        availList.scrollDirection(ScrollData.of(GuiAxis.Y));
         for (Module m : ExtraPlanets_Modules.getModules()) {
             if (installedNames.contains(
                 m.getName()
@@ -171,28 +192,28 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
             if (m.getSlotType() != -1 && m.getSlotType() != slotType) continue;
             final String mName = m.getName();
 
-            InteractionSyncHandler installHandler = new InteractionSyncHandler();
-            installHandler.setOnMouseTapped(mouseData -> {
-                if (player.worldObj.isRemote) return;
-                ModuleHelper.installModule(player.getHeldItem(), m.copy(), player);
-                openForPlayer((EntityPlayerMP) player);
-            });
+            InteractionSyncHandler installHandler = makeHandler(
+                () -> ModuleHelper.installModule(player.getHeldItem(), m.copy(), player),
+                player);
 
-            availCol.child(
-                new Row().height(14)
-                    .margin(0, 1)
-                    .child(
-                        IKey.str(localizeModule(mName))
-                            .asWidget()
-                            .width(72)
-                            .alignment(Alignment.CenterLeft))
-                    .child(
-                        new ButtonWidget<>().size(14, 12)
-                            .overlay(GuiTextures.ADD)
-                            .onMouseTapped(b -> false)
-                            .syncHandler(installHandler)));
+            Flow row = new Row().height(16)
+                .margin(0, 2);
+            row.child(
+                IKey.str(localizeModule(mName))
+                    .asWidget()
+                    .width(68)
+                    .alignment(Alignment.CenterLeft));
+            row.child(
+                new ButtonWidget<>().size(14, 12)
+                    .overlay(GuiTextures.ADD)
+                    .onMouseTapped(b -> {
+                        ModuleHelper.installModule(player.getHeldItem(), m.copy(), player);
+                        return false;
+                    })
+                    .syncHandler(installHandler));
+            availList.child(row);
         }
-        panel.child(availCol);
+        panel.child(availList);
 
         panel.child(ButtonWidget.panelCloseButton());
         return panel;
