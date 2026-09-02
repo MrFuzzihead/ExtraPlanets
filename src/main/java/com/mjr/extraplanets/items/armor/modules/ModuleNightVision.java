@@ -43,7 +43,6 @@ public class ModuleNightVision extends Module {
             0);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
         reqs.add(new ItemStack(Items.golden_carrot, 1));
-        reqs.add(new ItemStack(Items.glowstone_dust, 4));
         this.setRequirements(reqs);
     }
 

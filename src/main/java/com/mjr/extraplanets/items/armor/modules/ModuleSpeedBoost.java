@@ -33,10 +33,7 @@ public class ModuleSpeedBoost extends Module {
             0);
         this.tier = tier;
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Items.sugar, 4));
-        if (tier >= 2) {
-            reqs.add(new ItemStack(Items.blaze_powder, 2));
-        }
+        reqs.add(new ItemStack(tier >= 2 ? Items.blaze_powder : Items.sugar, 1));
         this.setRequirements(reqs);
     }
 

@@ -31,7 +31,6 @@ public class ModuleAntiGravityJump extends Module {
             0);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
         reqs.add(new ItemStack(Blocks.sticky_piston, 1));
-        reqs.add(new ItemStack(Blocks.piston, 1));
         this.setRequirements(reqs);
     }
 

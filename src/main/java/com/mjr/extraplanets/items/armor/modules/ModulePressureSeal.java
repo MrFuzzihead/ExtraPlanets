@@ -26,7 +26,7 @@ public class ModulePressureSeal extends Module {
         super(name, -1, new ItemStack(Items.iron_ingot), true, 5, 0);
         this.setSubType(1);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(ExtraPlanets_Items.ingotLead, 2));
+        reqs.add(new ItemStack(ExtraPlanets_Items.ingotLead, 1));
         this.setRequirements(reqs);
     }
 

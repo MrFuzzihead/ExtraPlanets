@@ -28,7 +28,6 @@ public class ModuleStepAssist extends Module {
             0);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
         reqs.add(new ItemStack(Blocks.piston, 1));
-        reqs.add(new ItemStack(Blocks.redstone_block, 1));
         this.setRequirements(reqs);
     }
 

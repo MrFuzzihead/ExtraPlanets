@@ -30,7 +30,7 @@ public class ModuleRadiationShield extends Module {
         // Default requirements — tier 1. Install logic checks inventory to pick the highest
         // tier the player can afford.
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(ExtraPlanets_Items.ingotLead, 4));
+        reqs.add(new ItemStack(ExtraPlanets_Items.ingotLead, 1));
         this.setRequirements(reqs);
     }
 

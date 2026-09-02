@@ -29,7 +29,6 @@ public class ModuleSensorGlasses extends Module {
             5);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
         reqs.add(new ItemStack(Items.ender_eye, 1));
-        reqs.add(new ItemStack(Items.glowstone_dust, 4));
         this.setRequirements(reqs);
     }
 

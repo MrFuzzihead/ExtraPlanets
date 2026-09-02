@@ -38,7 +38,7 @@ public class ModuleJetpack extends Module {
         this.accelSpeed = tier == 1 ? 0.15 : 0.25;
         this.maxAccel = tier == 1 ? 0.5 : 0.7;
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Blocks.piston, 2));
+        reqs.add(new ItemStack(Blocks.piston, 1));
         this.setRequirements(reqs);
     }
 

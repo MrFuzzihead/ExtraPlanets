@@ -29,7 +29,7 @@ public class ModuleEnhancedGravity extends Module {
             10,
             0);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Blocks.obsidian, 4));
+        reqs.add(new ItemStack(Blocks.obsidian, 1));
         this.setRequirements(reqs);
     }
 

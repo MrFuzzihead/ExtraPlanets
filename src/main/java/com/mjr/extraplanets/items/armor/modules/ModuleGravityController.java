@@ -35,8 +35,7 @@ public class ModuleGravityController extends Module {
             5,
             0);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Blocks.iron_block, 2));
-        reqs.add(new ItemStack(Blocks.redstone_block, 1));
+        reqs.add(new ItemStack(Blocks.iron_block, 1));
         this.setRequirements(reqs);
     }
 

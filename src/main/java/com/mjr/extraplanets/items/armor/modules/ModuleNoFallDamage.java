@@ -28,7 +28,6 @@ public class ModuleNoFallDamage extends Module {
             0,
             100);
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Items.feather, 8));
         reqs.add(new ItemStack(Items.iron_boots, 1));
         this.setRequirements(reqs);
     }

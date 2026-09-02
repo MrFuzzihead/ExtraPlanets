@@ -35,7 +35,7 @@ public class ModuleSolarPanel extends Module {
             0);
         this.tier = tier;
         List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(tier == 0 ? new ItemStack(Blocks.daylight_detector, 1) : new ItemStack(Blocks.daylight_detector, 2));
+        reqs.add(new ItemStack(Blocks.daylight_detector, 1));
         this.setRequirements(reqs);
     }
 
