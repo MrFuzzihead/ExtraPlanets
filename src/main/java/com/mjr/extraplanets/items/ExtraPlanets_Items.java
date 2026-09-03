@@ -163,7 +163,6 @@ public class ExtraPlanets_Items {
     public static Item purifiedTitaniumOre;
     public static Item titaniumDust;
     public static Item titaniumTinyDust;
-    public static Item moduleItem;
 
     public static void init() {
         initializeItems();
@@ -173,7 +172,6 @@ public class ExtraPlanets_Items {
     }
 
     private static void initializeItems() {
-        moduleItem = new ItemModule();
         if (Config.mercury) {
             if (Config.batteries) mercuryBattery = new ItemBasicBattery("mercury_battery", 85000f, 2);
             ingotMercury = new ItemBasicItem("ingot_mercury");
@@ -441,7 +439,6 @@ public class ExtraPlanets_Items {
         GameRegistry.registerItem(liquid_hydrocarbon_bucket, "bucket_liquid_hydrocarbon");
         GameRegistry.registerItem(liquid_chocolate_bucket, "bucket_liquid_chocolate");
         GameRegistry.registerItem(liquid_caramel_bucket, "bucket_liquid_caramel");
-        GameRegistry.registerItem(moduleItem, "moduleItem");
     }
 
     private static void registerFluidContainer() {

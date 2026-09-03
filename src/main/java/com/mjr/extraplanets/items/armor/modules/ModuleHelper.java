@@ -276,7 +276,7 @@ public class ModuleHelper {
      *
      * @return true if the item was found and consumed.
      */
-    private static boolean consumeFromInventory(EntityPlayer player, ItemStack required) {
+    public static boolean consumeFromInventory(EntityPlayer player, ItemStack required) {
         for (int i = 0; i < player.inventory.getSizeInventory(); i++) {
             ItemStack stack = player.inventory.getStackInSlot(i);
             if (stack != null && stack.isItemEqual(required) && stack.stackSize >= required.stackSize) {
