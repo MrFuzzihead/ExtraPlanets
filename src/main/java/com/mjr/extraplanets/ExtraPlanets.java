@@ -53,6 +53,7 @@ import com.mjr.extraplanets.handlers.ConfigSyncHandler;
 import com.mjr.extraplanets.handlers.GalacticraftVersionChecker;
 import com.mjr.extraplanets.handlers.MainHandler;
 import com.mjr.extraplanets.items.ExtraPlanets_Items;
+import com.mjr.extraplanets.items.armor.modules.ExtraPlanets_Modules;
 import com.mjr.extraplanets.items.tools.ExtraPlanets_Tools;
 import com.mjr.extraplanets.moons.Callisto.event.CallistoEvents;
 import com.mjr.extraplanets.moons.Deimos.event.DeimosEvents;
@@ -187,7 +188,12 @@ public class ExtraPlanets {
         Config.init();
 
         // Main Events
-        MinecraftForge.EVENT_BUS.register(new MainHandler());
+        MainHandler mainHandler = new MainHandler();
+        MinecraftForge.EVENT_BUS.register(mainHandler);
+        // Player tick events run on the FML bus
+        FMLCommonHandler.instance()
+            .bus()
+            .register(mainHandler);
 
         // Config sync: FML-bus events (server->client IDs + client restore on disconnect)
         FMLCommonHandler.instance()
@@ -231,6 +237,7 @@ public class ExtraPlanets {
         ExtraPlanets_Tools.init();
         ExtraPlanets_Armor.init();
         ExtraPlanets_Items.init();
+        ExtraPlanets_Modules.init();
 
         // Registering fluids with Bucket Handler
         BucketHandler.INSTANCE.buckets.put(ExtraPlanets_Fluids.salt, ExtraPlanets_Items.salt_bucket);

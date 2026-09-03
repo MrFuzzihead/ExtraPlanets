@@ -55,7 +55,6 @@ public class ExtraPlanets_Armor {
     public static Item spaceSuitChest;
     public static Item spaceSuitLegings;
     public static Item spaceSuitBoots;
-    public static Item spaceSuitGravityBoots;
 
     public static Item carbonHelmet;
     public static Item carbonChest;
@@ -293,8 +292,6 @@ public class ExtraPlanets_Armor {
                 .setUnlocalizedName("space_suit_legings");
             spaceSuitBoots = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 3)
                 .setUnlocalizedName("space_suit_boots");
-            spaceSuitGravityBoots = new SpaceSuitArmor("space_suit", SPACE_SUIT_ARMOR_MATERIAL, 3)
-                .setUnlocalizedName("space_suit_gravity_boots");
         }
     }
 
@@ -402,7 +399,6 @@ public class ExtraPlanets_Armor {
             GameRegistry.registerItem(spaceSuitChest, "spaceSuitChest");
             GameRegistry.registerItem(spaceSuitLegings, "spaceSuitLegings");
             GameRegistry.registerItem(spaceSuitBoots, "spaceSuitBoots");
-            GameRegistry.registerItem(spaceSuitGravityBoots, "spaceSuitGravityBoots");
         }
     }
 }

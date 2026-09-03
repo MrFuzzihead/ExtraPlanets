@@ -174,13 +174,14 @@ public abstract class ElectricArmorBase extends ItemArmor
             itemStack.setTagCompound(new NBTTagCompound());
         }
 
-        final float electricityStored = Math.max(Math.min(joules, this.getMaxElectricityStored(itemStack)), 0);
+        final float maxEnergy = this.getMaxElectricityStored(itemStack);
+        final float electricityStored = Math.max(Math.min(joules, maxEnergy), 0);
         itemStack.getTagCompound()
             .setFloat("electricity", electricityStored);
 
         // Map charge to item damage for the built-in durability bar
         itemStack.setItemDamage(
-            DAMAGE_RANGE - (int) (electricityStored / this.getMaxElectricityStored(itemStack) * DAMAGE_RANGE));
+            maxEnergy > 0 ? DAMAGE_RANGE - (int) (electricityStored / maxEnergy * DAMAGE_RANGE) : DAMAGE_RANGE);
     }
 
     @Override
@@ -200,15 +201,23 @@ public abstract class ElectricArmorBase extends ItemArmor
             final NBTBase obj = itemStack.getTagCompound()
                 .getTag("electricity");
             if (obj instanceof NBTTagDouble) {
-                energyStored = ((NBTTagDouble) obj).func_150288_h();
+                energyStored = (float) ((NBTTagDouble) obj).func_150288_h();
             } else if (obj instanceof NBTTagFloat) {
                 energyStored = ((NBTTagFloat) obj).func_150288_h();
+            } else if (obj instanceof net.minecraft.nbt.NBTTagInt) {
+                energyStored = (float) ((net.minecraft.nbt.NBTTagInt) obj).func_150287_d();
+            } else if (obj instanceof net.minecraft.nbt.NBTTagShort) {
+                energyStored = (float) ((net.minecraft.nbt.NBTTagShort) obj).func_150289_e();
+            } else if (obj instanceof net.minecraft.nbt.NBTTagByte) {
+                energyStored = (float) ((net.minecraft.nbt.NBTTagByte) obj).func_150290_f();
             }
         }
 
         // Keep the damage bar in sync
-        itemStack.setItemDamage(
-            DAMAGE_RANGE - (int) (energyStored / this.getMaxElectricityStored(itemStack) * DAMAGE_RANGE));
+        float maxEnergy = this.getMaxElectricityStored(itemStack);
+        if (maxEnergy > 0) {
+            itemStack.setItemDamage(DAMAGE_RANGE - (int) (energyStored / maxEnergy * DAMAGE_RANGE));
+        }
         return energyStored;
     }
 
