@@ -78,22 +78,19 @@ public class OverlayPressure {
             return;
         }
 
+        // Save GL state to avoid leaking
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthMask(false);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
         // Position: pressure indicator next to radiation
-        // Right side: both bars draw labels to the LEFT (toward center).
-        // Pressure must be far enough left that radiation labels don't overlap the pressure
-        // bar frame. Space required ≈ 55px (label) + 5px (padding) + 12px (bar) + 1px (frame) ≈ 73px.
         boolean right = !ConfigManagerCore.oxygenIndicatorLeft;
         boolean top = !ConfigManagerCore.oxygenIndicatorBottom;
 
         final ScaledResolution res = ClientUtil.getScaledRes(mc, mc.displayWidth, mc.displayHeight);
         final int screenWidth = res.getScaledWidth();
         final int screenHeight = res.getScaledHeight();
-
-        mc.entityRenderer.setupOverlayRendering();
-
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDepthMask(false);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         // Bar dimensions
         int barWidth = 12;
@@ -166,9 +163,6 @@ public class OverlayPressure {
         int worldX = right ? barX - mc.fontRenderer.getStringWidth(worldStr) - 5 : barX + barWidth + 5;
         mc.fontRenderer.drawString(worldStr, worldX, labelY + 24, 0xFFB4B4B4);
 
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glDepthMask(true);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glPopAttrib();
     }
 }

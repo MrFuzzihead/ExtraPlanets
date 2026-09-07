@@ -78,21 +78,18 @@ public class OverlayRadiation {
             return;
         }
 
-        // Position: on the same side as the oxygen indicator (top-right by default)
-        // oxygenIndicatorLeft defaults to false (oxygen is on the right)
-        // When true, oxygen moves to the left and radiation follows
+        // Save GL state to avoid leaking
+        GL11.glPushAttrib(GL11.GL_ALL_ATTRIB_BITS);
+        GL11.glDisable(GL11.GL_DEPTH_TEST);
+        GL11.glDepthMask(false);
+        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+
         boolean right = !ConfigManagerCore.oxygenIndicatorLeft;
         boolean top = !ConfigManagerCore.oxygenIndicatorBottom;
 
         final ScaledResolution res = ClientUtil.getScaledRes(mc, mc.displayWidth, mc.displayHeight);
         final int screenWidth = res.getScaledWidth();
         final int screenHeight = res.getScaledHeight();
-
-        mc.entityRenderer.setupOverlayRendering();
-
-        GL11.glDisable(GL11.GL_DEPTH_TEST);
-        GL11.glDepthMask(false);
-        GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
         // Bar dimensions
         int barWidth = 12;
@@ -165,9 +162,6 @@ public class OverlayRadiation {
         int worldX = right ? barX + barWidth + 5 : barX - mc.fontRenderer.getStringWidth(worldStr) - 5;
         mc.fontRenderer.drawString(worldStr, worldX, labelY + 24, 0xFFB4B4B4);
 
-        GL11.glDisable(GL11.GL_BLEND);
-        GL11.glDepthMask(true);
-        GL11.glEnable(GL11.GL_DEPTH_TEST);
-        GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GL11.glPopAttrib();
     }
 }
