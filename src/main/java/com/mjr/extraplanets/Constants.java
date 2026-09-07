@@ -53,6 +53,7 @@ public class Constants {
     public static final String CONFIG_CATEGORY_COMPATIBILITY = "compatibility support";
     public static final String CONFIG_CATEGORY_MOD_COMPATIBILITY = "mod compatibility support";
     public static final String CONFIG_CATEGORY_GENERAL_SETTINGS = "general settings";
+    public static final String CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS = "pressure & radiation settings";
     public static final String CONFIG_CATEGORY_CELESTIAL_BODY_MAP_SETTINGS = "celestial body map settings";
     public static final String CONFIG_CATEGORY_ENTITIES = "entities";
 }
