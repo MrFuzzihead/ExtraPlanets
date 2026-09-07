@@ -79,6 +79,36 @@ public class Config {
     public static int tritonRadiationAmount;
     public static int spaceStationRadiationAmount;
 
+    // Pressure system amounts (in %) — 0 = disabled per body, range 0-100
+    public static int pressureOvertimeReduceAmount;
+    public static int pressureSleepingReduceAmount;
+    public static int mercuryPressureAmount;
+    public static int venusPressureAmount;
+    public static int marsPressureAmount;
+    public static int asteroidsPressureAmount;
+    public static int ceresPressureAmount;
+    public static int jupiterPressureAmount;
+    public static int saturnPressureAmount;
+    public static int uranusPressureAmount;
+    public static int neptunePressureAmount;
+    public static int plutoPressureAmount;
+    public static int erisPressureAmount;
+    public static int kepler22bPressureAmount;
+    public static int moonPressureAmount;
+    public static int phobosPressureAmount;
+    public static int deimosPressureAmount;
+    public static int ioPressureAmount;
+    public static int europaPressureAmount;
+    public static int ganymedePressureAmount;
+    public static int callistoPressureAmount;
+    public static int rheaPressureAmount;
+    public static int titanPressureAmount;
+    public static int iapetusPressureAmount;
+    public static int titaniaPressureAmount;
+    public static int oberonPressureAmount;
+    public static int tritonPressureAmount;
+    public static int spaceStationPressureAmount;
+
     public static boolean thermalPaddings;
     public static boolean batteries;
     public static boolean cannedFood;
@@ -705,6 +735,204 @@ public class Config {
                 "Amount of Radiation on Space Stations (in %)",
                 4,
                 "[0 = Disabled. range: 0 ~ 100, default: 4]")
+            .getInt();
+
+        // -- Pressure amounts (0 = disabled per body, range 0-100) ------------
+        pressureOvertimeReduceAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Pressure overtime reduce amount (in %)",
+                1,
+                "Reduces the player's stored pressure by this percent over time when in a safe environment.")
+            .getInt();
+        pressureSleepingReduceAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Pressure sleeping reduce amount (in %)",
+                50,
+                "Reduces the player's stored pressure by this percent when they sleep in a bed.")
+            .getInt();
+        mercuryPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Mercury (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        venusPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Venus (in %)",
+                95,
+                "[0 = Disabled. range: 0 ~ 100, default: 95]")
+            .getInt();
+        marsPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Mars (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        asteroidsPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Asteroids (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        ceresPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Ceres (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        jupiterPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Jupiter (in %)",
+                100,
+                "[0 = Disabled. range: 0 ~ 100, default: 100]")
+            .getInt();
+        saturnPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Saturn (in %)",
+                100,
+                "[0 = Disabled. range: 0 ~ 100, default: 100]")
+            .getInt();
+        uranusPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Uranus (in %)",
+                100,
+                "[0 = Disabled. range: 0 ~ 100, default: 100]")
+            .getInt();
+        neptunePressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Neptune (in %)",
+                100,
+                "[0 = Disabled. range: 0 ~ 100, default: 100]")
+            .getInt();
+        plutoPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Pluto (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        erisPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Eris (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        kepler22bPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Kepler22b (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        moonPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Moon (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        phobosPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Phobos (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        deimosPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Deimos (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        ioPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Io (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        europaPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Europa (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        ganymedePressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Ganymede (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        callistoPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Callisto (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        rheaPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Rhea (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        titanPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Titan (in %)",
+                100,
+                "[0 = Disabled. range: 0 ~ 100, default: 100]")
+            .getInt();
+        iapetusPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Iapetus (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        titaniaPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Titania (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        oberonPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Oberon (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        tritonPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Triton (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
+            .getInt();
+        spaceStationPressureAmount = config
+            .get(
+                Constants.CONFIG_CATEGORY_PRESSURE_RADIATION_SETTINGS,
+                "Amount of Pressure on Space Stations (in %)",
+                0,
+                "[0 = Disabled. range: 0 ~ 100, default: 0]")
             .getInt();
 
         thermalPaddings = config

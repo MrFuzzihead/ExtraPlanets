@@ -13,6 +13,7 @@ import net.minecraftforge.client.event.RenderGameOverlayEvent;
 import org.lwjgl.opengl.GL11;
 
 import com.mjr.extraplanets.Config;
+import com.mjr.extraplanets.client.gui.overlay.OverlayPressure;
 import com.mjr.extraplanets.client.gui.overlay.OverlayRadiation;
 import com.mjr.extraplanets.client.gui.screen.CustomCelestialSelection;
 import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
@@ -159,6 +160,7 @@ public class MainHandlerClient {
     public void onRenderOverlay(RenderGameOverlayEvent.Post event) {
         if (event.type == RenderGameOverlayEvent.ElementType.ALL) {
             OverlayRadiation.render();
+            OverlayPressure.render();
         }
     }
 }

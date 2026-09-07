@@ -47,6 +47,7 @@ public class ExtraPlanets_Recipes {
         registerCraftingRecipes();
         registerSpaceSuitRecipes();
         registerRadiationLayerRecipes();
+        registerPressureLayerRecipes();
         registerCompressorRecipes();
         registerCircuitFabricatorRecipes();
         registerSatellitesRecipes();
@@ -2496,6 +2497,47 @@ public class ExtraPlanets_Recipes {
     }
 
     private static void addRadiationLayerCompressorUpgrade(net.minecraft.item.Item prev, net.minecraft.item.Item next) {
+        CompressorRecipes.addRecipe(
+            new ItemStack(next),
+            "LCL",
+            "LPL",
+            "LCL",
+            'L',
+            new ItemStack(ExtraPlanets_Items.ingotLead),
+            'C',
+            new ItemStack(ExtraPlanets_Items.cloth),
+            'P',
+            new ItemStack(prev));
+    }
+
+    /**
+     * Recipes for pressure layer plates (Tier 1-4) — GC Compressor recipes (shaped).
+     * Gated on Config.pressure.
+     * Cloth is crafted from 4 wool (any color) in a 2x2 crafting grid.
+     */
+    private static void registerPressureLayerRecipes() {
+        if (!Config.pressure) {
+            return;
+        }
+
+        // Tier 1: LCL x3 rows
+        CompressorRecipes.addRecipe(
+            new ItemStack(ExtraPlanets_Items.tier1PressureLayer),
+            "LCL",
+            "LCL",
+            "LCL",
+            'L',
+            new ItemStack(ExtraPlanets_Items.ingotLead),
+            'C',
+            new ItemStack(ExtraPlanets_Items.cloth));
+
+        // Tier 2-4: upgrade previous tier
+        addPressureLayerCompressorUpgrade(ExtraPlanets_Items.tier1PressureLayer, ExtraPlanets_Items.tier2PressureLayer);
+        addPressureLayerCompressorUpgrade(ExtraPlanets_Items.tier2PressureLayer, ExtraPlanets_Items.tier3PressureLayer);
+        addPressureLayerCompressorUpgrade(ExtraPlanets_Items.tier3PressureLayer, ExtraPlanets_Items.tier4PressureLayer);
+    }
+
+    private static void addPressureLayerCompressorUpgrade(net.minecraft.item.Item prev, net.minecraft.item.Item next) {
         CompressorRecipes.addRecipe(
             new ItemStack(next),
             "LCL",
