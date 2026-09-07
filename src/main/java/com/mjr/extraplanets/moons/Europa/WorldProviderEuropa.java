@@ -6,6 +6,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
 import com.mjr.extraplanets.moons.Europa.worldgen.ChunkProviderEuropa;
 import com.mjr.extraplanets.moons.Europa.worldgen.WorldChunkManagerEuropa;
 import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
@@ -20,7 +21,8 @@ import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
 import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
 import micdoodle8.mods.galacticraft.core.util.ConfigManagerCore;
 
-public class WorldProviderEuropa extends WorldProviderSpace implements IGalacticraftWorldProvider, ISolarLevel {
+public class WorldProviderEuropa extends WorldProviderSpace
+    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld {
 
     @Override
     public Vector3 getFogColor() {
@@ -163,4 +165,10 @@ public class WorldProviderEuropa extends WorldProviderSpace implements IGalactic
     public float getWindLevel() {
         return 0;
     }
+
+    @Override
+    public int getSolarRadiationLevel() {
+        return com.mjr.extraplanets.Config.europaRadiationAmount;
+    }
+
 }

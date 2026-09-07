@@ -35,6 +35,7 @@ import com.cleanroommc.modularui.widgets.layout.Row;
 import com.cleanroommc.modularui.widgets.slot.ModularSlot;
 import com.cleanroommc.modularui.widgets.slot.PhantomItemSlot;
 import com.mjr.extraplanets.armor.bases.ElectricArmorBase;
+import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.items.armor.modules.ExtraPlanets_Modules;
 import com.mjr.extraplanets.items.armor.modules.Module;
 import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
@@ -297,7 +298,9 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
             final ItemStack reqItem = (reqs != null && !reqs.isEmpty()) ? reqs.get(0) : null;
 
             StringBuilder tip = new StringBuilder();
-            if (reqItem != null) {
+            if ("radiation_shield".equals(mName)) {
+                tip.append("Drag Tier 1-4 Radiation Layer here to install");
+            } else if (reqItem != null) {
                 tip.append("Drag ")
                     .append(reqItem.getDisplayName())
                     .append(" here to install");
@@ -310,6 +313,13 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
             ModularSlot installSlot = new ModularSlot(installHandler, 0);
             installSlot.filter(stack -> {
                 if (stack == null) return false;
+                // Radiation shield accepts any tier of radiation layer
+                if ("radiation_shield".equals(mName)) {
+                    return stack.getItem() == ExtraPlanets_Items.tier1RadiationLayer
+                        || stack.getItem() == ExtraPlanets_Items.tier2RadiationLayer
+                        || stack.getItem() == ExtraPlanets_Items.tier3RadiationLayer
+                        || stack.getItem() == ExtraPlanets_Items.tier4RadiationLayer;
+                }
                 for (ItemStack req : m.getRequirements()) {
                     if (req.isItemEqual(stack)) return true;
                 }
@@ -319,6 +329,18 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                 if (stack != null && !player.worldObj.isRemote) {
                     Module mod = m.copy();
                     if (!ModuleHelper.hasModule(player.getHeldItem(), mod)) {
+                        // Determine tier for radiation shield based on the item used
+                        if ("radiation_shield".equals(mName)) {
+                            if (stack.getItem() == ExtraPlanets_Items.tier2RadiationLayer) {
+                                mod.setSubType(2);
+                            } else if (stack.getItem() == ExtraPlanets_Items.tier3RadiationLayer) {
+                                mod.setSubType(3);
+                            } else if (stack.getItem() == ExtraPlanets_Items.tier4RadiationLayer) {
+                                mod.setSubType(4);
+                            } else {
+                                mod.setSubType(1);
+                            }
+                        }
                         ModuleHelper.addModule(player.getHeldItem(), mod);
                         // Clear the phantom handler and server cursor
                         installHandler.setStackInSlot(0, null);

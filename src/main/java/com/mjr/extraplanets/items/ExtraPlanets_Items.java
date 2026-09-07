@@ -140,6 +140,18 @@ public class ExtraPlanets_Items {
     public static Item tier3ThermalPadding;
     public static Item tier4ThermalPadding;
 
+    // Radiation & pressure layer plates (used as module requirements)
+    public static Item tier1RadiationLayer;
+    public static Item tier2RadiationLayer;
+    public static Item tier3RadiationLayer;
+    public static Item tier4RadiationLayer;
+    public static Item tier1PressureLayer;
+    public static Item tier2PressureLayer;
+    public static Item tier3PressureLayer;
+    public static Item tier4PressureLayer;
+    public static Item antiRadiation;
+    public static Item cloth;
+
     public static Item wafers;
 
     public static Item marsRover;
@@ -264,6 +276,20 @@ public class ExtraPlanets_Items {
             tier2ThermalPadding = new ItemTier2ThermalPadding("tier2_thermal_padding");
             tier3ThermalPadding = new ItemTier3ThermalPadding("tier3_thermal_padding");
             tier4ThermalPadding = new ItemTier4ThermalPadding("tier4_thermal_padding");
+        }
+        if (Config.radiation) {
+            tier1RadiationLayer = new ItemBasicItem("tier1_radiation_layer");
+            tier2RadiationLayer = new ItemBasicItem("tier2_radiation_layer");
+            tier3RadiationLayer = new ItemBasicItem("tier3_radiation_layer");
+            tier4RadiationLayer = new ItemBasicItem("tier4_radiation_layer");
+            antiRadiation = new ItemBasicItem("anti_radiation");
+            cloth = new ItemBasicItem("cloth");
+        }
+        if (Config.pressure) {
+            tier1PressureLayer = new ItemBasicItem("tier1_pressure_layer");
+            tier2PressureLayer = new ItemBasicItem("tier2_pressure_layer");
+            tier3PressureLayer = new ItemBasicItem("tier3_pressure_layer");
+            tier4PressureLayer = new ItemBasicItem("tier4_pressure_layer");
         }
         if (Config.batteries) {
             advancedBattery = new ItemBasicBattery("advanced_battery", 50000f, 2);
@@ -406,6 +432,20 @@ public class ExtraPlanets_Items {
         if (Config.marsRover) GameRegistry.registerItem(marsRover, "item.marsRover");
         if (Config.venusRover) GameRegistry.registerItem(venusRover, "item.venusRover");
         if (Config.marsRover || Config.venusRover) GameRegistry.registerItem(electricParts, "item.electricParts");
+        if (Config.radiation) {
+            GameRegistry.registerItem(tier1RadiationLayer, "tier1_radiation_layer");
+            GameRegistry.registerItem(tier2RadiationLayer, "tier2_radiation_layer");
+            GameRegistry.registerItem(tier3RadiationLayer, "tier3_radiation_layer");
+            GameRegistry.registerItem(tier4RadiationLayer, "tier4_radiation_layer");
+            GameRegistry.registerItem(antiRadiation, "anti_radiation");
+            GameRegistry.registerItem(cloth, "cloth");
+        }
+        if (Config.pressure) {
+            GameRegistry.registerItem(tier1PressureLayer, "tier1_pressure_layer");
+            GameRegistry.registerItem(tier2PressureLayer, "tier2_pressure_layer");
+            GameRegistry.registerItem(tier3PressureLayer, "tier3_pressure_layer");
+            GameRegistry.registerItem(tier4PressureLayer, "tier4_pressure_layer");
+        }
         if (Config.marsRover) GameRegistry.registerItem(schematicMarsRover, "item.schematicMarsRover");
         if (Config.venusRover) GameRegistry.registerItem(schematicVenusRover, "item.schematicVenusRover");
 

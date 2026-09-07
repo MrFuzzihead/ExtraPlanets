@@ -6,6 +6,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
 import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
 import com.mjr.extraplanets.planets.Neptune.worldgen.ChunkProviderNeptune;
 import com.mjr.extraplanets.planets.Neptune.worldgen.WorldChunkManagerNeptune;
@@ -19,7 +20,8 @@ import micdoodle8.mods.galacticraft.api.vector.Vector3;
 import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
 import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
 
-public class WorldProviderNeptune extends WorldProviderSpace implements IGalacticraftWorldProvider, ISolarLevel {
+public class WorldProviderNeptune extends WorldProviderSpace
+    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld {
 
     @Override
     public Vector3 getFogColor() {
@@ -162,4 +164,10 @@ public class WorldProviderNeptune extends WorldProviderSpace implements IGalacti
     public double getSolarEnergyMultiplier() {
         return 2.0D;
     }
+
+    @Override
+    public int getSolarRadiationLevel() {
+        return com.mjr.extraplanets.Config.neptuneRadiationAmount;
+    }
+
 }

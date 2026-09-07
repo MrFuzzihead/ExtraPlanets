@@ -1666,3 +1666,11 @@ gui.module.gravity_controller.name=Gravity Controller
 gui.module.enhanced_gravity.name=Enhanced Gravity
 gui.module.anti_gravity_jump.name=Anti-Gravity Jump
 gui.module.no_fall_damage.name=No Fall Damage
+
+# Radiation System
+gui.radiation.slept.message=You have slept off some of your radiation
+gui.radiation.current.message=Current radiation level
+gui.radiation.subject.message=This area has a radiation level of
+gui.radiation.type.message=(Type: Solar Radiation)
+gui.radiation.reverse.message=Wearing a full space suit will reverse the radiation effects
+gui.radiation.cancel.message=Wearing a full space suit will cancel the radiation effects

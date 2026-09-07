@@ -41,7 +41,9 @@ public class PacketSimple extends Packet implements IPacket {
         // CLIENT
         C_OPEN_PARACHEST_GUI(Side.CLIENT, Integer.class, Integer.class, Integer.class),
         // P1: server pushes its authoritative Dimension/Biome/Schematic GUI/Page IDs
-        C_UPDATE_CONFIGS(Side.CLIENT, Config.getConfigSyncDecodeClasses());
+        C_UPDATE_CONFIGS(Side.CLIENT, Config.getConfigSyncDecodeClasses()),
+        // P2: server pushes the player's current radiation level for the HUD overlay
+        C_UPDATE_RADIATION(Side.CLIENT, Double.class);
 
         private Side targetSide;
         private Class<?>[] decodeAs;
@@ -164,6 +166,12 @@ public class PacketSimple extends Packet implements IPacket {
             case C_UPDATE_CONFIGS:
                 Config.saveClientConfigOverrideable();
                 Config.setConfigOverride(this.data);
+                break;
+            case C_UPDATE_RADIATION:
+                if (this.data.size() > 0) {
+                    com.mjr.extraplanets.client.gui.overlay.OverlayRadiation.clientRadiationLevel = (Double) this.data
+                        .get(0);
+                }
                 break;
             default:
                 break;

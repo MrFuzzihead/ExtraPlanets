@@ -103,6 +103,7 @@ import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.event.FMLServerStartingEvent;
 import cpw.mods.fml.common.network.NetworkRegistry;
 import cpw.mods.fml.relauncher.Side;
 import micdoodle8.mods.galacticraft.api.GalacticraftRegistry;
@@ -307,6 +308,11 @@ public class ExtraPlanets {
 
         // Proxy PostInit Method
         ExtraPlanets.proxy.postInit(event);
+    }
+
+    @EventHandler
+    public void serverStarting(FMLServerStartingEvent event) {
+        event.registerServerCommand(new com.mjr.extraplanets.command.CommandEP());
     }
 
     private void registerNonMobEntities() {
