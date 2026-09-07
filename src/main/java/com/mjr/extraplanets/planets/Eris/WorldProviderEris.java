@@ -6,6 +6,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.api.world.IPressureWorld;
 import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
 import com.mjr.extraplanets.planets.Eris.worldgen.ChunkProviderEris;
 import com.mjr.extraplanets.planets.Eris.worldgen.WorldChunkManagerEris;
@@ -21,7 +22,7 @@ import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
 import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
 
 public class WorldProviderEris extends WorldProviderSpace
-    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld {
+    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld, IPressureWorld {
 
     @Override
     public Vector3 getFogColor() {
@@ -169,4 +170,8 @@ public class WorldProviderEris extends WorldProviderSpace
         return com.mjr.extraplanets.Config.erisRadiationAmount;
     }
 
+    @Override
+    public int getPressureLevel() {
+        return com.mjr.extraplanets.Config.erisPressureAmount;
+    }
 }

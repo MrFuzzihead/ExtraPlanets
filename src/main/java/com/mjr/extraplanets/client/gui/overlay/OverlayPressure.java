@@ -7,7 +7,7 @@ import net.minecraft.client.gui.ScaledResolution;
 import org.lwjgl.opengl.GL11;
 
 import com.mjr.extraplanets.Config;
-import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
+import com.mjr.extraplanets.api.world.IPressureWorld;
 
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -16,41 +16,42 @@ import micdoodle8.mods.galacticraft.core.util.ClientUtil;
 import micdoodle8.mods.galacticraft.core.util.ConfigManagerCore;
 
 /**
- * Radiation level indicator HUD overlay.
+ * Pressure level indicator HUD overlay.
  * <p>
- * Renders a vertical bar + text showing the player's accumulated radiation level.
- * Positioned on the opposite side from the GC oxygen/thermal indicator.
+ * Renders a vertical bar + text showing the player's accumulated pressure level.
+ * Positioned next to the radiation indicator.
  * <p>
  * Triggers:
  * <ul>
- * <li>Player is in a Galacticraft world provider with radiation</li>
- * <li>Config.radiation is enabled</li>
- * <li>Player has accumulated radiation > 0</li>
+ * <li>Player is in a Galacticraft world provider with pressure hazards</li>
+ * <li>Config.pressure is enabled</li>
+ * <li>Player has accumulated pressure > 0</li>
  * </ul>
  */
 @SideOnly(Side.CLIENT)
-public class OverlayRadiation {
+public class OverlayPressure {
 
     private static final Minecraft mc = Minecraft.getMinecraft();
 
-    /** Client-side radiation level, updated by C_UPDATE_RADIATION packet. */
-    public static double clientRadiationLevel = 0;
+    /** Client-side pressure level, updated by C_UPDATE_PRESSURE packet. */
+    public static double clientPressureLevel = 0;
 
-    private static int getWorldRadiation() {
-        if (mc.thePlayer.worldObj.provider instanceof ISolarRadiationWorld) {
-            return ((ISolarRadiationWorld) mc.thePlayer.worldObj.provider).getSolarRadiationLevel();
+    private static int getWorldPressure() {
+        if (mc.thePlayer.worldObj.provider instanceof IPressureWorld) {
+            return ((IPressureWorld) mc.thePlayer.worldObj.provider).getPressureLevel();
         }
+        // Fallback config-based pressure levels for GC dimensions
         if (mc.thePlayer.worldObj.provider instanceof micdoodle8.mods.galacticraft.core.dimension.WorldProviderMoon) {
-            return Config.moonRadiationAmount;
+            return Config.moonPressureAmount;
         }
         if (mc.thePlayer.worldObj.provider instanceof micdoodle8.mods.galacticraft.planets.mars.dimension.WorldProviderMars) {
-            return Config.marsRadiationAmount;
+            return Config.marsPressureAmount;
         }
         if (mc.thePlayer.worldObj.provider instanceof micdoodle8.mods.galacticraft.planets.asteroids.dimension.WorldProviderAsteroids) {
-            return Config.asteroidsRadiationAmount;
+            return Config.asteroidsPressureAmount;
         }
         if (mc.thePlayer.worldObj.provider instanceof micdoodle8.mods.galacticraft.core.dimension.WorldProviderSpaceStation) {
-            return Config.spaceStationRadiationAmount;
+            return Config.spaceStationPressureAmount;
         }
         return 0;
     }
@@ -59,7 +60,7 @@ public class OverlayRadiation {
         if (mc.thePlayer == null || mc.theWorld == null) {
             return;
         }
-        if (!Config.radiation) {
+        if (!Config.pressure) {
             return;
         }
         if (!(mc.thePlayer.worldObj.provider instanceof IGalacticraftWorldProvider)) {
@@ -69,18 +70,18 @@ public class OverlayRadiation {
             return;
         }
 
-        int worldRadiation = getWorldRadiation();
+        int worldPressure = getWorldPressure();
+        double accumulated = clientPressureLevel;
 
-        double accumulated = clientRadiationLevel;
-
-        // Only show when we have accumulated radiation to display
+        // Only show when we have accumulated pressure to display
         if (accumulated <= 0) {
             return;
         }
 
-        // Position: on the same side as the oxygen indicator (top-right by default)
-        // oxygenIndicatorLeft defaults to false (oxygen is on the right)
-        // When true, oxygen moves to the left and radiation follows
+        // Position: pressure indicator next to radiation
+        // Right side: both bars draw labels to the LEFT (toward center).
+        // Pressure must be far enough left that radiation labels don't overlap the pressure
+        // bar frame. Space required ≈ 55px (label) + 5px (padding) + 12px (bar) + 1px (frame) ≈ 73px.
         boolean right = !ConfigManagerCore.oxygenIndicatorLeft;
         boolean top = !ConfigManagerCore.oxygenIndicatorBottom;
 
@@ -101,9 +102,9 @@ public class OverlayRadiation {
         int barY;
 
         if (right) {
-            barX = screenWidth - 67;
+            barX = screenWidth - 81;
         } else {
-            barX = 60;
+            barX = 74;
         }
 
         if (top) {
@@ -116,24 +117,24 @@ public class OverlayRadiation {
         GuiScreen.drawRect(barX - 1, barY - 1, barX + barWidth + 1, barY + barHeight + 1, 0xFF333333);
         GuiScreen.drawRect(barX, barY, barX + barWidth, barY + barHeight, 0xFF111111);
 
-        // Draw fill bar based on accumulated radiation
+        // Draw fill bar based on accumulated pressure
         int fillHeight = (int) ((accumulated / 100.0) * barHeight);
         fillHeight = Math.min(fillHeight, barHeight);
 
-        // Color: green -> yellow -> red as radiation increases
+        // Color: blue -> cyan -> purple as pressure increases
         int fillColor;
         if (accumulated < 33) {
-            fillColor = 0xFF00FF00;
+            fillColor = 0xFF00AAFF;
         } else if (accumulated < 66) {
-            fillColor = 0xFFFFAA00;
+            fillColor = 0xFF00FFFF;
         } else {
-            fillColor = 0xFFFF0000;
+            fillColor = 0xFFFF00FF;
         }
 
         int fillY = barY + barHeight - fillHeight;
         GuiScreen.drawRect(barX + 1, fillY, barX + barWidth - 1, fillY + fillHeight, fillColor);
 
-        // Determine warning label based on accumulated radiation (not world level)
+        // Determine warning label based on accumulated pressure
         String label;
         int labelColor;
         if (accumulated >= 80) {
@@ -143,26 +144,26 @@ public class OverlayRadiation {
             label = "\u00a76Warning";
             labelColor = 0xFFFF960A;
         } else if (accumulated >= 20) {
-            label = "\u00a7eExposed";
+            label = "\u00a7eStressed";
             labelColor = 0xFFFFFF0A;
         } else {
             label = "\u00a7aExposed";
             labelColor = 0xFF0AFF0A;
         }
 
-        // Position label text next to the bar — toward the screen edge
-        int labelX = right ? barX + barWidth + 5 : barX - mc.fontRenderer.getStringWidth(label) - 5;
+        // Position label text next to the bar
+        int labelX = right ? barX - mc.fontRenderer.getStringWidth(label) - 5 : barX + barWidth + 5;
         int labelY = barY + 12;
         mc.fontRenderer.drawString(label, labelX, labelY, labelColor);
 
         // Draw accumulated percentage
         String pct = String.format("%.0f%%", accumulated);
-        int pctX = right ? barX + barWidth + 5 : barX - mc.fontRenderer.getStringWidth(pct) - 5;
+        int pctX = right ? barX - mc.fontRenderer.getStringWidth(pct) - 5 : barX + barWidth + 5;
         mc.fontRenderer.drawString(pct, pctX, labelY + 12, 0xFFFFFFFF);
 
-        // Draw world radiation level
-        String worldStr = "\u00a77Rad: " + worldRadiation + "%";
-        int worldX = right ? barX + barWidth + 5 : barX - mc.fontRenderer.getStringWidth(worldStr) - 5;
+        // Draw world pressure level
+        String worldStr = "\u00a77Pres: " + worldPressure + "%";
+        int worldX = right ? barX - mc.fontRenderer.getStringWidth(worldStr) - 5 : barX + barWidth + 5;
         mc.fontRenderer.drawString(worldStr, worldX, labelY + 24, 0xFFB4B4B4);
 
         GL11.glDisable(GL11.GL_BLEND);

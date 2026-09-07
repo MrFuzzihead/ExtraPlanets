@@ -300,6 +300,8 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
             StringBuilder tip = new StringBuilder();
             if ("radiation_shield".equals(mName)) {
                 tip.append("Drag Tier 1-4 Radiation Layer here to install");
+            } else if ("pressure_seal".equals(mName)) {
+                tip.append("Drag Tier 1-4 Pressure Layer here to install");
             } else if (reqItem != null) {
                 tip.append("Drag ")
                     .append(reqItem.getDisplayName())
@@ -320,6 +322,13 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                         || stack.getItem() == ExtraPlanets_Items.tier3RadiationLayer
                         || stack.getItem() == ExtraPlanets_Items.tier4RadiationLayer;
                 }
+                // Pressure seal accepts any tier of pressure layer
+                if ("pressure_seal".equals(mName)) {
+                    return stack.getItem() == ExtraPlanets_Items.tier1PressureLayer
+                        || stack.getItem() == ExtraPlanets_Items.tier2PressureLayer
+                        || stack.getItem() == ExtraPlanets_Items.tier3PressureLayer
+                        || stack.getItem() == ExtraPlanets_Items.tier4PressureLayer;
+                }
                 for (ItemStack req : m.getRequirements()) {
                     if (req.isItemEqual(stack)) return true;
                 }
@@ -336,6 +345,18 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                             } else if (stack.getItem() == ExtraPlanets_Items.tier3RadiationLayer) {
                                 mod.setSubType(3);
                             } else if (stack.getItem() == ExtraPlanets_Items.tier4RadiationLayer) {
+                                mod.setSubType(4);
+                            } else {
+                                mod.setSubType(1);
+                            }
+                        }
+                        // Determine tier for pressure seal based on the item used
+                        if ("pressure_seal".equals(mName)) {
+                            if (stack.getItem() == ExtraPlanets_Items.tier2PressureLayer) {
+                                mod.setSubType(2);
+                            } else if (stack.getItem() == ExtraPlanets_Items.tier3PressureLayer) {
+                                mod.setSubType(3);
+                            } else if (stack.getItem() == ExtraPlanets_Items.tier4PressureLayer) {
                                 mod.setSubType(4);
                             } else {
                                 mod.setSubType(1);

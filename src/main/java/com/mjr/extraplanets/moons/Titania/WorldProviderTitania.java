@@ -6,6 +6,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.api.world.IPressureWorld;
 import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
 import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
 import com.mjr.extraplanets.moons.Titania.worldgen.ChunkProviderTitania;
@@ -22,7 +23,7 @@ import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
 import micdoodle8.mods.galacticraft.core.util.ConfigManagerCore;
 
 public class WorldProviderTitania extends WorldProviderSpace
-    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld {
+    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld, IPressureWorld {
 
     @Override
     public Vector3 getFogColor() {
@@ -168,6 +169,11 @@ public class WorldProviderTitania extends WorldProviderSpace
     @Override
     public int getSolarRadiationLevel() {
         return com.mjr.extraplanets.Config.titaniaRadiationAmount;
+    }
+
+    @Override
+    public int getPressureLevel() {
+        return com.mjr.extraplanets.Config.titaniaPressureAmount;
     }
 
 }

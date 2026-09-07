@@ -6,6 +6,7 @@ import net.minecraft.world.chunk.IChunkProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.api.world.IPressureWorld;
 import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
 import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
 import com.mjr.extraplanets.planets.Mercury.worldgen.ChunkProviderMercury;
@@ -21,7 +22,7 @@ import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
 import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
 
 public class WorldProviderMercury extends WorldProviderSpace
-    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld {
+    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld, IPressureWorld {
 
     @Override
     public Vector3 getFogColor() {
@@ -168,4 +169,8 @@ public class WorldProviderMercury extends WorldProviderSpace
         return com.mjr.extraplanets.Config.mercuryRadiationAmount;
     }
 
+    @Override
+    public int getPressureLevel() {
+        return com.mjr.extraplanets.Config.mercuryPressureAmount;
+    }
 }
