@@ -283,6 +283,8 @@ public class ExtraPlanets_Items {
             tier3RadiationLayer = new ItemBasicItem("tier3_radiation_layer");
             tier4RadiationLayer = new ItemBasicItem("tier4_radiation_layer");
             antiRadiation = new ItemBasicItem("anti_radiation");
+        }
+        if (Config.radiation || Config.pressure) {
             cloth = new ItemBasicItem("cloth");
         }
         if (Config.pressure) {
@@ -438,6 +440,8 @@ public class ExtraPlanets_Items {
             GameRegistry.registerItem(tier3RadiationLayer, "tier3_radiation_layer");
             GameRegistry.registerItem(tier4RadiationLayer, "tier4_radiation_layer");
             GameRegistry.registerItem(antiRadiation, "anti_radiation");
+        }
+        if (Config.radiation || Config.pressure) {
             GameRegistry.registerItem(cloth, "cloth");
         }
         if (Config.pressure) {
