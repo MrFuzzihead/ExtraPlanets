@@ -46,6 +46,8 @@ public class ExtraPlanets_Recipes {
         registerFurnaceRecipes();
         registerCraftingRecipes();
         registerSpaceSuitRecipes();
+        registerRadiationLayerRecipes();
+        registerPressureLayerRecipes();
         registerCompressorRecipes();
         registerCircuitFabricatorRecipes();
         registerSatellitesRecipes();
@@ -2421,10 +2423,10 @@ public class ExtraPlanets_Recipes {
      */
     private static void registerSpaceSuitRecipes() {
         if (Config.pressure || Config.radiation) {
-            Item helmet = ExtraPlanets_Armor.tier1SpaceSuitHelmet;
-            Item chest = ExtraPlanets_Armor.tier1SpaceSuitChest;
-            Item leggings = ExtraPlanets_Armor.tier1SpaceSuitLegings;
-            Item boots = ExtraPlanets_Armor.tier1SpaceSuitBoots;
+            Item helmet = ExtraPlanets_Armor.spaceSuitHelmet;
+            Item chest = ExtraPlanets_Armor.spaceSuitChest;
+            Item leggings = ExtraPlanets_Armor.spaceSuitLegings;
+            Item boots = ExtraPlanets_Armor.spaceSuitBoots;
             if (helmet == null || chest == null || leggings == null || boots == null) {
                 return;
             }
@@ -2452,6 +2454,101 @@ public class ExtraPlanets_Recipes {
                     new ItemStack(boots),
                     new Object[] { "III", "IAI", "III", 'I', "ingotAluminum", 'A', new ItemStack(Items.iron_boots) }));
         }
+    }
+
+    /**
+     * Recipes for radiation layer plates (Tier 1-4) — GC Compressor recipes (shaped).
+     * Gated on Config.radiation.
+     * Cloth is crafted from 4 wool (any color) in a 2x2 crafting grid.
+     */
+    private static void registerRadiationLayerRecipes() {
+        if (!Config.radiation) {
+            return;
+        }
+
+        // Cloth from 4 wool (any color) — 2x2 shaped, wildcard for any wool color
+        GameRegistry.addRecipe(
+            new net.minecraftforge.oredict.ShapedOreRecipe(
+                new ItemStack(ExtraPlanets_Items.cloth),
+                new Object[] { "WW", "WW", 'W',
+                    new ItemStack(Blocks.wool, 1, net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE) }));
+
+        // Tier 1: LCL x3 rows
+        CompressorRecipes.addRecipe(
+            new ItemStack(ExtraPlanets_Items.tier1RadiationLayer),
+            "LCL",
+            "LCL",
+            "LCL",
+            'L',
+            new ItemStack(ExtraPlanets_Items.ingotLead),
+            'C',
+            new ItemStack(ExtraPlanets_Items.cloth));
+
+        // Tier 2-4: upgrade previous tier
+        addRadiationLayerCompressorUpgrade(
+            ExtraPlanets_Items.tier1RadiationLayer,
+            ExtraPlanets_Items.tier2RadiationLayer);
+        addRadiationLayerCompressorUpgrade(
+            ExtraPlanets_Items.tier2RadiationLayer,
+            ExtraPlanets_Items.tier3RadiationLayer);
+        addRadiationLayerCompressorUpgrade(
+            ExtraPlanets_Items.tier3RadiationLayer,
+            ExtraPlanets_Items.tier4RadiationLayer);
+    }
+
+    private static void addRadiationLayerCompressorUpgrade(net.minecraft.item.Item prev, net.minecraft.item.Item next) {
+        CompressorRecipes.addRecipe(
+            new ItemStack(next),
+            "LCL",
+            "LPL",
+            "LCL",
+            'L',
+            new ItemStack(ExtraPlanets_Items.ingotLead),
+            'C',
+            new ItemStack(ExtraPlanets_Items.cloth),
+            'P',
+            new ItemStack(prev));
+    }
+
+    /**
+     * Recipes for pressure layer plates (Tier 1-4) — GC Compressor recipes (shaped).
+     * Gated on Config.pressure.
+     * Cloth is crafted from 4 wool (any color) in a 2x2 crafting grid.
+     */
+    private static void registerPressureLayerRecipes() {
+        if (!Config.pressure) {
+            return;
+        }
+
+        // Tier 1: LCL x3 rows
+        CompressorRecipes.addRecipe(
+            new ItemStack(ExtraPlanets_Items.tier1PressureLayer),
+            "LCL",
+            "LCL",
+            "LCL",
+            'L',
+            new ItemStack(ExtraPlanets_Items.ingotLead),
+            'C',
+            new ItemStack(ExtraPlanets_Items.cloth));
+
+        // Tier 2-4: upgrade previous tier
+        addPressureLayerCompressorUpgrade(ExtraPlanets_Items.tier1PressureLayer, ExtraPlanets_Items.tier2PressureLayer);
+        addPressureLayerCompressorUpgrade(ExtraPlanets_Items.tier2PressureLayer, ExtraPlanets_Items.tier3PressureLayer);
+        addPressureLayerCompressorUpgrade(ExtraPlanets_Items.tier3PressureLayer, ExtraPlanets_Items.tier4PressureLayer);
+    }
+
+    private static void addPressureLayerCompressorUpgrade(net.minecraft.item.Item prev, net.minecraft.item.Item next) {
+        CompressorRecipes.addRecipe(
+            new ItemStack(next),
+            "LCL",
+            "LPL",
+            "LCL",
+            'L',
+            new ItemStack(ExtraPlanets_Items.ingotLead),
+            'C',
+            new ItemStack(ExtraPlanets_Items.cloth),
+            'P',
+            new ItemStack(prev));
     }
 
     private static void registerCompressorRecipes() {

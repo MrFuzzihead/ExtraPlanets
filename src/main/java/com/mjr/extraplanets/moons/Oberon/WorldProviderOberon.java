@@ -6,6 +6,8 @@ import net.minecraft.world.chunk.IChunkProvider;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.api.world.IPressureWorld;
+import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
 import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
 import com.mjr.extraplanets.moons.Oberon.worldgen.ChunkProviderOberon;
 import com.mjr.extraplanets.moons.Oberon.worldgen.WorldChunkManagerOberon;
@@ -20,7 +22,8 @@ import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
 import micdoodle8.mods.galacticraft.api.world.ISolarLevel;
 import micdoodle8.mods.galacticraft.core.util.ConfigManagerCore;
 
-public class WorldProviderOberon extends WorldProviderSpace implements IGalacticraftWorldProvider, ISolarLevel {
+public class WorldProviderOberon extends WorldProviderSpace
+    implements IGalacticraftWorldProvider, ISolarLevel, ISolarRadiationWorld, IPressureWorld {
 
     @Override
     public Vector3 getFogColor() {
@@ -162,4 +165,15 @@ public class WorldProviderOberon extends WorldProviderSpace implements IGalactic
     public float getWindLevel() {
         return 4.0F;
     }
+
+    @Override
+    public int getSolarRadiationLevel() {
+        return com.mjr.extraplanets.Config.oberonRadiationAmount;
+    }
+
+    @Override
+    public int getPressureLevel() {
+        return com.mjr.extraplanets.Config.oberonPressureAmount;
+    }
+
 }
