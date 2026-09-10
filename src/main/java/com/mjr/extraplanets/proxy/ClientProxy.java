@@ -13,6 +13,7 @@ import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.blocks.machines.ExtraPlanets_Machines;
+import com.mjr.extraplanets.client.gui.GuiModuleManager;
 import com.mjr.extraplanets.client.handlers.KeyHandlerClient;
 import com.mjr.extraplanets.client.handlers.SkyProviderHandler;
 import com.mjr.extraplanets.client.model.bosses.ModelEvolvedIceSlimeBoss;
@@ -147,6 +148,14 @@ public class ClientProxy extends CommonProxy {
 
     @Override
     public void preInit(FMLPreInitializationEvent event) {
+        // Register the ModularUI factory for the spacesuit module manager GUI on the client.
+        // The factory would otherwise only be registered when GuiModuleManager is first loaded,
+        // which happens solely from the server-side branch of SpaceSuitArmor#onItemRightClick —
+        // never in the client process on a dedicated server. Without this, the client's GuiManager
+        // has no factory for "extraplanets:module_manager" and the OpenGuiPacket throws
+        // NoSuchElementException (GuiManager.getFactory) → player gets kicked.
+        GuiModuleManager.registerFactory();
+
         // Register Entity Renders/Models
         registerEntityRendersAndModels();
         super.preInit(event);
