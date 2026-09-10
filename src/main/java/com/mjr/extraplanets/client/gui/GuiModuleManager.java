@@ -47,6 +47,22 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
         GuiModuleManager::new);
 
     /**
+     * Registers the GUI factory with ModularUI on the client.
+     * <p>
+     * The {@link SimpleGuiFactory} constructor registers automatically, but only when this class is
+     * first loaded. On a dedicated server the server-side branch of {@code SpaceSuitArmor#onItemRightClick}
+     * loads this class — but the separate client process never does, so without this explicit call the
+     * client's {@code GuiManager} has no factory for {@code "extraplanets:module_manager"} and kicks the
+     * player with a {@code NoSuchElementException} when the {@code OpenGuiPacket} arrives (channel
+     * {@code modularui2}). Called from {@code ClientProxy#preInit}.
+     */
+    public static void registerFactory() {
+        if (!GuiManager.hasFactory(FACTORY.getFactoryName())) {
+            GuiManager.registerFactory(FACTORY);
+        }
+    }
+
+    /**
      * Opens the module GUI. Bypasses the GuiManager's openedContainers guard so the GUI
      * can be reopened from within a server-side handler in the same tick.
      */
