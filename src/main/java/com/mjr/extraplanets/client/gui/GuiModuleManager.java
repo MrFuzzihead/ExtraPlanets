@@ -3,10 +3,6 @@ package com.mjr.extraplanets.client.gui;
 import java.lang.reflect.Field;
 import java.util.List;
 
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiScreen;
-import net.minecraft.client.renderer.RenderHelper;
-import net.minecraft.client.renderer.entity.RenderItem;
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemArmor;
@@ -14,15 +10,13 @@ import net.minecraft.item.ItemStack;
 
 import com.cleanroommc.modularui.api.GuiAxis;
 import com.cleanroommc.modularui.api.IGuiHolder;
-import com.cleanroommc.modularui.api.drawable.IDrawable;
 import com.cleanroommc.modularui.api.drawable.IKey;
+import com.cleanroommc.modularui.drawable.ItemDrawable;
 import com.cleanroommc.modularui.factory.GuiData;
 import com.cleanroommc.modularui.factory.GuiManager;
 import com.cleanroommc.modularui.factory.SimpleGuiFactory;
 import com.cleanroommc.modularui.screen.ModularPanel;
 import com.cleanroommc.modularui.screen.UISettings;
-import com.cleanroommc.modularui.screen.viewport.GuiContext;
-import com.cleanroommc.modularui.theme.WidgetTheme;
 import com.cleanroommc.modularui.utils.Alignment;
 import com.cleanroommc.modularui.utils.item.ItemStackHandler;
 import com.cleanroommc.modularui.value.sync.InteractionSyncHandler;
@@ -236,7 +230,7 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                 .margin(0, 2);
             row.child(
                 new ButtonWidget<>().size(18, 18)
-                    .overlay(displayStack != null ? new ItemStackDrawable(displayStack) : IKey.str("?"))
+                    .overlay(displayStack != null ? new ItemDrawable(displayStack) : IKey.str("?"))
                     .syncHandler(removeHandler));
             row.child(
                 IKey.str(" ")
@@ -285,7 +279,7 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                 .margin(0, 2);
             row.child(
                 new ButtonWidget<>().size(18, 18)
-                    .overlay(displayStack != null ? new ItemStackDrawable(displayStack) : IKey.str("?"))
+                    .overlay(displayStack != null ? new ItemDrawable(displayStack) : IKey.str("?"))
                     .syncHandler(removeHandler));
             row.child(
                 IKey.str(" ")
@@ -409,29 +403,5 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
         panel.child(moduleList);
         panel.child(ButtonWidget.panelCloseButton());
         return panel;
-    }
-
-    /** Draws an ItemStack on a button. */
-    private static class ItemStackDrawable implements IDrawable {
-
-        private final ItemStack stack;
-        private static final RenderItem RENDER_ITEM = new RenderItem();
-
-        ItemStackDrawable(ItemStack stack) {
-            this.stack = stack;
-        }
-
-        @Override
-        public void draw(GuiContext context, int x, int y, int width, int height, WidgetTheme widgetTheme) {
-            if (stack != null) {
-                Minecraft mc = Minecraft.getMinecraft();
-                RenderHelper.enableGUIStandardItemLighting();
-                GuiScreen.drawRect(x, y, x + width, y + height, 0x44FFFFFF);
-                int slotX = x + (width - 16) / 2;
-                int slotY = y + (height - 16) / 2;
-                RENDER_ITEM.renderItemIntoGUI(mc.fontRenderer, mc.getTextureManager(), stack, slotX, slotY);
-                RenderHelper.disableStandardItemLighting();
-            }
-        }
     }
 }
