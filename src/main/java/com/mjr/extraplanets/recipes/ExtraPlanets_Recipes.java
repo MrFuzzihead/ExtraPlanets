@@ -2473,15 +2473,20 @@ public class ExtraPlanets_Recipes {
                 new Object[] { "WW", "WW", 'W',
                     new ItemStack(Blocks.wool, 1, net.minecraftforge.oredict.OreDictionary.WILDCARD_VALUE) }));
 
-        // Tier 1: LCL x3 rows
-        CompressorRecipes.addRecipe(
+        // Tier 1: 6 lead (oreDict) + 3 cloth
+        // Shapeless (ShapelessOreRecipe) is the only GC compressor recipe type that
+        // supports oreDict — shaped "addRecipe" builds a plain ShapedRecipes with
+        // exact ItemStack matching, so only ExtraPlanets lead would be accepted.
+        CompressorRecipes.addShapelessRecipe(
             new ItemStack(ExtraPlanets_Items.tier1RadiationLayer),
-            "LCL",
-            "LCL",
-            "LCL",
-            'L',
-            new ItemStack(ExtraPlanets_Items.ingotLead),
-            'C',
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
             new ItemStack(ExtraPlanets_Items.cloth));
 
         // Tier 2-4: upgrade previous tier
@@ -2497,17 +2502,18 @@ public class ExtraPlanets_Recipes {
     }
 
     private static void addRadiationLayerCompressorUpgrade(net.minecraft.item.Item prev, net.minecraft.item.Item next) {
-        CompressorRecipes.addRecipe(
+        // 6 lead (oreDict) + 2 cloth + previous tier
+        CompressorRecipes.addShapelessRecipe(
             new ItemStack(next),
-            "LCL",
-            "LPL",
-            "LCL",
-            'L',
-            new ItemStack(ExtraPlanets_Items.ingotLead),
-            'C',
+            new ItemStack(prev),
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
+            "ingotLead",
             new ItemStack(ExtraPlanets_Items.cloth),
-            'P',
-            new ItemStack(prev));
+            new ItemStack(ExtraPlanets_Items.cloth));
     }
 
     /**
@@ -2520,15 +2526,17 @@ public class ExtraPlanets_Recipes {
             return;
         }
 
-        // Tier 1: LCL x3 rows
-        CompressorRecipes.addRecipe(
+        // Tier 1: 1 Oxygen Concentrator + 6 cloth
+        // Upstream 1.12.2 uses oxygen concentrators (not lead) for pressure layers — an
+        // oxygen concentrator pressurizes air, which is what a pressure-proof layer needs.
+        CompressorRecipes.addShapelessRecipe(
             new ItemStack(ExtraPlanets_Items.tier1PressureLayer),
-            "LCL",
-            "LCL",
-            "LCL",
-            'L',
-            new ItemStack(ExtraPlanets_Items.ingotLead),
-            'C',
+            new ItemStack(GCItems.oxygenConcentrator),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
             new ItemStack(ExtraPlanets_Items.cloth));
 
         // Tier 2-4: upgrade previous tier
@@ -2538,17 +2546,18 @@ public class ExtraPlanets_Recipes {
     }
 
     private static void addPressureLayerCompressorUpgrade(net.minecraft.item.Item prev, net.minecraft.item.Item next) {
-        CompressorRecipes.addRecipe(
+        // 2 Oxygen Concentrators + 6 cloth + previous tier
+        CompressorRecipes.addShapelessRecipe(
             new ItemStack(next),
-            "LCL",
-            "LPL",
-            "LCL",
-            'L',
-            new ItemStack(ExtraPlanets_Items.ingotLead),
-            'C',
+            new ItemStack(prev),
+            new ItemStack(GCItems.oxygenConcentrator),
+            new ItemStack(GCItems.oxygenConcentrator),
             new ItemStack(ExtraPlanets_Items.cloth),
-            'P',
-            new ItemStack(prev));
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth),
+            new ItemStack(ExtraPlanets_Items.cloth));
     }
 
     private static void registerCompressorRecipes() {
