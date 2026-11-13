@@ -28,12 +28,12 @@
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
 | Tests | 122 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 32 checks, run by `./gradlew gameTestServer` |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 33 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.08 % of 80,971 lines, 0.61 % of 33,952 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.08 % of 80,800 lines, 0.61 % of 33,844 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
@@ -41,7 +41,7 @@ All four commands pass on a clean checkout:
 ```
 ./gradlew test               # 122 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 32/32 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 33/33 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -143,7 +143,7 @@ three for the same reasons:
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (32 checks, `./gradlew gameTestServer`):
+`src/gameTest/java` (33 checks, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -155,7 +155,7 @@ three for the same reasons:
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
-| worldgen | the Tower of Desh still generates: the restored generator is run against the live world and the iron-bars frame, desh blocks and mast are asserted |
+| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), and all nine bodies' biome layer chains return registered biomes, more than one biome, and never the ocean fallback |
 
 ### 3.3 Production fixes required by the tests
 
@@ -399,12 +399,32 @@ Net: **8 classes and 40 textures (728 KB) deleted, 3 classes given the call site
 * `StructureWiringTest` requires every class in `world/features` to be referenced by real code somewhere (imports and
   comments do not count), so a generator can no longer be left behind by a decorator rewrite.
 
-### 5.2 Unreferenced near-copies
+### 5.2 Unreferenced near-copies - ✅ CLEANED UP
 
-`GenLayer*BiomeStabilize` exists once per body but is only ever constructed for Io and Triton — the other five
-(`Oberon`, `Titan`, `Jupiter`, `Neptune`, `Saturn`, `Uranus`, `Kepler22b`) are dead copies. Note the Io copy is
-itself misnamed `GenLayerTritonBiomeStabilize` (it lives in the `Io/worldgen/biomes` package), which is a second,
-independent smell.
+`GenLayer*BiomeStabilize` exists once per body, and **all nine were dead** - not the seven this section originally
+claimed. `git grep` at every commit that ever touched those files (eight of them, from the "Converted X over to multi
+biome system" series onwards) finds no reference from any `WorldChunkManager*` or `GenLayer*`: they have been
+unreferenced since the day they were written, unlike the Tower of Desh, which was live and then lost.
+
+They are also all the *same* class: byte-identical apart from the package and class name, one 38-line implementation
+of the standard "snap biome cells to 4-block boundaries" layer. The copy in `Io/worldgen/biomes` was even named
+`GenLayerTritonBiomeStabilize`. **All nine deleted** (~400 lines of duplication), with the exact change recorded here
+instead of applied, because wiring them changes worldgen:
+
+* Each body's `GenLayerX.makeTheWorld` builds `GenLayerXBiomes` -> six `GenLayerZoom` -> `GenLayerVoronoiZoom`, and
+  the layer belongs on the line *before* the voronoi zoom:
+  `biomes = new GenLayerXBiomeStabilize(1000L, biomes);`
+* That is a visible change - biomes become square, 4-block aligned instead of voronoi polygons - and therefore a
+  change in biome layout, surface blocks and mob spawns for newly generated chunks, with the usual seam where new
+  chunks meet already-generated ones in existing worlds. It has never been enabled in any release, so it is a
+  decision to make deliberately, not a regression to repair. If it is wanted, it is now one shared class plus one line
+  per chunk manager, and the guard below covers it.
+
+**New guard** (in-game, `worldgen:` group): every one of the nine bodies' chains is asked for a 256x256 window and
+must return only registered biome ids, at least two distinct biomes (a degenerate chain would mean "this planet is one
+biome"), and never the vanilla ocean fallback. The chains are pure functions of the seed - they read no world - so
+this needs no dimension loading, and it is the only place they can be checked at all, because the biome objects they
+return only exist once the game has registered them.
 
 ### 5.3 The `migrate/` tree (already untracked)
 
@@ -598,7 +618,8 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | Make `ExtraPlanets_Modules.init()` order-independent (§4 P1) | 2 hours | medium |
 | ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
-| ✅ | Dead code (§5.1): 8 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
+| ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
+| | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
 on a config-id collision, a broken sync contract, a module-registry duplicate, a packet-codec regression, and a

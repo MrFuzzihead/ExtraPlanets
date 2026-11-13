@@ -61,7 +61,7 @@ tests run on a Java 8 launcher.
 |---|---|
 | `./gradlew test` | 122 headless JUnit 4 tests (JUnit 4.13.2 + Mockito 4.11.0, Java 8 launcher) |
 | `./gradlew check` | the above plus Spotless, Checkstyle, the coverage floor and the gameTest compile |
-| `./gradlew gameTestServer` | boots a real dedicated server, runs 32 in-game checks, then exits with the result |
+| `./gradlew gameTestServer` | boots a real dedicated server, runs 33 in-game checks, then exits with the result |
 | `./gradlew runServer -PsmokeTest` | boots a real server, prints `EXTRAPLANETS_SMOKE_TEST_OK` and exits |
 
 The unit suite covers what does not need a game: the config-file defaults (unique dimension/station/biome/schematic

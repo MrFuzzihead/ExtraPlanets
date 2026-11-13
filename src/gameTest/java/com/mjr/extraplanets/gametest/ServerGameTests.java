@@ -11,6 +11,8 @@ import net.minecraft.item.crafting.CraftingManager;
 import net.minecraft.item.crafting.FurnaceRecipes;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.gen.layer.GenLayer;
 import net.minecraftforge.oredict.OreDictionary;
 
 import com.mjr.extraplanets.Config;
@@ -23,7 +25,16 @@ import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.items.armor.modules.ExtraPlanets_Modules;
 import com.mjr.extraplanets.items.armor.modules.Module;
 import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
+import com.mjr.extraplanets.moons.Io.worldgen.biomes.GenLayerIo;
+import com.mjr.extraplanets.moons.Oberon.worldgen.biomes.GenLayerOberon;
+import com.mjr.extraplanets.moons.Titan.worldgen.biomes.GenLayerTitan;
+import com.mjr.extraplanets.moons.Triton.worldgen.biomes.GenLayerTriton;
 import com.mjr.extraplanets.network.PacketSimple;
+import com.mjr.extraplanets.planets.Jupiter.worldgen.biomes.GenLayerJupiter;
+import com.mjr.extraplanets.planets.Kepler22b.worldgen.biome.GenLayerKepler22b;
+import com.mjr.extraplanets.planets.Neptune.worldgen.biomes.GenLayerNeptune;
+import com.mjr.extraplanets.planets.Saturn.worldgen.biomes.GenLayerSaturn;
+import com.mjr.extraplanets.planets.Uranus.worldgen.biomes.GenLayerUranus;
 import com.mjr.extraplanets.tileEntities.machines.TileEntityAdvancedRefinery;
 import com.mjr.extraplanets.tileEntities.machines.TileEntitySolar;
 
@@ -558,6 +569,53 @@ final class ServerGameTests {
                 Blocks.iron_bars,
                 world.getBlock(x + 2, y + 6, z + 2));
         });
+
+        // The biome layer chains are pure functions of their seed: they read no world, only IntCache and the biome
+        // constants. That makes them checkable here without loading nine dimensions, and it is the only place they
+        // can be checked at all - the biome objects they return only exist once the game has registered them.
+        reporter.check("worldgen: every body's biome layers produce registered biomes", () -> {
+            assertBiomeLayers("Io", GenLayerIo.makeTheWorld(1234L));
+            assertBiomeLayers("Oberon", GenLayerOberon.makeTheWorld(1234L));
+            assertBiomeLayers("Titan", GenLayerTitan.makeTheWorld(1234L));
+            assertBiomeLayers("Triton", GenLayerTriton.makeTheWorld(1234L));
+            assertBiomeLayers("Jupiter", GenLayerJupiter.makeTheWorld(1234L));
+            assertBiomeLayers("Saturn", GenLayerSaturn.makeTheWorld(1234L));
+            assertBiomeLayers("Uranus", GenLayerUranus.makeTheWorld(1234L));
+            assertBiomeLayers("Neptune", GenLayerNeptune.makeTheWorld(1234L));
+            assertBiomeLayers("Kepler22b", GenLayerKepler22b.makeTheWorld(1234L));
+        });
+    }
+
+    /**
+     * Checks one body's layer chain over a large window: every id must resolve to a registered biome, and a
+     * multi-biome body must actually produce more than one of them.
+     */
+    private static void assertBiomeLayers(String body, GenLayer[] layers) {
+        TestReporter.assertNotNull(body + ": layer array", layers);
+        TestReporter.assertEquals(body + ": layer count", 3, layers.length);
+        TestReporter.assertNotNull(body + ": zoomed layer", layers[1]);
+
+        // The layer returns an IntCache buffer that is allowed to be larger than the request (vanilla only ever
+        // reads the first width*depth entries, see WorldChunkManager#getBiomeGenAt), so read exactly that much.
+        int window = 256;
+        int[] ids = layers[1].getInts(0, 0, window, window);
+        TestReporter.assertTrue(
+            body + ": the layer returned " + ids.length + " cells for a " + window + "x" + window + " request",
+            ids.length >= window * window);
+
+        java.util.Set<Integer> distinct = new java.util.HashSet<Integer>();
+        for (int i = 0; i < window * window; i++) {
+            int id = ids[i];
+            BiomeGenBase biome = BiomeGenBase.getBiome(id);
+            TestReporter.assertNotNull(body + " produced unregistered biome id " + id, biome);
+            TestReporter.assertFalse(
+                body + " produced the vanilla ocean fallback (id " + id + "), so its layer chain is broken",
+                biome == BiomeGenBase.ocean && id == 0);
+            distinct.add(Integer.valueOf(id));
+        }
+        TestReporter.assertTrue(
+            body + " produced only one biome (" + distinct + "), so its layer chain is degenerate",
+            distinct.size() > 1);
     }
 
     private static void modules(TestReporter reporter) {
