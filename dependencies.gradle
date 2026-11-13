@@ -34,13 +34,38 @@
  * For more details, see https://docs.gradle.org/8.0.1/userguide/java_library_plugin.html#sec:java_library_configurations_graph
  */
 dependencies {
+    // --- Hard dependencies -------------------------------------------------
+    // `api`: Galacticraft types appear in the public signatures of ExtraPlanets classes (see api/), so
+    // dependants must see the same GC version this mod was compiled against.
     api("com.github.GTNewHorizons:Galacticraft:3.5.0-GTNH:dev")
-    api("com.github.GTNewHorizons:ModularUI2:2.4.0-1.7.10:dev")
-    compileOnly("com.github.GTNewHorizons:ModularUI:1.3.4:dev") { transitive = false }
+    // `implementation`: ModularUI2 is used only inside client GUI code and is never exposed through a public
+    // signature, so it must not leak onto a dependant's compile classpath. (The old `compileOnly
+    // ModularUI:1.3.4` entry was removed: ModularUI 1 is unused - every import is `com.cleanroommc.modularui`,
+    // which is ModularUI2 - and ModularUI2 already pulls ModularUI 1.3.4 transitively.)
+    implementation("com.github.GTNewHorizons:ModularUI2:2.4.0-1.7.10:dev")
+
+    // --- Optional integrations ------------------------------------------
+    // NEI: compile + dev runtime only. The integration class is an `@NEIPlugin`, discovered by NEI itself, so the
+    // mod loads and runs without NEI installed and NEI must never be published as a dependency.
     devOnlyNonPublishable("com.github.GTNewHorizons:NotEnoughItems:2.9.5-GTNH:dev")
-	runtimeOnlyNonPublishable("com.github.GTNewHorizons:ForgeMultipart:1.8.0:dev")
+    // CodeChickenLib (shipped inside CodeChickenCore) supplies codechicken.lib.gui.GuiDraw, used by the NEI handler.
     compileOnly("com.github.GTNewHorizons:CodeChickenCore:1.5.0:dev")
+    // ForgeMultipart: microblock registration is done purely by reflection, so multipart is only needed at dev
+    // runtime to exercise that path - it is not a compile or a shipped dependency.
+    runtimeOnlyNonPublishable("com.github.GTNewHorizons:ForgeMultipart:1.8.0:dev")
+    // CoFH Core supplies cofh.api.energy (RF). Optional: referenced only through `@Optional.Interface`.
     compileOnly("curse.maven:cofh-core-69162:2388751")
+    // Mekanism Joules. Optional, same pattern.
     compileOnly("curse.maven:mekanism-268560:2475797")
+    // IC2 experimental EU. Optional, same pattern. Already a transitive of Galacticraft, but kept explicit so the
+    // optional-integration set is readable in one place.
     compileOnly("net.industrial-craft:industrialcraft-2:2.2.828-experimental:dev")
+
+    // --- Tests ----------------------------------------------------------
+    // JUnit 4.13.2 is the newest 4.x (the suite runs on a Java 8 launcher, see addon.gradle.kts). Mockito 4.11.0 is
+    // the newest Mockito that still runs there (5.x requires Java 11). Add `org.mockito:mockito-inline:4.11.0`
+    // alongside it if a test ever needs to mock a *final* Minecraft class (ItemStack, NBTTagCompound): the current
+    // suite mocks only EntityPlayer and InventoryPlayer, which are ordinary classes.
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.mockito:mockito-core:4.11.0")
 }

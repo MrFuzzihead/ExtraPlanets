@@ -11,7 +11,15 @@ public class ExtraPlanets_Modules {
 
     public static final List<Module> modules = new ArrayList<Module>();
 
+    /** Guards {@link #init()} against being run twice (preInit plus a reload, or a unit test). */
+    private static boolean initialised;
+
     public static void init() {
+        if (initialised) {
+            return;
+        }
+        initialised = true;
+
         // -- Universal ----------------------------------------------------------
         modules.add(new ModuleRadiationShield("radiation_shield"));
         modules.add(new ModulePressureSeal("pressure_seal"));

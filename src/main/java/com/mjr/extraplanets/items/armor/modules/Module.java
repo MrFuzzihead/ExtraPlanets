@@ -20,7 +20,8 @@ import cpw.mods.fml.relauncher.SideOnly;
 public abstract class Module implements Cloneable {
 
     private String name;
-    private final List<ItemStack> requirements = new ArrayList<ItemStack>();
+    /** Not final: {@link #copy()} gives each copy its own list instead of sharing the prototype's. */
+    private List<ItemStack> requirements = new ArrayList<ItemStack>();
     private final int slotType;
     private ItemStack icon;
     private boolean active;
@@ -134,11 +135,16 @@ public abstract class Module implements Cloneable {
     public abstract void tickClient(EntityPlayer player);
 
     /**
-     * Creates a shallow copy of this module with its own active state.
+     * Creates a copy of this module with its own active state, subtype and requirement list.
+     * <p>
+     * The requirement list has to be copied as well: {@link ModuleHelper#getModules(net.minecraft.item.ItemStack)}
+     * hands out copies, and callers that edit a copy's requirements (or clear them) must never mutate the registry
+     * prototype that every other installed suit of the same type looks up.
      */
     public Module copy() {
         try {
             Module copy = (Module) super.clone();
+            copy.requirements = new ArrayList<ItemStack>(this.requirements);
             return copy;
         } catch (CloneNotSupportedException e) {
             throw new RuntimeException(e);

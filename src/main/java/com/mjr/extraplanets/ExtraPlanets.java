@@ -101,6 +101,7 @@ import cpw.mods.fml.common.Mod.EventHandler;
 import cpw.mods.fml.common.Mod.Instance;
 import cpw.mods.fml.common.SidedProxy;
 import cpw.mods.fml.common.event.FMLInitializationEvent;
+import cpw.mods.fml.common.event.FMLLoadCompleteEvent;
 import cpw.mods.fml.common.event.FMLPostInitializationEvent;
 import cpw.mods.fml.common.event.FMLPreInitializationEvent;
 import cpw.mods.fml.common.event.FMLServerStartingEvent;
@@ -308,6 +309,15 @@ public class ExtraPlanets {
 
         // Proxy PostInit Method
         ExtraPlanets.proxy.postInit(event);
+    }
+
+    /**
+     * Fires once every mod has finished its own event handlers. Used by the CI smoke-test hook, which is a no-op
+     * unless {@code -PsmokeTest} set the {@code extraplanets.smokeTest} system property.
+     */
+    @EventHandler
+    public void loadComplete(FMLLoadCompleteEvent event) {
+        SmokeTestHook.scheduleExitIfRequested();
     }
 
     @EventHandler
