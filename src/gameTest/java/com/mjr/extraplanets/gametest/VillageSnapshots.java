@@ -105,43 +105,172 @@ final class VillageSnapshots {
             Map<String, Long> actual = snapshot(world);
             TestReporter.assertEquals("snapshot count", expectedCases(), actual.size());
 
-            File goldenFile = goldenFile();
-            if (Boolean.getBoolean("extraplanets.recordGoldens")) {
-                write(goldenFile, actual);
-                TestReporter.assertTrue("recorded " + actual.size() + " hashes to " + goldenFile, goldenFile.isFile());
-                return;
-            }
-
-            TestReporter.assertTrue(
-                "missing " + goldenFile + "; record it with ./gradlew gameTestServer -PrecordGoldens",
-                goldenFile.isFile());
-
-            Map<String, Long> expected = read(goldenFile);
-            List<String> failures = new ArrayList<String>();
-            for (Map.Entry<String, Long> entry : expected.entrySet()) {
-                Long now = actual.get(entry.getKey());
-                if (now == null) {
-                    failures.add(entry.getKey() + ": no longer produced");
-                } else if (!now.equals(entry.getValue())) {
-                    failures.add(
-                        entry.getKey() + " changed: "
-                            + Long.toHexString(entry.getValue())
-                            + " -> "
-                            + Long.toHexString(now));
-                }
-            }
-            for (String key : actual.keySet()) {
-                if (!expected.containsKey(key)) {
-                    failures.add(key + ": new case (record goldens deliberately)");
-                }
-            }
-
-            TestReporter.assertEquals(
-                "village block output changed, which means the generation is no longer identical:\n  "
-                    + String.join("\n  ", failures),
-                0,
-                failures.size());
+            verify(
+                actual,
+                "village block output changed, which means the generation is no longer identical",
+                key -> !key.startsWith("dispatch/") && !key.startsWith("placement/"));
         });
+    }
+
+    /**
+     * Compares a family of snapshots against the committed goldens, or records them when
+     * {@code -PrecordGoldens} is set.
+     */
+    private static void verify(Map<String, Long> actual, String whatChanged,
+        java.util.function.Predicate<String> belongsToThisFamily) {
+        File goldenFile = goldenFile();
+        if (Boolean.getBoolean("extraplanets.recordGoldens")) {
+            Map<String, Long> merged = goldenFile.isFile() ? read(goldenFile) : new TreeMap<String, Long>();
+            merged.putAll(actual);
+            write(goldenFile, merged);
+            TestReporter.assertTrue("recorded " + merged.size() + " hashes to " + goldenFile, goldenFile.isFile());
+            return;
+        }
+
+        TestReporter.assertTrue(
+            "missing " + goldenFile + "; record it with ./gradlew gameTestServer -PrecordGoldens",
+            goldenFile.isFile());
+
+        Map<String, Long> expected = read(goldenFile);
+        List<String> failures = new ArrayList<String>();
+        for (String key : actual.keySet()) {
+            Long was = expected.get(key);
+            if (was == null) {
+                failures.add(key + ": no golden for this case (record goldens deliberately)");
+            } else if (!was.equals(actual.get(key))) {
+                failures.add(key + " changed: " + Long.toHexString(was) + " -> " + Long.toHexString(actual.get(key)));
+            }
+        }
+        // The golden file holds several families; only report the ones this check owns.
+        for (String key : expected.keySet()) {
+            if (belongsToThisFamily.test(key) && !actual.containsKey(key)) {
+                failures.add(key + ": no longer produced");
+            }
+        }
+        TestReporter.assertEquals(whatChanged + ":\n  " + String.join("\n  ", failures), 0, failures.size());
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // Piece dispatch - the classes that place no blocks
+    // ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * Snapshots what a village is <em>made of</em>: the ordered list of component classes and their bounding boxes,
+     * for a few fixed seeds and chunk positions.
+     *
+     * <p>
+     * The block snapshots cannot see this. {@code StructureVillageStart}, {@code StructureVillagePieces},
+     * {@code StructureComponentVillageStartPiece} and {@code StructureVillagePieceWeight} decide <em>which</em> pieces
+     * exist and where; a mistake there shows up as a differently shaped village rather than a different block, so it
+     * needs its own harness. Nothing here reads the terrain: a village start only asks the world for its chunk
+     * manager, and that manager is never consulted (the per-body {@code villageSpawnBiomes} list is dead code), so
+     * the result is a pure function of the seed and the chunk coordinates.
+     * </p>
+     */
+    static void runDispatch(TestReporter reporter) {
+        reporter.check("worldgen: village piece dispatch is unchanged (golden)", () -> {
+            World world = net.minecraft.server.MinecraftServer.getServer()
+                .worldServerForDimension(0);
+            TestReporter.assertNotNull("overworld", world);
+
+            Map<String, Long> actual = new TreeMap<String, Long>();
+            int[][] cases = { { 0, 0 }, { 3, -2 }, { -7, 5 }, { 40, 40 } };
+            for (String body : bodies()) {
+                for (int i = 0; i < cases.length; i++) {
+                    actual.put(
+                        "dispatch/" + body + "/c" + i,
+                        dispatchHash(world, body, cases[i][0], cases[i][1], 7000L + i));
+                }
+            }
+            verify(
+                actual,
+                "village piece dispatch changed, which means villages are built from different pieces",
+                key -> key.startsWith("dispatch/"));
+        });
+
+        reporter.check("worldgen: village placement is unchanged (golden)", () -> {
+            World world = net.minecraft.server.MinecraftServer.getServer()
+                .worldServerForDimension(0);
+            TestReporter.assertNotNull("overworld", world);
+
+            Map<String, Long> actual = new TreeMap<String, Long>();
+            for (String body : bodies()) {
+                actual.put("placement/" + body, placementHash(world, body));
+            }
+            verify(
+                actual,
+                "village placement changed, which means villages spawn in different chunks",
+                key -> key.startsWith("placement/"));
+        });
+    }
+
+    /** @return a hash of the component classes and bounding boxes of one generated village. */
+    private static long dispatchHash(World world, String body, int chunkX, int chunkZ, long seed) {
+        try {
+            Class<?> startClass = Class.forName(packageOf(body) + "StructureVillageStart" + body);
+            Object start = startClass.getConstructor(World.class, Random.class, int.class, int.class, int.class)
+                .newInstance(world, new Random(seed), chunkX, chunkZ, 0);
+
+            @SuppressWarnings("unchecked")
+            List<StructureComponent> components = ((net.minecraft.world.gen.structure.StructureStart) start)
+                .getComponents();
+            TestReporter.assertTrue(body + ": the village has no components", components.size() > 0);
+
+            long hash = 1125899906842597L;
+            for (StructureComponent component : components) {
+                StructureBoundingBox box = boundingBoxOf(component);
+                hash = hash * 31 + component.getClass()
+                    .getSimpleName()
+                    .hashCode();
+                hash = hash * 31 + box.minX;
+                hash = hash * 31 + box.minY;
+                hash = hash * 31 + box.minZ;
+                hash = hash * 31 + box.maxX;
+                hash = hash * 31 + box.maxY;
+                hash = hash * 31 + box.maxZ;
+            }
+            hash = hash * 31 + components.size();
+            return hash;
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(body + ": the village start does not have the expected shape", e);
+        }
+    }
+
+    /** @return a hash of every chunk, in a fixed window, where this body wants a village. */
+    private static long placementHash(World world, String body) {
+        final int radius = 48;
+        try {
+            Class<?> mapGenClass = Class.forName(packageOf(body) + "MapGenVillage" + body);
+            Object mapGen = mapGenClass.getConstructor()
+                .newInstance();
+
+            // canSpawnStructureAtCoords only needs worldObj for World#setRandomSeed; it never reads the terrain.
+            // Both the field and the method may be declared anywhere up the hierarchy (the shared base holds the
+            // spawn grid), so look them up by walking it rather than assuming where they live.
+            findField(mapGenClass, "worldObj").set(mapGen, world);
+
+            Method canSpawn = findMethod(mapGenClass, "canSpawnStructureAtCoords", int.class, int.class);
+            TestReporter.assertNotNull(body + ": no canSpawnStructureAtCoords to call", canSpawn);
+            canSpawn.setAccessible(true);
+
+            long hash = 1125899906842597L;
+            int found = 0;
+            for (int x = -radius; x < radius; x++) {
+                for (int z = -radius; z < radius; z++) {
+                    if ((Boolean) canSpawn.invoke(mapGen, x, z)) {
+                        hash = hash * 31 + x;
+                        hash = hash * 31 + z;
+                        found++;
+                    }
+                }
+            }
+            TestReporter.assertTrue(
+                body + ": no villages are placed in a " + (2 * radius) + "x" + (2 * radius) + " chunk window",
+                found > 0);
+            return hash;
+        } catch (ReflectiveOperationException e) {
+            throw new AssertionError(body + ": the map generator does not have the expected shape", e);
+        }
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -401,6 +530,34 @@ final class VillageSnapshots {
             }
         }
         return "com.mjr.extraplanets.planets." + body + ".worldgen.village.";
+    }
+
+    /** Finds a field on the class or any of its superclasses. */
+    private static java.lang.reflect.Field findField(Class<?> type, String name) {
+        for (Class<?> current = type; current != null; current = current.getSuperclass()) {
+            try {
+                java.lang.reflect.Field field = current.getDeclaredField(name);
+                field.setAccessible(true);
+                return field;
+            } catch (NoSuchFieldException ignored) {
+                // keep walking
+            }
+        }
+        throw new AssertionError("no field '" + name + "' on " + type.getName() + " or its superclasses");
+    }
+
+    /** Finds a method on the class or any of its superclasses. */
+    private static Method findMethod(Class<?> type, String name, Class<?>... parameterTypes) {
+        for (Class<?> current = type; current != null; current = current.getSuperclass()) {
+            try {
+                Method method = current.getDeclaredMethod(name, parameterTypes);
+                method.setAccessible(true);
+                return method;
+            } catch (NoSuchMethodException ignored) {
+                // keep walking
+            }
+        }
+        return null;
     }
 
     private static StructureBoundingBox boundingBoxOf(StructureComponent component) {

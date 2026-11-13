@@ -28,12 +28,12 @@
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
 | Tests | 122 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 34 checks, run by `./gradlew gameTestServer` |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 36 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.55 % of 65,922 lines, 0.69 % of 30,050 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.57 % of 65,506 lines, 0.70 % of 29,714 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
@@ -41,7 +41,7 @@ All four commands pass on a clean checkout:
 ```
 ./gradlew test               # 122 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 34/34 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 36/36 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -143,7 +143,7 @@ three for the same reasons:
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (34 checks, incl. 286 golden village snapshots, `./gradlew gameTestServer`):
+`src/gameTest/java` (36 checks, incl. 396 golden village snapshots, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -155,7 +155,7 @@ three for the same reasons:
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
-| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **286 golden village snapshots**: every block-placing village component for every body, in both coordinate branches, hashed against its committed output |
+| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **396 golden village snapshots**: every block-placing component per body in both coordinate branches, the piece dispatch per body for four fixed villages, and the spawn-grid set per body |
 
 ### 3.3 Production fixes required by the tests
 
@@ -483,7 +483,7 @@ contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLo
 * **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
   where a failure means "this structure silently never generates".
 
-### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-3 done, 76% removed)
+### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-4 done, 77% removed)
 
 **Measured:** 308 files under `**/village/`, **131,287 lines**, for 22 bodies x 14 classes. Their shape is now known
 exactly:
@@ -526,19 +526,38 @@ crop types had to move to the base with its build code (its constructor picks th
 crop helper needed a distinct name because Io's own copy is `private`. `buildWell` takes the body's block as a
 parameter - it is the only one of the five that names `ExtraPlanets_Blocks`.
 
-**Result so far: 131,287 -> 31,583 lines in the village tree (76% gone), 4.6 MB -> 1.16 MB, 308 files -> 308 much
-smaller files, with all 286 golden snapshots unchanged.** Still untouched on purpose: Kepler22b's house and wood hut
-(the only pair with their own metadata scheme) and its well, plus Io's five components (Io's buildings genuinely
-differ - different blocks, not different formatting).
+**Step 4 - the classes that place no blocks (done, partly).** These cannot be seen by a block snapshot, so they got
+their own harness first:
 
-**Remaining, in order:**
+* **Piece dispatch.** `StructureVillageStart` is constructed for four fixed (seed, chunk) pairs per body and the
+  ordered list of (component class, bounding box) is hashed - 88 more snapshots. Nothing in that path reads the
+  terrain (a village start asks the world for its chunk manager and never uses it), so it is a pure function of the
+  seed. Mutation-tested by changing one piece weight in Jupiter: only Jupiter's four cases changed.
+* **Placement.** `MapGenVillage.canSpawnStructureAtCoords` is called over a 96x96-chunk window per body and the set of
+  spawning chunks is hashed - 22 more snapshots. Mutation-tested by changing the grid spacing from 32 to 16.
+* Both harnesses originally assumed the method/field they poke live on the per-body class; step 4 moved them into a
+  base, so they now walk the hierarchy instead of failing.
 
-1. The non-block-placing classes: `StructureVillagePieces` (242 lines x 22 = the largest item left), `MapGenVillage`
-   (83 x 22), `Start` (69 x 22), `StartPiece` (46 x 22), `PieceWeight` (24 x 22), `RoadPiece` (11 x 22) and the
-   `Village` base (138 x 22). These place no blocks, so the golden snapshots cannot see them: they need a *piece
-   dispatch* harness first - build a `StructureVillageStart` against a stub `WorldChunkManager` that always reports
-   viable biomes, and hash the ordered list of (component class, bounding box) it produces. That covers the factories,
-   the piece weights and the `getNextComponent*` dispatch, all of which is what these classes are.
+Then: `MapGenVillageBase` holds the vanilla 32-chunk spawn grid (the per-body files keep the registration, the start
+they build and their registration name - 83 -> 58 lines), and `StructureVillagePieceWeightBase` holds the piece
+counting (the per-body subclass exists only to keep the constructor typed to that body's components).
+
+**Result so far: 131,287 -> 30,542 lines in the village tree (77% gone), 308 files -> 308 much smaller files, with all
+396 golden snapshots unchanged.** Still untouched on purpose: Kepler22b's house and wood hut (the only pair with their
+own metadata scheme) and its well, plus Io's five components (Io's buildings genuinely differ - different blocks, not
+different formatting).
+
+**Remaining (all covered by the two new harnesses already):**
+
+1. `StructureVillagePieces` (242 x 22 = the largest item left), `StructureVillageStart` (69 x 22),
+   `StructureComponentVillageStartPiece` (46 x 22) and the two `getNextComponentNN/PP` helpers in the `Village` base
+   (138 x 22). These form a mutually-referencing web of *body-specific types*, which is why they were not part of the
+   earlier steps: sharing them needs generics, specifically
+   `StructureVillagePiecesBase<W extends StructureVillagePieceWeightBase, S extends StructureAttributeVillageStartPieceBase>`
+   holding the four statics-equivalent operations (weight sum, weighted random pick, `getNextStructureComponent`,
+   `getNextStructureComponentVillagePath`) with one abstract `create(W, S, ...)` dispatch hook. Each per-body
+   `StructureVillagePieces` keeps a static singleton and forwards, so the ~60 call sites in
+   PathGen/Well/Village/House do not change. `StructureVillagePieceWeightBase` (step 4) is already the `W` bound.
 2. Kepler22b's house + wood hut: the 498 diff lines are metadata values, so this wants the palette expressed through
    `getBiomeSpecificBlockMetadata` first (prove the mapping is a pure function of block+metadata; if it is not, leave
    the two files alone).
@@ -657,8 +676,8 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
 | ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
-| ✅ | Village refactor steps 0-2 (§6.3): golden snapshot harness + 90,764 lines of duplication removed | 1 day | none (harness-gated) |
-| | Village refactor step 3 (§6.3): Kepler22b's palette, then the 12 remaining classes | 1-2 days | medium, mechanical |
+| ✅ | Village refactor steps 0-4 (§6.3): three snapshot harnesses + 100,745 lines of duplication removed | 2 days | none (harness-gated) |
+| | Village refactor step 5 (§6.3): the generic `StructureVillagePiecesBase`, then Kepler22b's palette | 1-2 days | medium (needs generics) |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails

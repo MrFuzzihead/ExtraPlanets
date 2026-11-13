@@ -586,6 +586,7 @@ final class ServerGameTests {
         });
 
         VillageSnapshots.run(reporter);
+        VillageSnapshots.runDispatch(reporter);
     }
 
     /**
