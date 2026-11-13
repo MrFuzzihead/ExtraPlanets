@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -20,27 +21,30 @@ import net.minecraft.world.biome.WorldChunkManager;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 
+import micdoodle8.mods.galacticraft.core.blocks.GCBlocks;
+
 /**
  * Golden snapshots of the village structures.
  *
  * <p>
  * The village code is 22 copies of the same 14 classes (see {@code CODE_REVIEW.md} §6.3) and the plan is to collapse
- * them into one shared implementation plus per-body palettes. That is a mechanical refactor of ~4,300 lines of
+ * them into one shared implementation plus per-body palettes. That is a mechanical refactor of thousands of lines of
  * block-placement code per body, which is exactly the kind of change that produces "the village has a hole in the
- * roof" or "the village overwrites itself" without failing to compile.
+ * roof" without failing to compile.
  * </p>
  *
  * <p>
  * So each component is generated against a prepared scratch plateau with a fixed seed, and every block (id and
- * metadata) inside its bounding box is folded into one hash. The hashes are committed; after the refactor they must
- * be identical. This is a characterisation test: it does not assert what a village <em>should</em> look like, only
- * that it does not change.
+ * metadata) inside its bounding box is folded into one hash. The hashes are committed; after the refactor they must be
+ * identical. This is a characterisation test: it does not assert what a village <em>should</em> look like, only that it
+ * does not change.
  * </p>
  *
  * <p>
- * Determinism: the component is constructed through its own {@code func_74921_a} factory and placed on a flat plateau
- * that is rebuilt before each component, so neither the surrounding terrain nor the world seed can influence the
- * result. Everything else comes from the {@link Random} passed in.
+ * Determinism: the component is constructed the way the piece-generation code constructs it (through its own static
+ * factory where it has one), placed on a flat plateau, and its bounding box is cleared before it runs, so neither the
+ * surrounding terrain nor whatever an earlier case built can influence the result. Everything else comes from the
+ * {@link Random} passed in.
  * </p>
  *
  * <p>
@@ -59,15 +63,25 @@ final class VillageSnapshots {
     private static final String[] PLANETS = { "Ceres", "Eris", "Jupiter", "Kepler22b", "Mercury", "Neptune", "Pluto",
         "Saturn", "Uranus", "Venus" };
 
-    /** The components whose output is snapshotted: the two 2,150-line classes the refactor targets. */
-    private static final String[] COMPONENTS = { "VillageHouse", "VillageWoodHut" };
+    /**
+     * Every component that places blocks. The ones that build children but no blocks of their own (the start piece,
+     * the road piece, the piece-weight list) are not here: their behaviour is covered by the piece dispatch, which is
+     * a class comparison, not block placement.
+     */
+    private static final String[] COMPONENTS = { "VillageHouse", "VillageWoodHut", "VillageWell", "VillageField",
+        "VillageField2", "VillageTorch", "VillagePathGen" };
 
     /**
-     * Two of the four rotations, which is enough to cover both coordinate branches of
-     * {@code StructureComponent#placeBlockAtCurrentPosition}: modes 0 and 2 walk X (with opposite signs) and modes 1
-     * and 3 walk Z, so 0 and 1 exercise each branch once.
+     * The rotations to cover. {@code StructureComponent#getXWithOffset} has one branch for modes 0/2 and one for 1/3,
+     * so 0 and 1 exercise each of them. The well takes its rotation from the {@link Random} inside its constructor,
+     * so it ignores this and gets a single case.
      */
     private static final int[] ROTATIONS = { 0, 1 };
+
+    private static final String ROTATION_FREE_COMPONENT = "VillageWell";
+
+    private static final int SCRATCH_X = 3000;
+    private static final int SCRATCH_Z = 3000;
 
     /**
      * Top of the scratch plateau. 63 is deliberate: {@code getAverageGroundLevel} scans for air starting at y=64 and
@@ -76,9 +90,7 @@ final class VillageSnapshots {
      */
     private static final int PLATEAU_TOP = 63;
 
-    private static final int SCRATCH_X = 3000;
-    private static final int SCRATCH_Z = 3000;
-    /** Half-width of the prepared area around the scratch origin; a component's box reaches 16 blocks. */
+    /** Half-width of the prepared plateau; a component's box reaches 16 blocks for a 90-degree rotation. */
     private static final int SCRATCH_RADIUS = 24;
 
     private VillageSnapshots() {}
@@ -91,8 +103,7 @@ final class VillageSnapshots {
             TestReporter.assertNotNull("overworld", world);
 
             Map<String, Long> actual = snapshot(world);
-            TestReporter
-                .assertEquals("snapshot count", bodies().size() * COMPONENTS.length * ROTATIONS.length, actual.size());
+            TestReporter.assertEquals("snapshot count", expectedCases(), actual.size());
 
             File goldenFile = goldenFile();
             if (Boolean.getBoolean("extraplanets.recordGoldens")) {
@@ -104,7 +115,6 @@ final class VillageSnapshots {
             TestReporter.assertTrue(
                 "missing " + goldenFile + "; record it with ./gradlew gameTestServer -PrecordGoldens",
                 goldenFile.isFile());
-            TestReporter.assertEquals("golden file is empty", false, read(goldenFile).isEmpty());
 
             Map<String, Long> expected = read(goldenFile);
             List<String> failures = new ArrayList<String>();
@@ -114,12 +124,15 @@ final class VillageSnapshots {
                     failures.add(entry.getKey() + ": no longer produced");
                 } else if (!now.equals(entry.getValue())) {
                     failures.add(
-                        entry.getKey() + ": " + Long.toHexString(entry.getValue()) + " -> " + Long.toHexString(now));
+                        entry.getKey() + " changed: "
+                            + Long.toHexString(entry.getValue())
+                            + " -> "
+                            + Long.toHexString(now));
                 }
             }
             for (String key : actual.keySet()) {
                 if (!expected.containsKey(key)) {
-                    failures.add(key + ": new component (record goldens deliberately)");
+                    failures.add(key + ": new case (record goldens deliberately)");
                 }
             }
 
@@ -141,24 +154,43 @@ final class VillageSnapshots {
         int index = 0;
         for (String body : bodies()) {
             for (String component : COMPONENTS) {
-                for (int rotation : ROTATIONS) {
-                    // A distinct, stable seed per case. Every component is built in the same cleared scratch box, so
-                    // its hash cannot depend on whichever component ran before it.
+                for (int rotation : rotationsFor(component)) {
+                    // A distinct, stable seed per case, and the box is cleared before every run, so a hash cannot
+                    // depend on whichever case ran before it.
                     long seed = 1000L + index;
-                    clearScratch(world, SCRATCH_X, SCRATCH_Z);
+                    String key = body + "/" + component + "/r" + rotation;
                     hashes.put(
-                        body + "/" + component + "/r" + rotation,
-                        generateAndHash(world, body, component, seed, SCRATCH_X, SCRATCH_Z, rotation));
+                        key,
+                        generateAndHash(
+                            world,
+                            body,
+                            component,
+                            seed,
+                            SCRATCH_X,
+                            PLATEAU_TOP + 1,
+                            SCRATCH_Z,
+                            rotation,
+                            key));
                     index++;
                 }
             }
         }
-        clearScratch(world, SCRATCH_X, SCRATCH_Z);
+        resetScratch(world, SCRATCH_X, SCRATCH_Z);
         return hashes;
     }
 
-    private static long generateAndHash(World world, String body, String component, long seed, int x, int z,
-        int rotation) {
+    private static int expectedCases() {
+        int cases = 0;
+        for (String component : COMPONENTS) cases += rotationsFor(component).length;
+        return cases * bodies().size();
+    }
+
+    private static int[] rotationsFor(String component) {
+        return ROTATION_FREE_COMPONENT.equals(component) ? new int[] { 0 } : ROTATIONS;
+    }
+
+    private static long generateAndHash(World world, String body, String component, long seed, int x, int y, int z,
+        int rotation, String key) {
         Random rand = new Random(seed);
         String pkg = packageOf(body);
         try {
@@ -169,56 +201,143 @@ final class VillageSnapshots {
             Method weights = pieces.getMethod("getStructureVillageWeightedPieceList", Random.class, int.class);
             Object pieceList = weights.invoke(null, rand, 0);
 
-            Constructor<?> startCtor = startPieceClass.getConstructor(
-                WorldChunkManager.class,
-                int.class,
-                Random.class,
-                int.class,
-                int.class,
-                ArrayList.class,
-                int.class);
-            Object startPiece = startCtor
+            Object startPiece = startPieceClass
+                .getConstructor(
+                    WorldChunkManager.class,
+                    int.class,
+                    Random.class,
+                    int.class,
+                    int.class,
+                    ArrayList.class,
+                    int.class)
                 .newInstance(world.getWorldChunkManager(), 0, rand, (x << 4) + 2, (z << 4) + 2, pieceList, 0);
 
-            // The component's own factory builds the correct bounding box for its size and rotation, which is the
-            // same call the piece-generation code makes; constructing the box by hand would test a different thing.
-            // Its name is not consistent (func_74921_a for houses, func_74908_a for wood huts), so find it by shape.
-            Method factory = findFactory(componentClass);
-            Object built = factory
-                .invoke(null, startPiece, new ArrayList<Object>(), rand, x, PLATEAU_TOP + 1, z, rotation, 0);
-            TestReporter.assertNotNull(body + "/" + component + ": the factory returned null", built);
+            StructureComponent structure = build(componentClass, startPieceClass, startPiece, rand, x, y, z, rotation);
+            StructureBoundingBox box = expanded(boundingBoxOf(structure));
 
-            StructureComponent structure = (StructureComponent) built;
-            boolean placed = structure.addComponentParts(world, rand, boundingBoxOf(structure));
-            TestReporter.assertTrue(body + "/" + component + "/r" + rotation + ": addComponentParts failed", placed);
+            // Reset the whole scratch area, not just this box: a component's behaviour can depend on blocks outside
+            // its own footprint (the path generator asks for the highest solid block in a column, which an earlier
+            // case's house would answer), and the ground layer must be restored too, since the path replaces it.
+            resetScratch(world, SCRATCH_X, SCRATCH_Z);
 
-            return hash(world, boundingBoxOf(structure), body + "/" + component + "/r" + rotation);
+            // Snapshot the pristine state so the hash can be of what the component *changed*. Some components reach
+            // outside their own bounding box (the path generator paves the ground block one below its box, the
+            // foundation helper fills downwards), and comparing against the baseline keeps the snapshot about the
+            // component's output rather than about the scratch plateau.
+            int[] before = readRegion(world, box);
+
+            boolean placed = structure.addComponentParts(world, rand, box);
+            TestReporter.assertTrue(key + ": addComponentParts reported failure", placed);
+
+            return hashOfChanges(world, box, before, key);
         } catch (ReflectiveOperationException e) {
-            throw new AssertionError(body + "/" + component + ": village classes do not have the expected shape", e);
+            throw new AssertionError(key + ": village classes do not have the expected shape", e);
         }
     }
 
-    private static long hash(World world, StructureBoundingBox box, String key) {
+    /**
+     * Builds a component the way the piece-generation code does. The three shapes in use are: a static factory that
+     * returns the component (house, wood hut, fields), a static factory that returns just the bounding box (torch,
+     * path) and the well, whose constructor takes coordinates and picks its own rotation.
+     */
+    private static StructureComponent build(Class<?> componentClass, Class<?> startPieceClass, Object startPiece,
+        Random rand, int x, int y, int z, int rotation) throws ReflectiveOperationException {
+        Method componentFactory = findStatic(componentClass, componentClass, 8);
+        if (componentFactory != null) {
+            return (StructureComponent) componentFactory
+                .invoke(null, startPiece, new ArrayList<Object>(), rand, x, y, z, rotation, 0);
+        }
+
+        Method boxFactory = findStatic(componentClass, StructureBoundingBox.class, 7);
+        if (boxFactory != null) {
+            StructureBoundingBox box = (StructureBoundingBox) boxFactory
+                .invoke(null, startPiece, new ArrayList<Object>(), rand, x, y, z, rotation);
+            TestReporter.assertNotNull("the bounding box factory returned null", box);
+            return (StructureComponent) componentClass
+                .getConstructor(startPieceClass, int.class, Random.class, StructureBoundingBox.class, int.class)
+                .newInstance(startPiece, 0, rand, box, rotation);
+        }
+
+        Constructor<?> byCoordinates = componentClass
+            .getConstructor(startPieceClass, int.class, Random.class, int.class, int.class);
+        return (StructureComponent) byCoordinates.newInstance(startPiece, 0, rand, x, z);
+    }
+
+    /**
+     * @return the component's static factory with the given return type and parameter count, or null.
+     */
+    private static Method findStatic(Class<?> componentClass, Class<?> returnType, int parameterCount) {
+        Method found = null;
+        for (Method method : componentClass.getMethods()) {
+            if (!Modifier.isStatic(method.getModifiers())) continue;
+            if (method.getReturnType() != returnType) continue;
+            Class<?>[] params = method.getParameterTypes();
+            if (params.length != parameterCount) continue;
+            if (!params[1].equals(List.class) || !params[2].equals(Random.class)) continue;
+            if (found != null) {
+                throw new AssertionError(
+                    componentClass.getName() + " has two candidate factories: "
+                        + found.getName()
+                        + " and "
+                        + method.getName());
+            }
+            found = method;
+        }
+        return found;
+    }
+
+    /**
+     * Folds into one number every block the component changed inside the box. Unchanged cells contribute nothing, so
+     * the snapshot measures the component and not the scratch terrain it was placed on.
+     */
+    private static long hashOfChanges(World world, StructureBoundingBox box, int[] before, String key) {
+        int[] after = readRegion(world, box);
         long hash = 1125899906842597L;
-        int blocks = 0;
+        int changed = 0;
+        for (int i = 0; i < after.length; i++) {
+            if (after[i] == before[i]) {
+                hash = hash * 31;
+            } else {
+                hash = hash * 31 + after[i];
+                changed++;
+            }
+        }
+        // A component that changed nothing is not a useful snapshot. (A path only replaces the ground block under
+        // itself, so "changed > 0" is the right bar; an absolute block count is not.)
+        TestReporter.assertTrue(key + ": the component changed no blocks at all", changed > 0);
+        return hash;
+    }
+
+    /** @return the block id and metadata of every cell in the box, row-major. */
+    private static int[] readRegion(World world, StructureBoundingBox box) {
+        int width = box.maxX - box.minX + 1;
+        int depth = box.maxZ - box.minZ + 1;
+        int height = box.maxY - box.minY + 1;
+        int[] region = new int[width * height * depth];
+        int i = 0;
         for (int y = box.minY; y <= box.maxY; y++) {
             for (int z = box.minZ; z <= box.maxZ; z++) {
                 for (int x = box.minX; x <= box.maxX; x++) {
-                    Block block = world.getBlock(x, y, z);
-                    int meta = world.getBlockMetadata(x, y, z);
-                    hash = hash * 31 + Block.getIdFromBlock(block) * 16L + meta;
-                    if (block != Blocks.air) {
-                        blocks++;
-                    }
+                    region[i++] = Block.getIdFromBlock(world.getBlock(x, y, z)) * 16 + world.getBlockMetadata(x, y, z);
                 }
             }
         }
-        // A component that placed almost nothing is not a useful snapshot; fail loudly rather than recording a hash
-        // of air. A house shell is ~500 non-air cells of the 17x9x17 box; the rest is interior, cleared by the
-        // component's own fillWithAir calls.
-        System.out.println("[EP-GAMETEST] " + key + " box=" + box + " blocks=" + blocks);
-        TestReporter.assertTrue(key + ": the component placed only " + blocks + " blocks", blocks > 200);
-        return hash;
+        return region;
+    }
+
+    /**
+     * The component's own bounding box, grown by two blocks: components legitimately write just outside it (paths
+     * pave the block under themselves, the foundation helper fills below), and covering that is also what makes an
+     * off-by-one regression visible.
+     */
+    private static StructureBoundingBox expanded(StructureBoundingBox box) {
+        return new StructureBoundingBox(
+            box.minX - 2,
+            Math.max(PLATEAU_TOP - 2, box.minY - 2),
+            box.minZ - 2,
+            box.maxX + 2,
+            box.maxY + 2,
+            box.maxZ + 2);
     }
 
     // ---------------------------------------------------------------------------------------------------------
@@ -229,26 +348,27 @@ final class VillageSnapshots {
     private static void preparePlateau(World world, int x, int z) {
         for (int dx = -SCRATCH_RADIUS; dx <= SCRATCH_RADIUS; dx++) {
             for (int dz = -SCRATCH_RADIUS; dz <= SCRATCH_RADIUS; dz++) {
-                for (int y = PLATEAU_TOP - 10; y <= PLATEAU_TOP; y++) {
-                    setFast(world, x + dx, y, z + dz, Blocks.stone);
+                for (int y = PLATEAU_TOP - 10; y < PLATEAU_TOP; y++) {
+                    setFast(world, x + dx, y, z + dz, Blocks.stone, 0);
                 }
-                for (int y = PLATEAU_TOP + 1; y <= PLATEAU_TOP + 24; y++) {
-                    setFast(world, x + dx, y, z + dz, Blocks.air);
-                }
+                // The top layer is Galacticraft's moon gravel, which is what the village path generator looks for:
+                // it only paves over that block (or air), so a stone surface would make every path place nothing.
+                setFast(world, x + dx, PLATEAU_TOP, z + dz, GCBlocks.blockMoon, 5);
             }
         }
+        resetScratch(world, x, z);
     }
 
     /**
-     * Removes every block a component could have written, so each snapshot starts from the same empty space. A
-     * component writes only inside its bounding box (17x9x17, offset by up to 16 blocks for a 90-degree rotation),
-     * so a 49x49x25 box around the origin covers all four orientations with room to spare.
+     * Puts the scratch area back to open air over moon gravel. Every case starts from this exact state, which is what
+     * makes the snapshots independent of each other and of the run before.
      */
-    private static void clearScratch(World world, int x, int z) {
+    private static void resetScratch(World world, int x, int z) {
         for (int dx = -SCRATCH_RADIUS; dx <= SCRATCH_RADIUS; dx++) {
             for (int dz = -SCRATCH_RADIUS; dz <= SCRATCH_RADIUS; dz++) {
+                setFast(world, x + dx, PLATEAU_TOP, z + dz, GCBlocks.blockMoon, 5);
                 for (int y = PLATEAU_TOP + 1; y <= PLATEAU_TOP + 24; y++) {
-                    setFast(world, x + dx, y, z + dz, Blocks.air);
+                    setFast(world, x + dx, y, z + dz, Blocks.air, 0);
                 }
             }
         }
@@ -258,37 +378,14 @@ final class VillageSnapshots {
      * Writes straight into the chunk, skipping the notifications {@code World#setBlock} issues. Only used to prepare
      * the scratch area: the code under test still runs against the real {@code World#setBlock} path.
      */
-    private static void setFast(World world, int x, int y, int z, Block block) {
+    private static void setFast(World world, int x, int y, int z, Block block, int meta) {
         net.minecraft.world.chunk.Chunk chunk = world.getChunkFromBlockCoords(x, z);
-        chunk.func_150807_a(x & 15, y, z & 15, block, 0);
+        chunk.func_150807_a(x & 15, y, z & 15, block, meta);
     }
 
     // ---------------------------------------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------------------------------------
-
-    /** @return the component's {@code (StartPiece, List, Random, x, y, z, coordMode, type)} static factory. */
-    private static Method findFactory(Class<?> componentClass) {
-        Method found = null;
-        for (Method method : componentClass.getMethods()) {
-            if (!java.lang.reflect.Modifier.isStatic(method.getModifiers())) continue;
-            if (method.getReturnType() != componentClass) continue;
-            Class<?>[] params = method.getParameterTypes();
-            if (params.length != 8 || !params[1].equals(List.class) || !params[2].equals(Random.class)) continue;
-            if (found != null) {
-                throw new AssertionError(
-                    componentClass.getName() + " has two candidate factories: "
-                        + found.getName()
-                        + " and "
-                        + method.getName());
-            }
-            found = method;
-        }
-        if (found == null) {
-            throw new AssertionError(componentClass.getName() + " has no static factory to build it with");
-        }
-        return found;
-    }
 
     private static List<String> bodies() {
         List<String> bodies = new ArrayList<String>();

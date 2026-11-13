@@ -33,7 +33,7 @@
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.25 % of 74,794 lines, 0.63 % of 32,710 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.46 % of 68,296 lines, 0.66 % of 31,254 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
@@ -143,7 +143,7 @@ three for the same reasons:
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (34 checks, `./gradlew gameTestServer`):
+`src/gameTest/java` (34 checks, incl. 286 golden village snapshots, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -155,7 +155,7 @@ three for the same reasons:
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
-| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and every body's village house and wood hut hash to their committed golden block output (88 snapshots) |
+| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **286 golden village snapshots**: every block-placing village component for every body, in both coordinate branches, hashed against its committed output |
 
 ### 3.3 Production fixes required by the tests
 
@@ -483,50 +483,59 @@ contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLo
 * **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
   where a failure means "this structure silently never generates".
 
-### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (step 1 done)
+### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-2 done, 69% removed)
 
-**Measured, not estimated:** 308 files under `**/village/`, 4.6 MB, 14 classes per body for 22 bodies. Their shape is
-now known exactly:
+**Measured:** 308 files under `**/village/`, **131,287 lines**, for 22 bodies x 14 classes. Their shape is now known
+exactly:
 
-* Per class type there are only 1-3 *distinct implementations*; the rest are copies that differ solely by package and
-  class name. `StructureVillageStart*` is one variant across all 22 bodies.
-* `StructureComponent<Body>VillageHouse` and `...VillageWoodHut` are **the same 2,152-line build code in 21 of the 22
+* Per class type there are only 1-3 *distinct implementations*; the rest differ solely by package and class name.
+  `StructureVillageStart*` is one variant across all 22 bodies.
+* `StructureComponent<Body>VillageHouse` and `...VillageWoodHut` were **the same 2,152-line build code in 21 of the 22
   bodies** - the "house" and the "wood hut" are the same 17x9x17 building. Only Kepler22b differs (498 lines: its own
   metadata scheme).
-* The palette seam the refactor needs already exists: `StructureComponent<Body>Village` overrides
-  `placeBlockAtCurrentPosition`/`fillWithBlocks`/`func_151554_b` and routes them through
-  `getBiomeSpecificBlock(Block, int)` and `getBiomeSpecificBlockMetadata(Block, int)`, which every body currently
-  inherits as the identity. The copies were hand-edited anyway (Kepler22b's 0 -> 1, 2 -> 11), which is where the
+* The per-body component bases were the same 244 lines apart from three things: the body name, the
+  `MapGenVillage<Body>.initiateStructures()` static block, and one 8-line "snap the ground level to air at y=64" fast
+  path that **only Jupiter** has.
+* The palette seam the rest of the refactor needs already exists: `StructureComponent*Village` overrides
+  `placeBlockAtCurrentPosition`/`fillWithBlocks`/`func_151554_b` and routes them through `getBiomeSpecificBlock` and
+  `getBiomeSpecificBlockMetadata`. The copies were hand-edited anyway (Kepler22b's 0 -> 1, 2 -> 11), which is where the
   duplication actually hurts.
 
-**Step 0 - the safety net (done).** `VillageSnapshots` (in-game) builds each body's House and WoodHut on a prepared
-scratch plateau from a fixed seed, in both coordinate branches (rotations 0 and 1), folds every block id and metadata
-inside the resulting bounding box into one hash, and compares against `src/gameTest/resources/village-golden.txt`
-(88 hashes, committed). It is a characterisation test: it does not say what a village should look like, only that it
-does not change. Verified three ways: it is deterministic across runs, it fails on a single changed metadata value
-(mutation-tested), and all four `World`-side inputs it depends on are pinned (flat plateau, fixed seed, cleared box,
-component's own factory).
+**Step 0 - the safety net (done).** `VillageSnapshots` (in-game) builds every block-placing component - house, wood
+hut, well, field, field2, torch, path - for all 22 bodies, in both coordinate branches, on a prepared scratch plateau
+from a fixed seed, and folds every block id and metadata the component *changes* into one hash: **286 snapshots**,
+committed to `src/gameTest/resources/village-golden.txt`. It is a characterisation test: it does not say what a village
+should look like, only that it does not change. Verified three ways - deterministic across runs, fails on a single
+changed metadata value in a house *and* in a path (mutation-tested twice), and all the `World`-side inputs are pinned.
 
-**Step 1 - WoodHut (done).** In the 21 bodies where it is literally the same code, `StructureComponent<VillageWoodHut>`
-now extends `...VillageHouse` and keeps only its constructor and its static factory: **44,652 lines deleted**
-(2,152 -> 34 per file). The class identity that matters is untouched - the piece dispatch compares
-`villagePieceClass == WoodHut.class` and `MapGenStructureIO` registers each class under its own name, so both still
-work, and the goldens prove the block output is byte-identical. **Kepler22b's wood hut stays separate**: the golden
-run *caught* that its building differs from its house, which is exactly the kind of silent change this harness exists
-to prevent.
+**Step 1 - the wood hut (done).** In the 21 bodies where it is literally the same code,
+`StructureComponent<VillageWoodHut>` extends `...VillageHouse` and keeps only its constructor and static factory:
+44,652 lines deleted.
 
-**Steps 2+ (not started, in order of value):**
+**Step 2 - the shared root and the house (done).** `com.mjr.extraplanets.world.village.StructureComponentVillageBase`
+now holds everything that was identical in all 22 component bases (villager bookkeeping, ground-level probe, villager
+spawner, the four placement overrides) plus `buildHouse(World, Random, StructureBoundingBox, Block)` - the 2,153-line
+building, taking the body's block as a parameter. The 22 per-body bases are 138 lines of registration and piece
+lookup, and the 21 non-Kepler22b houses are 62 lines each. Jupiter's odd ground-level fast path survives as a
+`snapsGroundLevelToAir()` override rather than being silently unified.
 
-1. Collapse the 21 identical WoodHuts/Houses into one shared `StructureComponentVillageBuildingBase` per tree, with
-   the body's block set supplied through the existing `getBiomeSpecificBlock*` hooks. The 21 bodies differ only by
-   which `ExtraPlanets_Blocks.<body>Blocks` they reference, so this is a field, not a rewrite.
-2. Kepler22b's pair last, as its own palette (it is the only body that changes metadata values).
-3. The remaining 12 classes per body, smallest first (`RoadPiece` 11 lines, `StartPiece` 46, `Start` 69, `Torch` 79,
-   `Field` 160, `Well` 186, `PathGen` 227, `Pieces` 242, `Village` 253, `Field2` 293); each is 1-2 variants, and each
-   only needs its own golden entries added to `VillageSnapshots` first.
-4. Only then collapse the 22 thin subclasses into configuration keys.
+**Result so far: 131,287 -> 40,523 lines in the village tree (69% gone), 308 files -> 308 much smaller files, with all
+286 golden snapshots unchanged.** Kepler22b's house and wood hut are untouched on purpose - they are the only pair with
+their own metadata scheme, and they go last.
 
-Do not reorder these: the harness must cover a class before that class is touched.
+**Remaining, in order:**
+
+1. Kepler22b's house + wood hut: the 498 diff lines are metadata values, so this wants the palette expressed through
+   `getBiomeSpecificBlockMetadata` first (prove the mapping is a pure function of block+metadata; if it is not, leave
+   the two files alone).
+2. The other 12 classes per body (~1,420 lines x 22 = 31,000 lines, the bulk of what is left), smallest first
+   (`RoadPiece` 11 lines, `PieceWeight` 24, `StartPiece` 46, `Start` 69, `Torch` 79, `MapGenVillage` 83, `Field` 160,
+   `Well` 186, `PathGen` 227, `Pieces` 242, `Village` 138 now, `Field2` 293). Each needs its golden entries added
+   before it is touched, and `Start`/`Pieces`/`StartPiece` are not block-placing, so they need the *piece dispatch*
+   covered instead (a generated village, or a per-body dispatch check).
+3. Only then collapse the 22 thin subclasses into configuration keys.
+
+Do not reorder these: the harness covers a class before that class is touched.
 
 ### 6.4 Build / repo hygiene
 
@@ -639,6 +648,8 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
 | ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
+| ✅ | Village refactor steps 0-2 (§6.3): golden snapshot harness + 90,764 lines of duplication removed | 1 day | none (harness-gated) |
+| | Village refactor step 3 (§6.3): Kepler22b's palette, then the 12 remaining classes | 1-2 days | medium, mechanical |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
