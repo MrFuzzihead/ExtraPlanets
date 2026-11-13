@@ -27,21 +27,21 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 108 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 24 checks, run by `./gradlew gameTestServer` |
+| Tests | 118 headless JUnit 4 tests in `src/test/java` (was 0) |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 31 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**1.8 % of 80,990 lines, 0.5 % of 34,022 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.07 % of 81,228 lines, 0.61 % of 34,070 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
-All three commands pass on a clean checkout:
+All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 91 tests, 0 failures
+./gradlew test               # 118 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 27/27 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 31/31 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -116,11 +116,12 @@ three for the same reasons:
   compile-only supertypes (`cofh.api.energy`, `mekanism.api.energy`, `ic2.api.item`) and cannot even be *named*
   without them.
 * The test working directory is redirected to `build/test-workdir`, so `Config.init()` (which writes
-  `config/ExtraPlanets.cfg` relative to the working directory) does not pollute the checkout.
+  `config/ExtraPlanets.cfg` relative to the working directory) does not pollute the checkout. The project directory is
+  passed to the tests as `-Dextraplanets.projectDir` so `NoStrayTracesTest` can still lint `src/main/java`.
 * `jacocoTestReport` (HTML + XML) and `jacocoTestCoverageVerification` with a floor just under the measured baseline.
   `check` depends on the verification, so CI fails on a coverage regression.
 * `jacocoGameTestReport` reports the in-game run against the class files JaCoCo actually saw. It self-skips when the
-  data is absent (see §8.5).
+  data is absent (see §8.6).
 * A `gameTest` source set wired into `runServer`/`runClient` when `-PgameTest` or `gameTestServer` is requested, with
   `fml.queryResult=confirm` pre-answered.
 * `-PsmokeTest` sets `extraplanets.smokeTest`, which `SmokeTestHook` turns into a clean exit at world load.
@@ -131,15 +132,16 @@ three for the same reasons:
 |---|---|
 | `ConfigDefaultsTest` (9) | The real `config/ExtraPlanets.cfg` defaults: planet/station dimension ids unique, 49 biome ids unique **and inside 0-255**, schematic GUI/page ids unique, `Config.init()` idempotent |
 | `ConfigSyncContractTest` (18) | The server→client config sync: every synced name resolves to a real `public static int`, no name is synced twice, every `...ID` field is covered, each field round-trips through its own getter **and** setter, pair order is irrelevant, a missing/unknown/non-numeric pair affects nothing, a legacy positional payload is ignored, null/empty/odd-length packets change nothing, and save/restore around a remote session |
-| `ExtraPlanets_BiomesTest` (10) | In-range ids are kept verbatim, out-of-range ids are relocated into the array, a collision with another mod's biome is reported but **not** remapped, name lookups are cached |
+| `ExtraPlanets_BiomesTest` (12) | In-range ids are kept verbatim, out-of-range ids are relocated into the array, id `0` is relocated instead of replacing the vanilla ocean, a collision with another mod's biome is reported but **not** remapped, name lookups are cached |
 | `ModuleHelperInstallTest` (15) | `installModule`/`uninstallModule`/`consumeFromInventory`: wrong-slot and duplicate rejection, requirement consumption and refund (including a lazily declared cost), drop-when-inventory-full |
-| `ModuleHelperTest` (24) | The suit-module NBT format: setup, add/replace/remove, active flag, subtype, unknown names, wrong tag types, copies-not-prototypes, slot compatibility |
+| `ModuleHelperTest` (27) | The suit-module NBT format: setup, add/replace/remove, active flag, subtype, unknown names, wrong tag types, copies-not-prototypes, slot compatibility, and that a modular-but-not-electric suit reads 0 power instead of throwing |
 | `ModuleRegistryTest` (12) | `init()` idempotency, 17 modules, unique lower_snake_case names, slot types match the `ModuleHelper`/`ItemArmor.armorType` convention per piece, every module has an icon and requirements, copies do not share lists |
 | `ModuleRequirementOrderTest` (6) | Requirements resolve after the item they reference is registered, a config-disabled item drops its requirement instead of keeping a null stack, a declaration is evaluated once, `setRequirements` overrides a declaration, `copy()` of an unresolved module resolves |
-| `PacketSimpleCodecTest` (10) | Real codec round trip for every packet type, plus truncated/out-of-range/negative ordinals are discarded instead of throwing |
+| `PacketSimpleCodecTest` (13) | Real codec round trip for every packet type and for the real config payload, truncated/out-of-range/negative ordinals are discarded instead of throwing, and a payload of the wrong shape is refused rather than sent (loudly in `debugMode`) |
+| `NoStrayTracesTest` (2) | Lints `src/main/java`: no `printStackTrace()`, no `System.out`/`System.err` outside the one documented CI marker, with `file:line` for each offence |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (24 checks, `./gradlew gameTestServer`):
+`src/gameTest/java` (31 checks, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -150,6 +152,7 @@ three for the same reasons:
 | ore dictionary | planet ores and blocks registered, every entry points at a real stack |
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
+| armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
 
 ### 3.3 Production fixes required by the tests
 
@@ -217,7 +220,7 @@ overriding a declaration, and `copy()` of an unresolved module; plus `ModuleHelp
 for the install/refund path. In game, `gameTestServer` asserts each of the three resolved to the *actual* registered
 item, which is the part a headless suite cannot see (`ItemStack#getItem()` is null outside a loaded game).
 
-### P2 — `ModuleHelper` casts `IModularArmor` to `ElectricArmorBase` without checking
+### P2 — `ModuleHelper` casts `IModularArmor` to `ElectricArmorBase` without checking — ✅ FIXED
 
 ```java
 public static int getArmourStoredPower(ItemStack item) {
@@ -226,21 +229,40 @@ public static int getArmourStoredPower(ItemStack item) {
 }
 ```
 Same in `takeArmourPower`. `IModularArmor` is a marker interface, so any addon (or future non-electric suit) that
-implements it gets a `ClassCastException` from a HUD render path. `ModuleHelperTest.hasPowerIsFalseForAnItemThatIsNotAnElectricArmor`
-pins the current behaviour so a fix is a deliberate change.
-**Recommendation:** `if (!(item.getItem() instanceof ElectricArmorBase)) return 0;`.
+implements it gets a `ClassCastException` from a HUD render path.
+**Fixed:** both helpers check `instanceof ElectricArmorBase` and treat anything else as "no power".
+`ModuleHelperTest` now pins that a modular-but-not-electric suit reads 0, reports `hasPower` false and survives
+`takeArmourPower` (the old test pinned the `ClassCastException`, which is why the fix had to be deliberate).
 
-### P2 — Setting a biome id to `0` overwrites the vanilla ocean biome
+### P2 — Setting a biome id to `0` overwrites the vanilla ocean biome — ✅ FIXED
 
 `ExtraPlanets_Biomes.resolveBiomeID` deliberately skips the collision check when `configuredID == 0`, on the grounds
 that "the ocean biome itself owns slot 0". But it then returns 0 and the factory constructs a biome with id 0, which
 `BiomeGenBase`'s constructor writes into `biomeList[0]` — replacing the ocean for the rest of the session. Every ocean
 in the world becomes an ExtraPlanets biome. The comment reads as if this were handled; it is not.
-**Recommendation:** treat 0 as out-of-range (relocate to the first free slot and log the same "please change the
-config" message) instead of exempting it — this is a change in behaviour, so it should be a deliberate decision.
-`ExtraPlanets_BiomesTest` covers the in-range, out-of-range and collision cases but deliberately not this one.
+**Fixed:** id 0 is now relocated to the first free slot with a dedicated message. It is deliberately *not* treated
+as out of range, because the valid upper bound must stay whatever `BiomeGenBase.getBiomeGenArray().length` reports
+(see the ID policy below). `findFreeBiomeID()` also no longer falls back to slot 0 when the array is full - it
+throws instead, because replacing the ocean is worse than failing to register one biome.
+`ExtraPlanets_BiomesTest` covers both new cases (`idZeroIsRelocatedInsteadOfReplacingTheOcean`,
+`aRelocatedIdIsNeverZero`).
 
-### P2 — `EntityVehicleBase.setPositionAndRotation2` references a client-only class without a guard
+#### ID guards must not cap IDs (EndlessIDs)
+
+Several modpacks now run `EndlessIDs`, which patches the biome array (and the block/item registries) to thousands of
+slots. Any guard that hardcodes 255/4096 is therefore wrong twice over: it rejects IDs that are perfectly valid on an
+extended instance, and it turns a working config into a relocated one. The rules this codebase follows:
+
+* Always read the bound from the live registry (`BiomeGenBase.getBiomeGenArray().length`,
+  `Block.blockRegistry`/`Item.itemRegistry` sizes), never a literal.
+* Relocate only what would corrupt the world - an out-of-range ID, or an ID owned by a vanilla biome that must not
+  be replaced (0 = ocean) - and always log the value the user should change.
+* Never silently remap an in-range value, even on a collision: the ID is already written into every generated
+  chunk, so changing it corrupts existing saves.
+* `ConfigDefaultsTest.biomeIdsFitTheVanillaBiomeArray` asserts only that the *shipped defaults* fit vanilla's 256,
+  i.e. that a player without an extender gets a working mod. It is not a cap on what a pack may configure.
+
+### P2 — `EntityVehicleBase.setPositionAndRotation2` references a client-only class without a guard — ✅ FIXED
 
 ```java
 if (this.riddenByEntity instanceof EntityPlayer && FMLClientHandler.instance().getClient().thePlayer.equals(...))
@@ -248,19 +270,34 @@ if (this.riddenByEntity instanceof EntityPlayer && FMLClientHandler.instance().g
 `cpw.mods.fml.client.FMLClientHandler` does not exist on a dedicated server. The method is only *called* from the
 client-side tracker, so it works today by accident; a single future call from common code turns this into a
 `NoClassDefFoundError` on the server. `EntityPoweredVehicleBase` has the same shape.
-**Recommendation:** guard with `this.worldObj.isRemote` (which is what GC's own vehicle code does) or move the
-"is this the local player" test behind a proxy method.
+**Fixed:** both methods return immediately unless `worldObj != null && worldObj.isRemote`. The only caller really is
+`NetHandlerPlayClient` (verified against the decompiled source), so this removes the latent crash without changing
+behaviour.
 
-### P2 — `getElectricityStored` mutates the stack it is asked to read
+**The same pattern elsewhere, surveyed:** `TileEntitySolar`, `TileEntityPoweredChargingPad`,
+`TileEntityTier2/3LandingPad` and `KuiperBeltEvents` already guard their `FMLClientHandler` use with
+`worldObj.isRemote` or `@SideOnly(CLIENT)` and are fine. Two families are still unguarded, both inside
+`addInformation` tooltips, which only ever run client-side: `SpaceSuitArmor` (reads the sneak-key binding via
+`FMLClientHandler.instance().getClient().gameSettings`) and the seven `Tier4..Tier10Rocket` item classes (builds a
+throw-away rocket entity in `FMLClientHandler.instance().getWorldClient()` to read its fuel NBT). Both are latent in
+exactly the way the vehicle code was. The clean fix is to route them through `CommonProxy` (a
+`getClientWorld()`/`getKeyDisplayString()` seam) rather than sprinkling more side checks, so they are scheduled
+together as one item below.
+
+### P2 — `getElectricityStored` mutates the stack it is asked to read — ✅ FIXED
 
 `ElectricArmorBase.getElectricityStored` is a getter that calls `itemStack.setItemDamage(...)`. It is called from HUD
 rendering, from `isModuleActive` chains and from `hasPower` — i.e. several times per tick — and each call writes the
 damage value, which on a `MultiItemStack` in an inventory marks the stack dirty and re-syncs it to the client. It is
 also the source of the "damage bar flickers while charging" reports. Correct, but expensive and surprising.
-**Recommendation:** rename the side effect into an explicit `syncDamageBar(ItemStack)` and call it only from
-`setElectricity`.
+**Fixed:** the getter is pure - no damage write, and it no longer creates an empty NBT tag on read either - and the
+write moved into `syncDamageBar(ItemStack)`, which `setElectricity` calls and which skips the write when the bar is
+already correct. Covered by four in-game checks (`armor:` group in `gameTestServer`): reads never move the bar,
+charging does, a read never invents a tag, and a stale bar can be repaired. A headless test is not possible -
+`ElectricArmorBase`'s constructor asks Galacticraft whether IC2 is loaded, which reaches into the launch classloader
+and throws `ClassCastException: AppClassLoader cannot be cast to LaunchClassLoader` in a plain JVM (recorded in §8).
 
-### P2 — `PacketSimple`'s constructor prints a stack trace instead of failing
+### P2 — `PacketSimple`'s constructor prints a stack trace instead of failing — ✅ FIXED
 
 ```java
 if (packetType.getDecodeClasses().length != data.size()) {
@@ -269,9 +306,11 @@ if (packetType.getDecodeClasses().length != data.size()) {
 }
 ```
 A mismatched payload is exactly the bug the packet type system exists to prevent; printing to stdout and carrying on
-means the client decodes garbage. It should `GCLog.severe` and return without setting `type`, or throw.
-**Recommendation:** make it a hard failure in dev (`Config.debugMode`) and a `severe` log plus empty packet in
-production.
+means the client decodes garbage.
+**Fixed:** with `Config.debugMode` on it throws `IllegalArgumentException` (in development a mismatch is always a
+coding error); otherwise it logs `severe` and leaves `type`/`data` null, and `encodeInto` refuses to write a packet
+that was never built. The two other `printStackTrace()` calls in the class, and the `System.err` in `decodeInto`,
+now log the throwable through `ExtraPlanetsLog` - see §6.2.
 
 ### P2 — Module slot-convention documentation is inverted in two places — ✅ FIXED
 
@@ -377,17 +416,23 @@ static analysis. Delete it locally; nothing references it.
 5. **`ExtraPlanets_Recipes` is 172 KB in one class.** Splitting it per body (the rocket recipes already are) would make
    it navigable and would let a per-body recipe class be loaded only when that body is enabled.
 
-### 6.2 Logging hygiene
+### 6.2 Logging hygiene — ✅ printStackTrace/System.out done, empty catches OPEN
 
-* **11 empty `catch` blocks** and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers. A failure
-  there means "this structure silently never generates".
-* **7 `System.out`/`System.err`** call sites in production code (`EntityCustomBlueCreeper:285`,
-  `Kepler22bDungeons:177`, `CustomCelestialSelection:669`, `MainHandler:519`, `PacketSimple:123`).
-* **7 `printStackTrace()`** call sites.
+`GCLog` has no `(String, Throwable)` overload, which is why every `catch` block in this mod called
+`e.printStackTrace()`: it writes to the console, so the trace never reaches `logs/fml-*.log` and a user crash report
+contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLog` now provides
+`info/warn/severe/debug`, with throwable overloads, on the same Forge relaunch-log sink under this mod's own name.
 
-`GCLog` already exists and is used correctly elsewhere; routing all of the above through
-`GCLog.severe`/`GCLog.info` — and gating the verbose ones behind a `Config.debugMode` — costs a day and makes the two
-locales where these bugs actually bite (startup and worldgen) diagnosable from a log file.
+* **7 `printStackTrace()` sites** — all replaced with `ExtraPlanetsLog.severe(...)`/`warn(...)` plus the throwable
+  (`CustomCelestialSelection`, `EntityVehicleBase`, `ExtraPlanetsChannelHandler` ×2, `PacketSimple` ×3).
+* **`System.out`/`System.err` in production** — the two leftover debug prints in `EntityCustomBlueCreeper`'s AI are
+  gone, `MainHandler`'s sealer diagnostics and `Kepler22bDungeons`' spawner warning go through the logger
+  (`debug`/`warn`), and `CustomCelestialSelection`'s render guard logs the throwable. The one remaining stdout write is
+  `SmokeTestHook`'s marker, which is a deliberate CI contract.
+* **`NoStrayTracesTest`** fails the build if either habit returns, with `file:line` for each offence. Verified by
+  adding a violation and watching it fail.
+* **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
+  where a failure means "this structure silently never generates".
 
 ### 6.3 The worldgen copy-paste (the big one)
 
@@ -448,7 +493,7 @@ Ordered by (value ÷ effort). None of these are implemented in this pass.
 5. **Schematic pages for the rovers 2.0 / rocket 11.** The schematic id plumbing (`Config.SYNC_ENTRIES`,
    `SchematicRegistry`, `SchematicPage` config ids) is fully generic; adding a page is currently a 6-file change that
    could be a 1-file change with a small builder.
-6. **In-game coverage in CI.** See §8.5 — the machinery is in place, only the class-dump flag is missing.
+6. **In-game coverage in CI.** See §8.6 — the machinery is in place, only the class-dump flag is missing.
 
 ---
 
@@ -482,14 +527,23 @@ plain JVM two stacks of completely different items compare equal**. A headless t
 satisfy a diamond requirement" fails for the wrong reason. `ModuleHelperInstallTest.consumingPrefersTheMatchingStack`
 documents this in place; the positive case is tested headless and the negative case is tested in game.
 
-### 8.4 `FluidRegistry` and `Forge Configuration` need FML injections
+### 8.4 Galacticraft asks `Launch.classLoader` in constructors
+
+`ElectricArmorBase`'s constructor calls `EnergyConfigHandler.isIndustrialCraft2Loaded()`, which resolves
+`Launch.classLoader` and casts it to FML's `LaunchClassLoader`. In a plain JVM that is
+`ClassCastException: sun.misc.Launcher$AppClassLoader cannot be cast to net.minecraft.launchwrapper.LaunchClassLoader`,
+so **no `ElectricArmorBase` subclass can be instantiated headless at all** - not even a test stub. This was found while
+trying to unit-test the `getElectricityStored` fix, which is why those four checks live in the in-game suite instead
+(`armor:` group). The same applies to any class whose constructor reaches into GC's `ConfigManagerCore` static state.
+
+### 8.5 `FluidRegistry` and `Forge Configuration` need FML injections
 
 `FluidRegistry`'s static initialiser touches the FML side, and `net.minecraftforge.common.config.Configuration` reads
 `FMLInjectionData.data()[6]` (the Minecraft home directory), which is `null` outside a launch and throws an NPE.
 `FmlTestEnvironment` stubs the injection data so `Config.init()` can run headless; fluid-registry-dependent code
 cannot (fluids must be created in the game test).
 
-### 8.5 In-game coverage
+### 8.6 In-game coverage
 
 The `gameTestServer` run writes `build/jacoco/gameTest.exec` with the agent restricted to `com.mjr.extraplanets.*`, and
 `jacocoGameTestReport` reports it. That report is **empty today** because it needs RFB's post-transform class dump
@@ -505,20 +559,17 @@ pointing `classDirectories` at a production jar) is the remaining step.
 
 | Order | Item | Effort | Risk |
 |---|---|---|---|
-| 1 | `ModuleHelper` blind cast to `ElectricArmorBase` (§4 P2) | 10 lines | none |
-| 2 | Guard the rover's client-only call with `isWorldRemote` (§4 P2) | 5 lines | none |
-| 3 | **Delete the 9 unreferenced classes** (§5.1) | mechanical | none |
-| 4 | Route `System.out`/`printStackTrace` through `GCLog`, add `debugMode` gating (§6.2) | 1 day | low |
-| 5 | Split `getElectricityStored`'s read from its write (§4 P2) | 1 hour | low (touches the HUD) |
-| 6 | Decide on biome id `0` (§4 P2) | 30 min + a decision | medium — behaviour change |
-| 7 | `Config` instance facade (§4 P1) | 2-3 days | medium |
-| 8 | Refactor the 44 worldgen copies (§6.3) | 1 week | medium, mechanical |
-| 9 | Delete / implement the dead config keys (§5.4) | depends | low |
-| 10 | Add `gameTestServer` + `smokeTest` to CI (§6.4) | 1 hour | none |
-| 11 | Delete the local `migrate/` tree (§5.3) | 1 min | none |
+| 1 | `CommonProxy.getClientWorld()`/`getKeyDisplayString()` seam for the 8 remaining tooltip-only client calls (§4 P2) | 2 hours | low |
+| 2 | **Delete the 9 unreferenced classes** (§5.1) | mechanical | none |
+| 3 | Empty `catch` blocks and `catch (Throwable)` in worldgen (§6.2) | 1 day | low |
+| 4 | `Config` instance facade (§4 P1) | 2-3 days | medium |
+| 5 | Refactor the 44 worldgen copies (§6.3) | 1 week | medium, mechanical |
+| 6 | Delete / implement the dead config keys (§5.4) | depends | low |
+| 7 | Add `gameTestServer` + `smokeTest` to CI (§6.4) | 1 hour | none |
+| 8 | Delete the local `migrate/` tree (§5.3) | 1 min | none |
 | ✅ | Make `ExtraPlanets_Modules.init()` order-independent (§4 P1) | 2 hours | medium |
 | ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
-| ✅ | Correct the inverted slot-convention docs (§4 P2) | 20 lines | none |
+| ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
 on a config-id collision, a broken sync contract, a module-registry duplicate, a packet-codec regression, and a

@@ -16,6 +16,7 @@ import net.minecraftforge.common.ChestGenHooks;
 import net.minecraftforge.common.DungeonHooks;
 
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 public class WorldGenKepler22bDungeons extends WorldGenerator {
 
@@ -71,8 +72,6 @@ public class WorldGenKepler22bDungeons extends WorldGenerator {
         }
 
         if (j1 >= 1 && j1 <= 5) {
-            // System.out.println("Generating Kepler22b Dungeon at:" + p_76484_3_+ ", " + p_76484_4_+ ", " +
-            // p_76484_5_);
             for (k1 = p_76484_3_ - l - 1; k1 <= p_76484_3_ + l + 1; ++k1) {
                 for (l1 = p_76484_4_ + b0; l1 >= p_76484_4_ - 1; --l1) {
                     for (i2 = p_76484_5_ - i1 - 1; i2 <= p_76484_5_ + i1 + 1; ++i2) {
@@ -174,13 +173,13 @@ public class WorldGenKepler22bDungeons extends WorldGenerator {
                 tileentitymobspawner.func_145881_a()
                     .setEntityName(this.pickMobSpawner(p_76484_2_));
             } else {
-                System.err.println(
-                    "Failed to fetch mob spawner entity at (" + p_76484_3_
+                ExtraPlanetsLog.warn(
+                    "Failed to fetch the mob spawner entity at (" + p_76484_3_
                         + ", "
                         + p_76484_4_
                         + ", "
                         + p_76484_5_
-                        + ")");
+                        + "); the dungeon will generate without a spawner.");
             }
 
             return true;

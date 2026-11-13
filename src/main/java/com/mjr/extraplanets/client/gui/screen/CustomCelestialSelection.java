@@ -15,6 +15,7 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import com.google.common.collect.Maps;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.relauncher.Side;
@@ -666,9 +667,10 @@ public class CustomCelestialSelection extends GuiCelestialSelection {
                 }
             }
         } catch (Exception e) {
-            System.out.println(
-                "An error has occurred while rendering custom features on the Celestial Selection screen, Please check log for errors!");
-            e.printStackTrace();
+            ExtraPlanetsLog.severe(
+                "An error occurred while rendering the custom celestial-selection features; the rest of the screen was"
+                    + " still drawn. Please report this with the log.",
+                e);
         }
         super.drawButtons(mousePosX, mousePosY);
     }

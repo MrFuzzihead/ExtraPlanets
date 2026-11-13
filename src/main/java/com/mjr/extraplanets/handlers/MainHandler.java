@@ -17,6 +17,7 @@ import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
 import com.mjr.extraplanets.items.armor.modules.ModulePressureSeal;
 import com.mjr.extraplanets.items.armor.modules.ModuleRadiationShield;
 import com.mjr.extraplanets.util.DamageSourceEP;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -516,8 +517,8 @@ public class MainHandler {
                 }
             }
             if (player.ticksExisted % 200 == 0 && sealer != null) {
-                System.out.println(
-                    "[EP] Sealer check: found=" + (sealer != null)
+                ExtraPlanetsLog.debug(
+                    "Sealer check: found=" + true
                         + " sealed="
                         + sealer.sealed
                         + " thermal="

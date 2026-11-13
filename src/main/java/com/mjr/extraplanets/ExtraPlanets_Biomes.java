@@ -23,13 +23,14 @@ import micdoodle8.mods.galacticraft.core.util.GCLog;
  * <p>
  * Because of that, {@link #getBiome} deliberately never remaps an existing config value:
  * <ul>
- * <li>It KEEPS the configured ID whenever it is within the valid 0-255 range - even if it collides
+ * <li>It KEEPS the configured ID whenever it is within the live array's range - even if it collides
  * with another mod's biome - so existing configs and worlds are never remapped.</li>
  * <li>It DETECTS and loudly LOGS any collision with another mod's biome, naming the slot and the
  * biome currently occupying it, so the user can fix the value in their config by hand.</li>
- * <li>It only relocates an ID that is OUT of the valid range (which would otherwise crash
- * <code>biomeList[id] = ...</code> with an {@link ArrayIndexOutOfBoundsException}), as a last
- * resort to keep the game running, and logs a clear message to fix the config.</li>
+ * <li>It only relocates an ID that would otherwise corrupt the world: one that is OUT of the live
+ * range (which would throw {@link ArrayIndexOutOfBoundsException} inside the {@link BiomeGenBase}
+ * constructor) and ID 0, which is the vanilla ocean biome's slot. Relocation is a last resort to keep
+ * the game running, and it always logs a clear message to fix the config.</li>
  * <li>It never constructs a biome until the first time it is actually requested, which for
  * ExtraPlanets only happens when a planet/moon's dimension is used. Disabled bodies therefore
  * never claim a biome slot.</li>
@@ -52,7 +53,9 @@ public class ExtraPlanets_Biomes {
      * Returns (creating it on first use) the biome registered for {@code biomeName}.
      *
      * @param biomeName    config biome name, e.g. {@code "venus"}
-     * @param configuredID the numeric ID read from the config (0-255 is the valid range on 1.7.10)
+     * @param configuredID the numeric ID read from the config; the valid upper bound is whatever
+     *                     {@link BiomeGenBase#getBiomeGenArray()} reports at runtime (255 vanilla, far higher with an
+     *                     ID extender), never a hardcoded cap
      * @param factory      creates the biome instance for the given numeric ID
      * @return the created (or already registered) biome instance
      */
@@ -90,12 +93,31 @@ public class ExtraPlanets_Biomes {
             return fallbackID;
         }
 
+        // ID 0 is vanilla's ocean biome. BiomeGenBase writes every constructed biome into biomeList[id], so
+        // accepting 0 here would replace the ocean for the rest of the session: every ocean in every world becomes
+        // this planet's biome. The slot is used, so treat it exactly like a collision - but relocate instead of just
+        // warning, because keeping the configured value is what corrupts the world.
+        //
+        // Note that 0 is *not* treated as out of range: with an ID extender (EndlessIDs and friends) the valid range
+        // runs to the extender's real array length, and this check stays out of the way of that.
+        if (configuredID == 0) {
+            int fallbackID = findFreeBiomeID();
+            GCLog.severe(
+                "[ExtraPlanets] The Biome ID for '" + biomeName
+                    + "' is 0 in config/ExtraPlanets.cfg, but 0 is the vanilla ocean biome's ID. Using it would replace"
+                    + " the ocean with this biome in every world. Using the unused ID "
+                    + fallbackID
+                    + " instead. Please set the '"
+                    + biomeName
+                    + " Biome ID' value in config/ExtraPlanets.cfg to an unused number and restart.");
+            return fallbackID;
+        }
+
         // BiomeGenBase.getBiome returns the biome occupying a slot when that ID is in range, or null
         // if the slot is empty (only out-of-bounds IDs fall back to ocean). A null occupant therefore
         // means the slot is genuinely unused -> no conflict, use the configured ID as-is.
-        // The ocean biome itself owns slot 0, so ID 0 is never treated as a conflict here either.
         BiomeGenBase occupant = BiomeGenBase.getBiome(configuredID);
-        if (configuredID != 0 && occupant != null && occupant != BiomeGenBase.ocean) {
+        if (occupant != null && occupant != BiomeGenBase.ocean) {
             if (BIOMES.containsValue(occupant)) {
                 String owner = findOwnerName(occupant);
                 GCLog.severe(
@@ -142,17 +164,19 @@ public class ExtraPlanets_Biomes {
         final int arrayLen = BiomeGenBase.getBiomeGenArray().length;
         // Skip slot 0 (vanilla ocean biome). A slot is free only when biomeList[id] is null
         // (BiomeGenBase.getBiome returns null for an in-range empty slot). After EndlessIDs (or
-        // similar extenders) patching the array, there may be thousands of free slots > 255.
+        // similar extenders) patching the array, there may be thousands of free slots > 255 - the bound is always
+        // read from the live array, never hardcoded.
         for (int id = 1; id < arrayLen; id++) {
             if (BiomeGenBase.getBiome(id) == null) {
                 return id;
             }
         }
-        GCLog.severe(
-            "[ExtraPlanets] No free biome IDs remain in the entire 0-" + (arrayLen - 1)
-                + " range! This indicates a severe "
-                + "biome conflict with other mods. Falling back to ID 0 (the ocean biome) so the game can continue, "
-                + "but this world will have corrupted biomes.");
-        return 0;
+        // Nothing left. Taking slot 0 would replace the ocean in every world, which is a far worse outcome than a
+        // crash on the one planet that needed a biome, so fail loudly instead of corrupting the save.
+        throw new IllegalStateException(
+            "[ExtraPlanets] No free biome IDs remain in the whole 0-" + (arrayLen - 1)
+                + " range, so this biome cannot be registered. "
+                + "Another mod has claimed every slot; remove a few biome-adding mods or install an ID extender such "
+                + "as EndlessIDs, then restart.");
     }
 }

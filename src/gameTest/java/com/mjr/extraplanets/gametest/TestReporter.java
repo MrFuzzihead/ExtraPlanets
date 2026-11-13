@@ -66,6 +66,17 @@ final class TestReporter {
         }
     }
 
+    static void assertNull(String message, Object value) {
+        if (value != null) throw new AssertionError(message + " but was <" + value + ">");
+    }
+
+    static void assertEquals(String message, float expected, float actual, float delta) {
+        if (Math.abs(expected - actual) > delta) {
+            throw new AssertionError(
+                message + ": expected <" + expected + "> +/- " + delta + " but was <" + actual + ">");
+        }
+    }
+
     static void assertEquals(String message, int expected, int actual) {
         if (expected != actual) {
             throw new AssertionError(message + ": expected <" + expected + "> but was <" + actual + ">");

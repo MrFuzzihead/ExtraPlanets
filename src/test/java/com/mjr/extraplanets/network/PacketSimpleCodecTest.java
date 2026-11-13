@@ -168,6 +168,63 @@ public class PacketSimpleCodecTest {
     }
 
     // ---------------------------------------------------------------------------------------------------------
+    // A payload of the wrong shape is refused, not sent
+    // ---------------------------------------------------------------------------------------------------------
+
+    @Test
+    public void aPayloadOfTheWrongLengthIsNotBuilt() {
+        // The type's decode classes *are* the protocol; a mismatch means the far side would decode garbage. The old
+        // behaviour logged, printed a stack trace and built the packet anyway.
+        boolean debug = Config.debugMode;
+        Config.debugMode = false;
+        try {
+            PacketSimple packet = new PacketSimple(
+                PacketSimple.EnumSimplePacket.C_OPEN_PARACHEST_GUI,
+                new Object[] { Integer.valueOf(1) }); // that type decodes three integers
+
+            Assert.assertNull("a mismatched packet must not carry a type", typeOf(packet));
+            Assert.assertNull(dataOf(packet));
+        } finally {
+            Config.debugMode = debug;
+        }
+    }
+
+    @Test
+    public void aRefusedPacketWritesNothing() {
+        boolean debug = Config.debugMode;
+        Config.debugMode = false;
+        try {
+            PacketSimple refused = new PacketSimple(
+                PacketSimple.EnumSimplePacket.C_OPEN_PARACHEST_GUI,
+                new Object[] { Integer.valueOf(1) });
+
+            ByteBuf buffer = Unpooled.buffer();
+            refused.encodeInto(null, buffer);
+
+            Assert.assertEquals("a refused packet must not put bytes on the wire", 0, buffer.readableBytes());
+        } finally {
+            Config.debugMode = debug;
+        }
+    }
+
+    @Test
+    public void aMismatchFailsLoudlyInDevelopment() {
+        // In dev a mismatch is always a coding error, so debugMode turns it into an immediate failure instead of a
+        // log line nobody reads.
+        boolean debug = Config.debugMode;
+        Config.debugMode = true;
+        try {
+            Assert.assertThrows(
+                IllegalArgumentException.class,
+                () -> new PacketSimple(
+                    PacketSimple.EnumSimplePacket.C_OPEN_PARACHEST_GUI,
+                    new Object[] { Integer.valueOf(1) }));
+        } finally {
+            Config.debugMode = debug;
+        }
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
     // Helpers
     // ---------------------------------------------------------------------------------------------------------
 

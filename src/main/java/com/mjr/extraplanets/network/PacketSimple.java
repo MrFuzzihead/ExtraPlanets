@@ -16,6 +16,7 @@ import com.mjr.extraplanets.client.gui.vehicles.GuiPoweredVehicleBase;
 import com.mjr.extraplanets.client.gui.vehicles.GuiVehicleBase;
 import com.mjr.extraplanets.entities.vehicles.EntityPoweredVehicleBase;
 import com.mjr.extraplanets.entities.vehicles.EntityVehicleBase;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 import com.mjr.extraplanets.util.ExtraPlanetsUtli;
 
 import cpw.mods.fml.client.FMLClientHandler;
@@ -27,7 +28,6 @@ import io.netty.channel.ChannelHandlerContext;
 import micdoodle8.mods.galacticraft.core.entities.player.GCPlayerStatsClient;
 import micdoodle8.mods.galacticraft.core.network.IPacket;
 import micdoodle8.mods.galacticraft.core.network.NetworkUtil;
-import micdoodle8.mods.galacticraft.core.util.GCLog;
 import micdoodle8.mods.galacticraft.core.util.PlayerUtil;
 
 public class PacketSimple extends Packet implements IPacket {
@@ -75,8 +75,22 @@ public class PacketSimple extends Packet implements IPacket {
 
     public PacketSimple(EnumSimplePacket packetType, List<Object> data) {
         if (packetType.getDecodeClasses().length != data.size()) {
-            GCLog.info("[ExtraPlanets] Simple Packet Core found data length different than packet type");
-            new RuntimeException().printStackTrace();
+            // The type system exists to prevent exactly this: a payload whose shape the far side will decode into
+            // garbage. Sending it anyway (the old behaviour: log, print a stack trace, carry on) means the client
+            // silently misinterprets whatever arrives, so refuse to build the packet instead.
+            String message = "[ExtraPlanets] Refusing to build a " + packetType
+                + " packet with "
+                + data.size()
+                + " values; that type decodes "
+                + packetType.getDecodeClasses().length
+                + ". Nothing was sent.";
+            if (Config.debugMode) {
+                // Fail loudly in development, where a mismatch is always a coding error.
+                throw new IllegalArgumentException(message);
+            }
+            ExtraPlanetsLog.severe(message);
+            // Leave type and data null: encodeInto() refuses to write an unset packet.
+            return;
         }
 
         this.type = packetType;
@@ -85,25 +99,31 @@ public class PacketSimple extends Packet implements IPacket {
 
     @Override
     public void encodeInto(ChannelHandlerContext context, ByteBuf buffer) {
+        if (this.type == null) {
+            ExtraPlanetsLog
+                .severe("[ExtraPlanets] Tried to encode a packet that was never built; nothing was written.");
+            return;
+        }
         buffer.writeInt(this.type.ordinal());
 
         try {
             NetworkUtil.encodeData(buffer, this.data);
         } catch (IOException e) {
-            e.printStackTrace();
+            ExtraPlanetsLog.severe("[ExtraPlanets] Failed to encode a " + this.type + " packet", e);
         }
     }
 
     @Override
     public void decodeInto(ChannelHandlerContext context, ByteBuf buffer) {
         if (buffer.readableBytes() < 4) {
-            GCLog.severe("[ExtraPlanets] Received a simple packet too short to contain a packet type. Discarding it.");
+            ExtraPlanetsLog
+                .severe("[ExtraPlanets] Received a simple packet too short to contain a packet type. Discarding it.");
             return;
         }
         int typeOrdinal = buffer.readInt();
         EnumSimplePacket[] types = EnumSimplePacket.values();
         if (typeOrdinal < 0 || typeOrdinal >= types.length) {
-            GCLog.severe(
+            ExtraPlanetsLog.severe(
                 "[ExtraPlanets] Received a simple packet with invalid type ordinal " + typeOrdinal
                     + " (valid range is 0-"
                     + (types.length - 1)
@@ -117,12 +137,12 @@ public class PacketSimple extends Packet implements IPacket {
                 this.data = NetworkUtil.decodeData(this.type.getDecodeClasses(), buffer);
             }
             if (buffer.readableBytes() > 0) {
-                GCLog.severe("ExtraPlanets packet length problem for packet type " + this.type.toString());
+                ExtraPlanetsLog.severe("ExtraPlanets packet length problem for packet type " + this.type.toString());
             }
         } catch (Exception e) {
-            System.err.println(
-                "[ExtraPlanets] Error handling simple packet type: " + this.type.toString() + " " + buffer.toString());
-            e.printStackTrace();
+            ExtraPlanetsLog.severe("[ExtraPlanets] Failed to decode a " + this.type + " packet", e);
+            // A half-decoded payload is worse than none: clear it so the handlers treat the packet as discarded.
+            this.data = null;
         }
     }
 

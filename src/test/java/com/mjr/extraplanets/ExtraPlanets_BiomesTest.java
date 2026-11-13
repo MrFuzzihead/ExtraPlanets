@@ -10,9 +10,10 @@ import org.junit.Test;
  *
  * <p>
  * The registry is deliberately conservative: on 1.7.10 a biome's numeric ID is written into every generated
- * chunk, so remapping a value that is merely *colliding* would corrupt existing worlds. Only an out-of-range value
- * is relocated, because that one would otherwise throw {@code ArrayIndexOutOfBoundsException} inside
- * {@code BiomeGenBase}'s constructor and take the game down.
+ * chunk, so remapping a value that is merely *colliding* would corrupt existing worlds. Only an ID that would
+ * corrupt the world anyway is relocated: one outside the array (which would throw
+ * {@code ArrayIndexOutOfBoundsException} inside {@code BiomeGenBase}'s constructor) and ID 0, which belongs to the
+ * vanilla ocean biome.
  * </p>
  *
  * <p>
@@ -129,6 +130,31 @@ public class ExtraPlanets_BiomesTest {
         BiomeGenBase second = ExtraPlanets_Biomes.getBiome("test_dup_second", 197, PLAIN_BIOME);
         Assert.assertNotNull(second);
         Assert.assertEquals(197, second.biomeID);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // ID 0 belongs to the vanilla ocean
+    // ---------------------------------------------------------------------------------------------------------
+
+    @Test
+    public void idZeroIsRelocatedInsteadOfReplacingTheOcean() {
+        // BiomeGenBase writes every constructed biome into biomeList[id], so accepting 0 would make this biome *the*
+        // ocean for the rest of the session, in every world. The slot is occupied, but unlike a plain collision the
+        // configured value cannot be kept either.
+        BiomeGenBase ocean = BiomeGenBase.ocean;
+        BiomeGenBase biome = ExtraPlanets_Biomes.getBiome("test_zero", 0, PLAIN_BIOME);
+
+        Assert.assertNotEquals("ID 0 must not be handed to the factory", 0, biome.biomeID);
+        Assert.assertTrue("relocated id must be inside the array", biome.biomeID >= 1);
+        Assert.assertSame("the vanilla ocean must still own slot 0", ocean, BiomeGenBase.getBiome(0));
+    }
+
+    @Test
+    public void aRelocatedIdIsNeverZero() {
+        // findFreeBiomeID skips slot 0, so even a relocation triggered by a negative id stays clear of the ocean.
+        BiomeGenBase biome = ExtraPlanets_Biomes.getBiome("test_never_zero", -1, PLAIN_BIOME);
+        Assert.assertTrue(biome.biomeID >= 1);
+        Assert.assertNotSame(BiomeGenBase.ocean, biome);
     }
 
     // ---------------------------------------------------------------------------------------------------------

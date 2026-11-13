@@ -179,9 +179,9 @@ public abstract class ElectricArmorBase extends ItemArmor
         itemStack.getTagCompound()
             .setFloat("electricity", electricityStored);
 
-        // Map charge to item damage for the built-in durability bar
-        itemStack.setItemDamage(
-            maxEnergy > 0 ? DAMAGE_RANGE - (int) (electricityStored / maxEnergy * DAMAGE_RANGE) : DAMAGE_RANGE);
+        // Map charge to item damage for the built-in durability bar. syncDamageBar() also skips the write when the
+        // bar already shows this charge, so charging a stack that was written this tick does not dirty it again.
+        this.syncDamageBar(itemStack);
     }
 
     @Override
@@ -192,8 +192,12 @@ public abstract class ElectricArmorBase extends ItemArmor
 
     @Override
     public float getElectricityStored(ItemStack itemStack) {
+        // A pure read. This used to write the damage bar on every call, and it is called from HUD rendering, from the
+        // suit-module power checks and from hasPower - several times per tick. Every one of those writes marked the
+        // stack dirty and re-synced it to the client, which is where the "damage bar flickers while charging"
+        // reports came from. The bar is now written only where the charge actually changes: setElectricity().
         if (itemStack.getTagCompound() == null) {
-            itemStack.setTagCompound(new NBTTagCompound());
+            return 0f;
         }
         float energyStored = 0f;
         if (itemStack.getTagCompound()
@@ -212,13 +216,26 @@ public abstract class ElectricArmorBase extends ItemArmor
                 energyStored = (float) ((net.minecraft.nbt.NBTTagByte) obj).func_150290_f();
             }
         }
-
-        // Keep the damage bar in sync
-        float maxEnergy = this.getMaxElectricityStored(itemStack);
-        if (maxEnergy > 0) {
-            itemStack.setItemDamage(DAMAGE_RANGE - (int) (energyStored / maxEnergy * DAMAGE_RANGE));
-        }
         return energyStored;
+    }
+
+    /**
+     * Writes the charge into the damage bar (0 damage = full, {@link #DAMAGE_RANGE} = empty), and only when the bar
+     * is actually out of date - writing on every read is what used to re-sync the stack to the client several times
+     * a tick.
+     * <p>
+     * Called automatically by {@link #setElectricity(ItemStack, float)}. Call it directly after changing the charge
+     * by any other route (for example when repairing a stack from another mod's API).
+     */
+    public void syncDamageBar(ItemStack itemStack) {
+        final float maxEnergy = this.getMaxElectricityStored(itemStack);
+        if (maxEnergy <= 0) {
+            return;
+        }
+        final int damage = DAMAGE_RANGE - (int) (this.getElectricityStored(itemStack) / maxEnergy * DAMAGE_RANGE);
+        if (itemStack.getItemDamage() != damage) {
+            itemStack.setItemDamage(damage);
+        }
     }
 
     @Override

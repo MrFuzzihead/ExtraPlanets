@@ -103,6 +103,8 @@ tasks.withType<Test>().configureEach {
     // (and anything else a test writes) inside build/ instead of the checkout.
     workingDir = layout.buildDirectory.dir("test-workdir").get().asFile
     doFirst { workingDir.mkdirs() }
+    // NoStrayTracesTest lints src/main/java, which the redirected working directory puts out of reach.
+    systemProperty("extraplanets.projectDir", layout.projectDirectory.asFile.absolutePath)
     testLogging {
         events("failed")
         exceptionFormat = TestExceptionFormat.FULL
@@ -166,18 +168,18 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         // A regression guard at the current baseline, not a target. ExtraPlanets is ~13 MB of worldgen,
         // rendering and registration code that needs a live game to execute at all; the honest headless
-        // ceiling for this codebase is low (measured: 2.04% of 81,200 lines, 0.58% of 34,058 branches).
+        // ceiling for this codebase is low (measured: 2.07% of 81,228 lines, 0.61% of 34,070 branches).
         // Raise these numbers as tests are added - never lower them.
         rule {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal("0.020")
+                minimum = BigDecimal("0.0205")
             }
             limit {
                 counter = "BRANCH"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal("0.0055")
+                minimum = BigDecimal("0.0059")
             }
         }
     }

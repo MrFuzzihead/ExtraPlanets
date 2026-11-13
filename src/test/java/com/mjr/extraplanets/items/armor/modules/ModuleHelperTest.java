@@ -397,10 +397,28 @@ public class ModuleHelperTest {
     }
 
     @Test
-    public void hasPowerIsFalseForAnItemThatIsNotAnElectricArmor() {
-        // getArmourStoredPower casts to ElectricArmorBase after only an IModularArmor check. This pins the current
-        // contract: callers must only pass real electric suits.
-        ItemStack stack = modularStack();
-        Assert.assertThrows(ClassCastException.class, () -> ModuleHelper.getArmourStoredPower(stack));
+    public void powerReadsOnANonElectricModularItemReturnZero() {
+        // IModularArmor is a marker interface: it promises module slots, not an energy store. Any addon suit can
+        // implement it, and getArmourStoredPower is on the HUD path, so an unchecked cast here threw
+        // ClassCastException every frame for that player. It must read as "no power" instead.
+        Assert.assertEquals(0, ModuleHelper.getArmourStoredPower(modularStack()));
+    }
+
+    @Test
+    public void hasPowerIsFalseForANonElectricModularItem() {
+        Assert.assertFalse(ModuleHelper.hasPower(modularStack(), 1));
+    }
+
+    @Test
+    public void takingPowerFromANonElectricModularItemIsANoOp() {
+        // Used by the module tick and use paths; it has to survive a suit it cannot discharge.
+        ModuleHelper.takeArmourPower(modularStack(), 100);
+    }
+
+    @Test
+    public void powerReadsOnANonModularItemReturnZero() {
+        Assert.assertEquals(0, ModuleHelper.getArmourStoredPower(new ItemStack(new TestNonModularItem(), 1)));
+        Assert.assertFalse(ModuleHelper.hasPower(new ItemStack(new TestNonModularItem(), 1), 1));
+        ModuleHelper.takeArmourPower(new ItemStack(new TestNonModularItem(), 1), 100);
     }
 }

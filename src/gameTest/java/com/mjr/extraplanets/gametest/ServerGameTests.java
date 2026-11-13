@@ -15,6 +15,7 @@ import net.minecraftforge.oredict.OreDictionary;
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.Constants;
 import com.mjr.extraplanets.armor.ExtraPlanets_Armor;
+import com.mjr.extraplanets.armor.bases.ElectricArmorBase;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.blocks.machines.ExtraPlanets_Machines;
 import com.mjr.extraplanets.items.ExtraPlanets_Items;
@@ -53,6 +54,7 @@ final class ServerGameTests {
         run(reporter, "oreDictionary");
         run(reporter, "recipes");
         run(reporter, "modules");
+        run(reporter, "armor");
 
         System.out.println(
             "[EP-GAMETEST] server checks: " + (reporter.checks() - reporter.failures())
@@ -84,6 +86,9 @@ final class ServerGameTests {
                 break;
             case "modules":
                 modules(reporter);
+                break;
+            case "armor":
+                armor(reporter);
                 break;
             default:
                 throw new IllegalArgumentException(group);
@@ -439,6 +444,62 @@ final class ServerGameTests {
                 + ", expected the item the config names",
             requirements.get(0)
                 .getItem() == expected);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // Armour charge handling
+    // ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * The electric suit's charge accessors. These cannot run headless: {@code ElectricArmorBase}'s constructor asks
+     * Galacticraft whether IC2 is loaded, which reaches into the launch classloader and fails in a plain JVM.
+     */
+    private static void armor(TestReporter reporter) {
+        reporter.check("armor: reading the charge never writes the damage bar", () -> {
+            ItemStack suit = new ItemStack(ExtraPlanets_Armor.spaceSuitChest, 1);
+            ElectricArmorBase item = (ElectricArmorBase) ExtraPlanets_Armor.spaceSuitChest;
+            item.setElectricity(suit, item.getMaxElectricityStored(suit) / 2F);
+
+            // Somebody else moves the bar; reads must leave it exactly as they found it, or every HUD frame
+            // re-syncs the stack to the client (the "damage bar flickers while charging" reports).
+            suit.setItemDamage(7);
+            item.getElectricityStored(suit);
+            item.getElectricityStored(suit);
+            TestReporter.assertEquals("damage bar after two reads", 7, suit.getItemDamage());
+        });
+
+        reporter.check("armor: charging writes the damage bar", () -> {
+            ItemStack suit = new ItemStack(ExtraPlanets_Armor.spaceSuitChest, 1);
+            ElectricArmorBase item = (ElectricArmorBase) ExtraPlanets_Armor.spaceSuitChest;
+
+            item.setElectricity(suit, item.getMaxElectricityStored(suit));
+            TestReporter.assertEquals("full charge is 0 damage", 0, suit.getItemDamage());
+
+            item.setElectricity(suit, 0F);
+            TestReporter
+                .assertEquals("empty charge is full damage", ElectricArmorBase.DAMAGE_RANGE, suit.getItemDamage());
+        });
+
+        reporter.check("armor: an uncharged suit gets no NBT tag from a read", () -> {
+            ItemStack suit = new ItemStack(ExtraPlanets_Armor.spaceSuitHelmet, 1);
+            ElectricArmorBase item = (ElectricArmorBase) ExtraPlanets_Armor.spaceSuitHelmet;
+
+            TestReporter.assertEquals("charge of a new suit", 0F, item.getElectricityStored(suit), 0F);
+            TestReporter.assertNull("a read must not create an NBT tag", suit.getTagCompound());
+
+            item.setElectricity(suit, 1F);
+            TestReporter.assertNotNull("charging must create the tag", suit.getTagCompound());
+        });
+
+        reporter.check("armor: a stale damage bar can be repaired", () -> {
+            ItemStack suit = new ItemStack(ExtraPlanets_Armor.spaceSuitLegings, 1);
+            ElectricArmorBase item = (ElectricArmorBase) ExtraPlanets_Armor.spaceSuitLegings;
+            item.setElectricity(suit, item.getMaxElectricityStored(suit));
+
+            suit.setItemDamage(99);
+            item.syncDamageBar(suit);
+            TestReporter.assertEquals("repaired damage bar", 0, suit.getItemDamage());
+        });
     }
 
     private static void modules(TestReporter reporter) {
