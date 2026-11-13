@@ -12,8 +12,6 @@ public class StructureComponentIapetusVillageStartPiece extends StructureCompone
     public int terrainType;
     public StructureVillagePieceWeightIapetus structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightIapetus> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentIapetusVillageStartPiece() {}
 

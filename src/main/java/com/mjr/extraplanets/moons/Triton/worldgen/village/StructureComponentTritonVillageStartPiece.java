@@ -12,8 +12,6 @@ public class StructureComponentTritonVillageStartPiece extends StructureComponen
     public int terrainType;
     public StructureVillagePieceWeightTriton structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightTriton> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentTritonVillageStartPiece() {}
 

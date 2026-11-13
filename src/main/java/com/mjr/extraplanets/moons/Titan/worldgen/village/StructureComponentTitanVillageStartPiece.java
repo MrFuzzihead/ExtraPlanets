@@ -12,8 +12,6 @@ public class StructureComponentTitanVillageStartPiece extends StructureComponent
     public int terrainType;
     public StructureVillagePieceWeightTitan structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightTitan> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentTitanVillageStartPiece() {}
 

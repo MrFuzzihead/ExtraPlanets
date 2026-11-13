@@ -12,8 +12,6 @@ public class StructureComponentRheaVillageStartPiece extends StructureComponentR
     public int terrainType;
     public StructureVillagePieceWeightRhea structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightRhea> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentRheaVillageStartPiece() {}
 

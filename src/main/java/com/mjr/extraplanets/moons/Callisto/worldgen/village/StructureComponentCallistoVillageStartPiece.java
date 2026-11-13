@@ -12,8 +12,6 @@ public class StructureComponentCallistoVillageStartPiece extends StructureCompon
     public int terrainType;
     public StructureVillagePieceWeightCallisto structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightCallisto> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentCallistoVillageStartPiece() {}
 

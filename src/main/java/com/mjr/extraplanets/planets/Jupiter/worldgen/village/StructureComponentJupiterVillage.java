@@ -40,104 +40,31 @@ public abstract class StructureComponentJupiterVillage extends StructureComponen
         return true;
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected StructureComponent getNextComponentNN(
-        StructureComponentJupiterVillageStartPiece par1ComponentVillageStartPiece, List par2List, Random par3Random,
-        int par4, int par5) {
-        switch (this.coordBaseMode) {
-            case 0:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.minX - 1,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.minZ + par5,
-                    1,
-                    this.getComponentType());
-            case 1:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.minX + par5,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.minZ - 1,
-                    2,
-                    this.getComponentType());
-            case 2:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.minX - 1,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.minZ + par5,
-                    1,
-                    this.getComponentType());
-            case 3:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.minX + par5,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.minZ - 1,
-                    2,
-                    this.getComponentType());
-            default:
-                return null;
-        }
+    @Override
+    protected StructureComponent dispatchNext(StructureComponent startPiece, List components, Random rand, int x, int y,
+        int z, int mode, int type) {
+        return StructureVillagePiecesJupiter.getNextStructureComponent(
+            (StructureComponentJupiterVillageStartPiece) startPiece,
+            components,
+            rand,
+            x,
+            y,
+            z,
+            mode,
+            type);
     }
 
-    @SuppressWarnings({ "rawtypes", "unchecked" })
-    protected StructureComponent getNextComponentPP(
-        StructureComponentJupiterVillageStartPiece par1ComponentVillageStartPiece, List par2List, Random par3Random,
-        int par4, int par5) {
-        switch (this.coordBaseMode) {
-            case 0:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.maxX + 1,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.minZ + par5,
-                    3,
-                    this.getComponentType());
-            case 1:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.minX + par5,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.maxZ + 1,
-                    0,
-                    this.getComponentType());
-            case 2:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.maxX + 1,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.minZ + par5,
-                    3,
-                    this.getComponentType());
-            case 3:
-                return StructureVillagePiecesJupiter.getNextStructureComponent(
-                    par1ComponentVillageStartPiece,
-                    par2List,
-                    par3Random,
-                    this.boundingBox.minX + par5,
-                    this.boundingBox.minY + par4,
-                    this.boundingBox.maxZ + 1,
-                    0,
-                    this.getComponentType());
-            default:
-                return null;
-        }
+    @Override
+    protected StructureComponent dispatchNextPath(StructureComponent startPiece, List components, Random rand, int x,
+        int y, int z, int mode, int type) {
+        return StructureVillagePiecesJupiter.getNextStructureComponentVillagePath(
+            (StructureComponentJupiterVillageStartPiece) startPiece,
+            components,
+            rand,
+            x,
+            y,
+            z,
+            mode,
+            type);
     }
-
 }

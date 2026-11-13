@@ -33,7 +33,7 @@
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.57 % of 65,506 lines, 0.70 % of 29,714 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.60 % of 64,645 lines, 0.71 % of 29,290 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
@@ -483,7 +483,7 @@ contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLo
 * **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
   where a failure means "this structure silently never generates".
 
-### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-4 done, 77% removed)
+### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-5 done, 78% removed)
 
 **Measured:** 308 files under `**/village/`, **131,287 lines**, for 22 bodies x 14 classes. Their shape is now known
 exactly:
@@ -542,22 +542,34 @@ Then: `MapGenVillageBase` holds the vanilla 32-chunk spawn grid (the per-body fi
 they build and their registration name - 83 -> 58 lines), and `StructureVillagePieceWeightBase` holds the piece
 counting (the per-body subclass exists only to keep the constructor typed to that body's components).
 
-**Result so far: 131,287 -> 30,542 lines in the village tree (77% gone), 308 files -> 308 much smaller files, with all
+**Step 5 - the piece lookup, the start algorithm and the pending queues (done).** Three more things turned out to be
+identical in all 22 bodies: the negative/positive piece lookups in `StructureComponent<Body>Village` (a switch on
+`coordBaseMode` around two static calls), the `StructureVillageStart` growth loop, and the two "pending pieces" queues.
+They now live in `StructureComponentVillageBase` (which gained one abstract hook, `dispatchNext`/`dispatchNextPath`,
+that forwards to the body's `StructureVillagePieces`) and in `StructureVillageStartBase`. The per-body starts also
+carried a loop that counted non-road components into a local nobody read; that is gone.
+
+That step produced the bug this whole harness exists for: the per-body start pieces still **declared their own copies**
+of the two pending queues, which shadowed the shared ones - so the growing village filled the subclass's lists while
+the shared start drained the empty base ones, and every village would have been a single well. The dispatch snapshot
+caught it immediately (all 88 hashes moved), the fields were removed, and the hashes came back. Same shadowing trap as
+`averageGroundLevel` in step 2 - a field that moves to a base must be *deleted* from the subclass.
+
+**Result so far: 131,287 -> 28,298 lines in the village tree (78% gone), 308 files -> 308 much smaller files, with all
 396 golden snapshots unchanged.** Still untouched on purpose: Kepler22b's house and wood hut (the only pair with their
 own metadata scheme) and its well, plus Io's five components (Io's buildings genuinely differ - different blocks, not
 different formatting).
 
-**Remaining (all covered by the two new harnesses already):**
+**Remaining:**
 
-1. `StructureVillagePieces` (242 x 22 = the largest item left), `StructureVillageStart` (69 x 22),
-   `StructureComponentVillageStartPiece` (46 x 22) and the two `getNextComponentNN/PP` helpers in the `Village` base
-   (138 x 22). These form a mutually-referencing web of *body-specific types*, which is why they were not part of the
-   earlier steps: sharing them needs generics, specifically
-   `StructureVillagePiecesBase<W extends StructureVillagePieceWeightBase, S extends StructureAttributeVillageStartPieceBase>`
-   holding the four statics-equivalent operations (weight sum, weighted random pick, `getNextStructureComponent`,
-   `getNextStructureComponentVillagePath`) with one abstract `create(W, S, ...)` dispatch hook. Each per-body
-   `StructureVillagePieces` keeps a static singleton and forwards, so the ~60 call sites in
-   PathGen/Well/Village/House do not change. `StructureVillagePieceWeightBase` (step 4) is already the `W` bound.
+1. `StructureVillagePieces` (~240 x 22 = the largest item left). The four statics that do the work (weight sum,
+   weighted random pick, and the two growth steps) are identical; what differs is the weight table, the dispatch
+   switch, and the two factories it falls back to (torch, path). The plan is
+   `StructureVillagePiecesBase<W extends StructureVillagePieceWeightBase>` with `weightedPieceList`, `create`,
+   `createTorch` and `createPath` as hooks, plus a static singleton per body so the ~60 call sites do not change.
+   The per-body start pieces' `structureVillageWeightedPieceList`, `structVillagePieceWeight` and `terrainType` fields
+   move to `StructureComponentVillageBase` first - and must be *deleted* from the subclasses, per the shadowing trap
+   above. Expect the dispatch snapshot to be the judge.
 2. Kepler22b's house + wood hut: the 498 diff lines are metadata values, so this wants the palette expressed through
    `getBiomeSpecificBlockMetadata` first (prove the mapping is a pure function of block+metadata; if it is not, leave
    the two files alone).
@@ -676,8 +688,8 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
 | ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
-| ✅ | Village refactor steps 0-4 (§6.3): three snapshot harnesses + 100,745 lines of duplication removed | 2 days | none (harness-gated) |
-| | Village refactor step 5 (§6.3): the generic `StructureVillagePiecesBase`, then Kepler22b's palette | 1-2 days | medium (needs generics) |
+| ✅ | Village refactor steps 0-5 (§6.3): three snapshot harnesses + 102,989 lines of duplication removed | 2 days | none (harness-gated) |
+| | Village refactor step 6 (§6.3): `StructureVillagePiecesBase`, then Kepler22b's palette | 1-2 days | medium |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails

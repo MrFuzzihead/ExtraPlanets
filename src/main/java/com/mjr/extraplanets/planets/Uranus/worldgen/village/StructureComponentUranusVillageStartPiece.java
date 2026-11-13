@@ -12,8 +12,6 @@ public class StructureComponentUranusVillageStartPiece extends StructureComponen
     public int terrainType;
     public StructureVillagePieceWeightUranus structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightUranus> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentUranusVillageStartPiece() {}
 

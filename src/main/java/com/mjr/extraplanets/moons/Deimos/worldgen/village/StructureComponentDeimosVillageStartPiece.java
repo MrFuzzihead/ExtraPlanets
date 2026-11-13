@@ -12,8 +12,6 @@ public class StructureComponentDeimosVillageStartPiece extends StructureComponen
     public int terrainType;
     public StructureVillagePieceWeightDeimos structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightDeimos> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentDeimosVillageStartPiece() {}
 

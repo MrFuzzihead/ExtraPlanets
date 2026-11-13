@@ -12,8 +12,6 @@ public class StructureComponentKepler22bVillageStartPiece extends StructureCompo
     public int terrainType;
     public StructureVillagePieceWeightKepler22b structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightKepler22b> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentKepler22bVillageStartPiece() {}
 

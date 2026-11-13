@@ -12,8 +12,6 @@ public class StructureComponentPhobosVillageStartPiece extends StructureComponen
     public int terrainType;
     public StructureVillagePieceWeightPhobos structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightPhobos> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentPhobosVillageStartPiece() {}
 

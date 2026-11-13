@@ -12,8 +12,6 @@ public class StructureComponentPlutoVillageStartPiece extends StructureComponent
     public int terrainType;
     public StructureVillagePieceWeightPluto structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightPluto> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentPlutoVillageStartPiece() {}
 

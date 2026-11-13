@@ -12,8 +12,6 @@ public class StructureComponentGanymedeVillageStartPiece extends StructureCompon
     public int terrainType;
     public StructureVillagePieceWeightGanymede structVillagePieceWeight;
     public ArrayList<StructureVillagePieceWeightGanymede> structureVillageWeightedPieceList;
-    public ArrayList<Object> field_74932_i = new ArrayList<Object>();
-    public ArrayList<Object> field_74930_j = new ArrayList<Object>();
 
     public StructureComponentGanymedeVillageStartPiece() {}
 
