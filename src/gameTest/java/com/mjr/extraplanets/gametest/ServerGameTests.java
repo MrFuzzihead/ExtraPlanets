@@ -584,6 +584,8 @@ final class ServerGameTests {
             assertBiomeLayers("Neptune", GenLayerNeptune.makeTheWorld(1234L));
             assertBiomeLayers("Kepler22b", GenLayerKepler22b.makeTheWorld(1234L));
         });
+
+        VillageSnapshots.run(reporter);
     }
 
     /**

@@ -28,12 +28,12 @@
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
 | Tests | 122 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 33 checks, run by `./gradlew gameTestServer` |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 34 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.08 % of 80,800 lines, 0.61 % of 33,844 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.25 % of 74,794 lines, 0.63 % of 32,710 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
@@ -41,7 +41,7 @@ All four commands pass on a clean checkout:
 ```
 ./gradlew test               # 122 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 33/33 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 34/34 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -143,7 +143,7 @@ three for the same reasons:
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (33 checks, `./gradlew gameTestServer`):
+`src/gameTest/java` (34 checks, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -155,7 +155,7 @@ three for the same reasons:
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
-| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), and all nine bodies' biome layer chains return registered biomes, more than one biome, and never the ocean fallback |
+| worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and every body's village house and wood hut hash to their committed golden block output (88 snapshots) |
 
 ### 3.3 Production fixes required by the tests
 
@@ -483,30 +483,50 @@ contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLo
 * **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
   where a failure means "this structure silently never generates".
 
-### 6.3 The worldgen copy-paste (the big one)
+### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (step 1 done)
 
-| Pattern | Copies | Size each |
-|---|---|---|
-| `structureComponent*VillageHouse.java` | **22** | ~59 KB |
-| `structureComponent*VillageWoodHut.java` | **22** | ~59 KB |
-| `MapGen*Village` / `WorldGen*Village` | 22 | ~10 KB |
-| `GenLayer*Biome*` | 15 bodies × 5 layers | ~2 KB |
+**Measured, not estimated:** 308 files under `**/village/`, 4.6 MB, 14 classes per body for 22 bodies. Their shape is
+now known exactly:
 
-That is ~5 MB of the 9.4 MB source tree, and every one of the 44 structure files is the *same* class with a different
-package name and a different block palette. Concretely: a bug fixed in `StructureComponentJupiterVillageHouse` has to
-be fixed 21 more times, and has been missed at least once (the Io/Triton `GenLayer` misnaming in §5.2 is the same
-failure mode).
+* Per class type there are only 1-3 *distinct implementations*; the rest are copies that differ solely by package and
+  class name. `StructureVillageStart*` is one variant across all 22 bodies.
+* `StructureComponent<Body>VillageHouse` and `...VillageWoodHut` are **the same 2,152-line build code in 21 of the 22
+  bodies** - the "house" and the "wood hut" are the same 17x9x17 building. Only Kepler22b differs (498 lines: its own
+  metadata scheme).
+* The palette seam the refactor needs already exists: `StructureComponent<Body>Village` overrides
+  `placeBlockAtCurrentPosition`/`fillWithBlocks`/`func_151554_b` and routes them through
+  `getBiomeSpecificBlock(Block, int)` and `getBiomeSpecificBlockMetadata(Block, int)`, which every body currently
+  inherits as the identity. The copies were hand-edited anyway (Kepler22b's 0 -> 1, 2 -> 11), which is where the
+  duplication actually hurts.
 
-**Recommended refactor (staged):**
+**Step 0 - the safety net (done).** `VillageSnapshots` (in-game) builds each body's House and WoodHut on a prepared
+scratch plateau from a fixed seed, in both coordinate branches (rotations 0 and 1), folds every block id and metadata
+inside the resulting bounding box into one hash, and compares against `src/gameTest/resources/village-golden.txt`
+(88 hashes, committed). It is a characterisation test: it does not say what a village should look like, only that it
+does not change. Verified three ways: it is deterministic across runs, it fails on a single changed metadata value
+(mutation-tested), and all four `World`-side inputs it depends on are pinned (flat plateau, fixed seed, cleared box,
+component's own factory).
 
-1. Extract the palette (the `Block`/metadata pairs and the loot list) into a small `VillagePalette` object.
-2. Turn the two structure classes into single parameterised classes that take a `VillagePalette` and a `VillageTheme`
-   (wall material, roof material, door, window).
-3. Replace the 44 classes with 15 one-line subclasses (or 15 registry entries), keeping the package paths for now so
-   nothing else has to change.
-4. Only then collapse the 15 subclasses into configuration.
+**Step 1 - WoodHut (done).** In the 21 bodies where it is literally the same code, `StructureComponent<VillageWoodHut>`
+now extends `...VillageHouse` and keeps only its constructor and its static factory: **44,652 lines deleted**
+(2,152 -> 34 per file). The class identity that matters is untouched - the piece dispatch compares
+`villagePieceClass == WoodHut.class` and `MapGenStructureIO` registers each class under its own name, so both still
+work, and the goldens prove the block output is byte-identical. **Kepler22b's wood hut stays separate**: the golden
+run *caught* that its building differs from its house, which is exactly the kind of silent change this harness exists
+to prevent.
 
-This is the single largest maintainability win available and the one item on this list that will keep paying off.
+**Steps 2+ (not started, in order of value):**
+
+1. Collapse the 21 identical WoodHuts/Houses into one shared `StructureComponentVillageBuildingBase` per tree, with
+   the body's block set supplied through the existing `getBiomeSpecificBlock*` hooks. The 21 bodies differ only by
+   which `ExtraPlanets_Blocks.<body>Blocks` they reference, so this is a field, not a rewrite.
+2. Kepler22b's pair last, as its own palette (it is the only body that changes metadata values).
+3. The remaining 12 classes per body, smallest first (`RoadPiece` 11 lines, `StartPiece` 46, `Start` 69, `Torch` 79,
+   `Field` 160, `Well` 186, `PathGen` 227, `Pieces` 242, `Village` 253, `Field2` 293); each is 1-2 variants, and each
+   only needs its own golden entries added to `VillageSnapshots` first.
+4. Only then collapse the 22 thin subclasses into configuration keys.
+
+Do not reorder these: the harness must cover a class before that class is touched.
 
 ### 6.4 Build / repo hygiene
 

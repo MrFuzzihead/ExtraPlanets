@@ -168,18 +168,19 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         // A regression guard at the current baseline, not a target. ExtraPlanets is ~13 MB of worldgen,
         // rendering and registration code that needs a live game to execute at all; the honest headless
-        // ceiling for this codebase is low (measured: 2.07% of 81,228 lines, 0.61% of 34,070 branches).
-        // Raise these numbers as tests are added - never lower them.
+        // ceiling for this codebase is low (measured: 2.25% of 74,794 lines, 0.63% of 32,710 branches).
+        // Raise these numbers as tests are added - never lower them. (The ratio moves when dead code is
+        // deleted, which is why it jumped in the village refactor: fewer lines, not more tests.)
         rule {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal("0.0205")
+                minimum = BigDecimal("0.022")
             }
             limit {
                 counter = "BRANCH"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal("0.0059")
+                minimum = BigDecimal("0.0062")
             }
         }
     }
@@ -291,6 +292,15 @@ tasks.register("gameTestServer") {
     description = "Boots a dedicated server, runs the in-game game test mod, and exits with its result"
     if (isGameTestRun && tasks.names.contains("runServer")) dependsOn(tasks.named("runServer"))
     finalizedBy(tasks.named("jacocoGameTestReport"))
+}
+
+// The golden snapshots (VillageSnapshots) need to know where the sources are and, when recording, the right to
+// rewrite their own baseline. `-PrecordGoldens` is the only supported way to regenerate one.
+tasks.withType<JavaExec>().configureEach {
+    systemProperty("extraplanets.projectDir", layout.projectDirectory.asFile.absolutePath)
+    if (project.hasProperty("recordGoldens")) {
+        systemProperty("extraplanets.recordGoldens", "true")
+    }
 }
 
 // ---------------------------------------------------------------------------------------------------------
