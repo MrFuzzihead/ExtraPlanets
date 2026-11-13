@@ -647,38 +647,6 @@ tile.red_sandstone.name=Roter Sandstein
 tile.orange_sand.name=Oranger Sand
 tile.orange_sandstone.name=Oranger Sandstein
 
-#CandyCane/Cake/Icing Blocks
-tile.candy_blocks.candy_cane_red.name=Rote Zuckerstange
-tile.candy_blocks.candy_cane_green.name=Grüne Zuckerstange
-tile.candy_blocks.candy_cane_blue.name=Blaue Zuckerstange
-tile.candy_blocks.candy_cane_orange.name=Orange Zuckerstange
-tile.candy_blocks.candy_cane_magenta.name=Magenta Zuckerstange
-tile.candy_blocks.candy_cane_pink.name=Pinke Zuckerstange
-tile.candy_blocks.candy_cane_lime.name=Limone Zuckerstange
-tile.candy_blocks.candy_cane_purple.name=Lila Zuckerstange
-tile.candy_blocks.candy_cane_brown.name=Braune Zuckerstange
-tile.candy_blocks.candy_cane_black.name=Schwarze Zuckerstange
-
-tile.candy_blocks_horizontal.candy_cane_red_horizontal.name=Rote Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_green_horizontal.name=Grüne Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_blue_horizontal.name=Blaue Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_orange_horizontal.name=Orange Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_magenta_horizontal.name=Magenta Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_pink_horizontal.name=Pinke Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_lime_horizontal.name=Limone Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_purple_horizontal.name=Lila Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_brown_horizontal.name=Braune Zuckerstange (Horizontal)
-tile.candy_blocks_horizontal.candy_cane_black_horizontal.name=Schwarze Zuckerstange (Horizontal)
-
-tile.cake_blocks.cake_block.name=Kuchenblock
-tile.cake_blocks.cake_block_red_velvet.name=Roter Samtkuchenblock
-tile.cake_blocks.cake_block_chocolate.name=Schokoladenkuchenblock
-tile.cake_blocks.white_icing_red_dots.name=Weiße Eisschicht mit roten Punkten
-tile.cake_blocks.white_icing_green_dots.name=Weiße Eisschicht mit grünen Punkten
-tile.cake_blocks.white_icing_pink_dots.name=Weiße Eisschicht mit pinken Punkten
-tile.cake_blocks.white_icing_orange_dots.name=Weiße Eisschicht mit orangen Punkten
-tile.cake_blocks.cookie_rocks.name=Keksgestein
-
 tile.white_sugar_cane.name=Weißer Zuckerohrblock
 
 #Decorative Blocks

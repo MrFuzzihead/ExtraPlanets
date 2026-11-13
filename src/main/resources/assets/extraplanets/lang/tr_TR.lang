@@ -647,38 +647,6 @@ tile.red_sandstone.name=Kırmızı Kumtaşı
 tile.orange_sand.name=Turuncu Kum
 tile.orange_sandstone.name=Turuncu Kumtaşı
 
-#CandyCane/Cake/Icing Blocks
-tile.candy_blocks.candy_cane_red.name=Kırmızı Şeker Kamışı
-tile.candy_blocks.candy_cane_green.name=Yeşil Şeker Kamışı
-tile.candy_blocks.candy_cane_blue.name=Mavi Şeker Kamışı
-tile.candy_blocks.candy_cane_orange.name=Turuncu Şeker Kamışı
-tile.candy_blocks.candy_cane_magenta.name=Magenta Şeker Kamışı
-tile.candy_blocks.candy_cane_pink.name=Pembe Şeker Kamışı
-tile.candy_blocks.candy_cane_lime.name=Grimsi Şeker Kamışı
-tile.candy_blocks.candy_cane_purple.name=Mor Şeker Kamışı
-tile.candy_blocks.candy_cane_brown.name=Kahverengi Şeker Kamışı
-tile.candy_blocks.candy_cane_black.name=Siyah Şeker Kamışı
-
-tile.candy_blocks_horizontal.candy_cane_red_horizontal.name=Kırmızı Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_green_horizontal.name=Yeşil Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_blue_horizontal.name=Mavi Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_orange_horizontal.name=Orange Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_magenta_horizontal.name=Magenta Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_pink_horizontal.name=Pink Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_lime_horizontal.name=Lime Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_purple_horizontal.name=Mor Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_brown_horizontal.name=Kahverengi Şeker Kamışı (Yatay)
-tile.candy_blocks_horizontal.candy_cane_black_horizontal.name=Black Şeker Kamışı (Yatay)
-
-tile.cake_blocks.cake_block.name=Pasta Bloğu
-tile.cake_blocks.cake_block_red_velvet.name=Kırmızı Kadife Pasta Bloğu
-tile.cake_blocks.cake_block_chocolate.name=Çikolatalı Pasta Bloğu
-tile.cake_blocks.white_icing_red_dots.name=Kırmızı Noktalı Pasta Bloğu
-tile.cake_blocks.white_icing_green_dots.name=Yeşil Noktalı Pasta Bloğu
-tile.cake_blocks.white_icing_pink_dots.name=Pembe Noktalı Pasta Bloğu
-tile.cake_blocks.white_icing_orange_dots.name=Turuncu Noktalı Pasta Bloğu
-tile.cake_blocks.cookie_rocks.name=Pişmiş Kaya
-
 tile.white_sugar_cane.name=Beyaz Şeker Kamışı Bloğu
 
 #Decorative Blocks

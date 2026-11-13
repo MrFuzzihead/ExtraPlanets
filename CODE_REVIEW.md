@@ -27,21 +27,21 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 118 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 31 checks, run by `./gradlew gameTestServer` |
+| Tests | 122 headless JUnit 4 tests in `src/test/java` (was 0) |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 32 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.07 % of 81,228 lines, 0.61 % of 34,070 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.08 % of 80,971 lines, 0.61 % of 33,952 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 118 tests, 0 failures
+./gradlew test               # 122 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 31/31 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 32/32 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -139,9 +139,11 @@ three for the same reasons:
 | `ModuleRequirementOrderTest` (6) | Requirements resolve after the item they reference is registered, a config-disabled item drops its requirement instead of keeping a null stack, a declaration is evaluated once, `setRequirements` overrides a declaration, `copy()` of an unresolved module resolves |
 | `PacketSimpleCodecTest` (13) | Real codec round trip for every packet type and for the real config payload, truncated/out-of-range/negative ordinals are discarded instead of throwing, and a payload of the wrong shape is refused rather than sent (loudly in `debugMode`) |
 | `NoStrayTracesTest` (2) | Lints `src/main/java`: no `printStackTrace()`, no `System.out`/`System.err` outside the one documented CI marker, with `file:line` for each offence |
+| `SkyProviderWiringTest` (2) | Parses `SkyProviderHandler` and requires `WorldProviderX` -> `SkyProviderX` for every body (orbits excepted) and a branch for every provider on disk |
+| `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (31 checks, `./gradlew gameTestServer`):
+`src/gameTest/java` (32 checks, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -153,6 +155,7 @@ three for the same reasons:
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
+| worldgen | the Tower of Desh still generates: the restored generator is run against the live world and the iron-bars frame, desh blocks and mast are asserted |
 
 ### 3.3 Production fixes required by the tests
 
@@ -323,6 +326,16 @@ convention correctly. The code is right and the docs are wrong — which is wors
 convention.
 **Fixed:** both comments now say `armorType` and the real values (helmet 0, chestplate 1, leggings 2, boots 3).
 
+### P2 — Europa and Titan rendered another body's sky — ✅ FIXED
+
+`SkyProviderHandler` is a chain of `world.provider instanceof WorldProviderX` blocks, and two of them constructed the
+wrong renderer: the Europa branch built `SkyProviderGanymede` and the Titan branch built `SkyProviderEris`. So Titan
+showed Pluto, Dysnomia and Earth, and the correct `SkyProviderTitan` (saturn.png) and `SkyProviderEuropa` files sat
+unused in their own packages. Nothing could catch it at runtime - the code compiles, runs, and simply draws the wrong
+planets - and nothing did.
+**Fixed:** both branches now construct their own body's renderer. `SkyProviderWiringTest` parses the handler and
+enforces the identity mapping, so a future copy-paste fails the build.
+
 ### P3 — Naming that has become part of the save format
 
 * `ExtraPlanetsUtli` (typo for `Utils`).
@@ -354,21 +367,37 @@ Still open from that earlier list: `Config.jupiterLightingServer` is read but ne
 Found by comparing every declared top-level type against all references in `src/main/java` (reflection-only and
 registry-only uses were checked by hand).
 
-### 5.1 Unreferenced classes (safe to delete)
+### 5.1 Unreferenced classes - ✅ CLEANED UP
 
-| Class | Notes |
+Each candidate was checked against git history before being deleted, which changed four of the nine verdicts.
+"What nothing references" and "what nothing intended to reference" are not the same thing.
+
+**Wired up instead of deleted (3):**
+
+| Class | What it actually was |
 |---|---|
-| `blocks/BlockCandyBlocks` | Candy-cane block set, never instantiated or registered. Textures are also unused. |
-| `blocks/BlockCandyBlocksHorizontal` | Same. |
-| `entities/monsters/EntityCustomSlime` | Never registered; `EntityEvolvedIceSlime`/`EntityEvolvedMagmaCube` are the ones that are used. |
-| `client/model/monsters/ModelEvolvedPowerSkeleton` | Renderer for the above; never referenced. |
-| `client/render/entities/monsters/RenderEvolvedIceBlaze` | No matching entity exists. |
-| `client/render/projectiles/RenderEntitySmallSnowball` | `EntitySmallSnowball` uses a different renderer (or none). |
-| `moons/Europa/SkyProviderEuropa` | `SkyProviderHandler` never sets it; Europa gets no custom sky. |
-| `moons/Titan/SkyProviderTitan` | Same — Titan renders with the default sky. |
-| `world/features/WorldGenDeshTower` | Never called from any chunk provider. |
+| `moons/Titan/SkyProviderTitan` | A complete, *distinct* Titan sky (`saturn.png`, the vanilla sun, a larger disc, no Earth). `SkyProviderHandler` had a copy-paste bug and constructed `SkyProviderEris` in the Titan branch, so Titan rendered **Pluto, Dysnomia and Earth**. Now wired. |
+| `moons/Europa/SkyProviderEuropa` | A byte-identical copy of `SkyProviderGanymede` (both render `jupiter.png`, as two Jovian moons should). The Europa branch constructed `SkyProviderGanymede` directly. Now wired, so each branch names its own body's renderer - see the guard below. |
+| `world/features/WorldGenDeshTower` | **A regression, not dead code.** `git log -S` shows it was added to `BiomeDecoratorCeres` in c1192dc ("Added a Custom Structure of Tower of Desh to Ceres") and lost when that decorator was rewritten. Restored at the original 1-in-150-chunks rate. |
 
-Deleting 9 classes and their textures is ~150 KB and removes 9 files from every future code search.
+**Deleted (8 classes):**
+
+| Class | Why it was safe |
+|---|---|
+| `blocks/BlockCandyBlocks`, `blocks/BlockCandyBlocksHorizontal` | Never instantiated. They were also already broken: they register `candyCaneRed` (camelCase) while the assets are `candy_cane_red.png`, so the icons would never have resolved. Removed with their 40 textures (728 KB) and 479 dead `lang` lines (`tile.candy_blocks.*`, `tile.cake_blocks.*`, and the orphaned cake/icing keys, which never had classes either). |
+| `entities/monsters/EntityCustomSlime` | Never registered or spawned; `EntityEvolvedIceSlime`/`EntityEvolvedMagmaCube` are the ones in use. |
+| `client/model/monsters/ModelEvolvedPowerSkeleton` | A stale duplicate: the registered `RenderEvolvedPowerSkeleton` uses Galacticraft's `ModelEvolvedSkeleton`. |
+| `entities/monsters/EntityEvolvedIceBlaze`, `client/model/monsters/ModelIceBlaze`, `client/render/entities/monsters/RenderEvolvedIceBlaze` | A whole ice-blaze that was never finished: the entity is registered nowhere, spawned by no chunk provider and gated by no config flag, and the model and renderer exist only to serve it. (The earlier note "no matching entity exists" was wrong - the entity file is there, it is just as unreachable as its renderer.) |
+| `client/render/projectiles/RenderEntitySmallSnowball` | Superseded: `ClientProxy` registers `EntitySmallSnowball` with vanilla's `RenderSnowball(Items.snowball)`. |
+
+Net: **8 classes and 40 textures (728 KB) deleted, 3 classes given the call sites they were written for, ~480 dead
+`lang` lines removed.** Two guards keep it that way:
+
+* `SkyProviderWiringTest` parses `SkyProviderHandler` and requires the identity mapping `WorldProviderX` ->
+  `SkyProviderX` (orbit providers excepted, they legitimately share `SkyProviderOrbit`). It reports
+  `WorldProviderTitan -> SkyProviderEris` if the copy-paste is reintroduced.
+* `StructureWiringTest` requires every class in `world/features` to be referenced by real code somewhere (imports and
+  comments do not count), so a generator can no longer be left behind by a decorator rewrite.
 
 ### 5.2 Unreferenced near-copies
 
@@ -560,7 +589,6 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | Order | Item | Effort | Risk |
 |---|---|---|---|
 | 1 | `CommonProxy.getClientWorld()`/`getKeyDisplayString()` seam for the 8 remaining tooltip-only client calls (§4 P2) | 2 hours | low |
-| 2 | **Delete the 9 unreferenced classes** (§5.1) | mechanical | none |
 | 3 | Empty `catch` blocks and `catch (Throwable)` in worldgen (§6.2) | 1 day | low |
 | 4 | `Config` instance facade (§4 P1) | 2-3 days | medium |
 | 5 | Refactor the 44 worldgen copies (§6.3) | 1 week | medium, mechanical |
@@ -570,6 +598,7 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | Make `ExtraPlanets_Modules.init()` order-independent (§4 P1) | 2 hours | medium |
 | ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
+| ✅ | Dead code (§5.1): 8 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
 on a config-id collision, a broken sync contract, a module-registry duplicate, a packet-codec regression, and a

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.crafting.CraftingManager;
@@ -28,6 +29,7 @@ import com.mjr.extraplanets.tileEntities.machines.TileEntitySolar;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import micdoodle8.mods.galacticraft.planets.mars.blocks.MarsBlocks;
 
 /**
  * Everything the in-game test asserts about registries, recipes and tile entities.
@@ -55,6 +57,7 @@ final class ServerGameTests {
         run(reporter, "recipes");
         run(reporter, "modules");
         run(reporter, "armor");
+        run(reporter, "worldgen");
 
         System.out.println(
             "[EP-GAMETEST] server checks: " + (reporter.checks() - reporter.failures())
@@ -89,6 +92,9 @@ final class ServerGameTests {
                 break;
             case "armor":
                 armor(reporter);
+                break;
+            case "worldgen":
+                worldgen(reporter);
                 break;
             default:
                 throw new IllegalArgumentException(group);
@@ -499,6 +505,58 @@ final class ServerGameTests {
             suit.setItemDamage(99);
             item.syncDamageBar(suit);
             TestReporter.assertEquals("repaired damage bar", 0, suit.getItemDamage());
+        });
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // World generation
+    // ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * Structure generators are only meaningful against a real {@link net.minecraft.world.World}: they query the
+     * block at a position, walk down to find the ground and write hundreds of blocks. Nothing about that can run in a
+     * plain JVM, so the in-game suite is the only place these can be exercised at all.
+     */
+    private static void worldgen(TestReporter reporter) {
+        reporter.check("worldgen: the tower of desh generates", () -> {
+            net.minecraft.world.World world = net.minecraft.server.MinecraftServer.getServer()
+                .worldServerForDimension(0);
+            TestReporter.assertNotNull("overworld", world);
+
+            int x = 40;
+            int z = 40;
+            int y = world.getTopSolidOrLiquidBlock(x, z) + 1;
+
+            // Flatten a patch so the generator's own placement check ("solid ground under the origin, no liquid")
+            // is satisfied whatever the spawn terrain happens to be.
+            for (int dx = -2; dx <= 2; dx++) {
+                for (int dz = -2; dz <= 2; dz++) {
+                    world.setBlock(x + dx, y - 1, z + dz, Blocks.stone);
+                    world.setBlock(x + dx, y, z + dz, Blocks.air);
+                }
+            }
+            // checkValidSpawn() also requires the whole 10-block footprint to be loaded, and reading a block is what
+            // makes the server generate the chunk. Touch the far corners so the check is about the structure and not
+            // about how much of the world happens to be in memory.
+            for (int dx = 0; dx <= 10; dx += 10) {
+                for (int dz = 0; dz <= 10; dz += 10) {
+                    world.getBlock(x + dx, y, z + dz);
+                }
+            }
+
+            boolean generated = new com.mjr.extraplanets.world.features.WorldGenDeshTower()
+                .generate(world, new java.util.Random(1L), x, y, z);
+            TestReporter.assertTrue("the generator refused to place the tower", generated);
+
+            // The tower is a 5x5 iron-bars frame with a desh-lined interior and a 4-block mast on top.
+            TestReporter.assertEquals("corner of the base", Blocks.iron_bars, world.getBlock(x, y, z));
+            TestReporter
+                .assertEquals("desh in the middle of the base", MarsBlocks.marsBlock, world.getBlock(x + 2, y, z + 2));
+            TestReporter.assertEquals("desh metadata", 8, world.getBlockMetadata(x + 2, y, z + 2));
+            TestReporter.assertEquals(
+                "the mast is iron bars all the way up",
+                Blocks.iron_bars,
+                world.getBlock(x + 2, y + 6, z + 2));
         });
     }
 
