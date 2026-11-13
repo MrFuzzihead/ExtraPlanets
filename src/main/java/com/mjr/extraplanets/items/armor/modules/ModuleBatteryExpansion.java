@@ -1,8 +1,5 @@
 package com.mjr.extraplanets.items.armor.modules;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
@@ -26,9 +23,7 @@ public class ModuleBatteryExpansion extends Module {
 
     public ModuleBatteryExpansion(String name) {
         super(name, -1, new ItemStack(ExtraPlanets_Items.advancedBattery), true, 0, 0);
-        List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(ExtraPlanets_Items.advancedBattery, 1));
-        this.setRequirements(reqs);
+        this.setRequirementSupplier(() -> requirementOf(ExtraPlanets_Items.advancedBattery, 1));
     }
 
     /**

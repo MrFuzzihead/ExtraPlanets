@@ -28,12 +28,9 @@ public class ModuleRegistryTest {
 
     @BeforeClass
     public static void initialise() {
-        // ExtraPlanets_Modules.init() builds its prototypes out of ExtraPlanets_Items fields, which are assigned
-        // inside ExtraPlanets_Items.init(). That method needs FML's GameRegistry, so it cannot run here; stub the
-        // three items the prototypes reference so the registry is exercised with real (non-null) stacks.
-        //
-        // This ordering dependency is itself a finding: ExtraPlanets_Modules.init() silently builds requirement
-        // stacks with a null item if it ever runs before ExtraPlanets_Items.init().
+        // The prototypes declare their requirements lazily (see ModuleRequirementOrderTest), so init() itself no
+        // longer touches these items. They are still stubbed here because this class reads every module's
+        // requirement list, and a requirement whose item does not exist is deliberately dropped at that point.
         stubItem("tier1RadiationLayer");
         stubItem("tier1PressureLayer");
         stubItem("advancedBattery");

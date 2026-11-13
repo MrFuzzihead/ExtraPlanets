@@ -170,6 +170,33 @@ public class ModuleHelperInstallTest {
         }
     }
 
+    @Test
+    public void installingConsumesADeferredRequirement() {
+        // The real modules declare their cost lazily (see ModuleRequirementOrderTest), so the install and refund
+        // paths have to work on a module whose requirement list is built on first read rather than at construction.
+        final List<ItemStack> cost = new ArrayList<ItemStack>();
+        cost.add(new ItemStack(Items.diamond, 2));
+        TestModule deferred = new TestModule("install_test_deferred", -1);
+        deferred.setRequirementSupplier(() -> cost);
+        ExtraPlanets_Modules.addModule(deferred);
+        try {
+            ItemStack chest = new ItemStack(new TestChest(), 1, 0);
+            ItemStack payment = new ItemStack(Items.diamond, 3);
+            EntityPlayer player = mockPlayer(1);
+            when(player.inventory.getStackInSlot(0)).thenReturn(payment);
+            when(player.inventory.addItemStackToInventory(any(ItemStack.class))).thenReturn(true);
+
+            Assert.assertTrue(ModuleHelper.installModule(chest, deferred, player));
+            Assert.assertEquals("only the required amount is taken", 1, payment.stackSize);
+
+            ModuleHelper.uninstallModule(chest, deferred, player);
+            Assert.assertFalse(ModuleHelper.hasModule(chest, deferred));
+            verify(player.inventory).addItemStackToInventory(any(ItemStack.class));
+        } finally {
+            ExtraPlanets_Modules.removeModule(deferred);
+        }
+    }
+
     // ---------------------------------------------------------------------------------------------------------
     // uninstallModule
     // ---------------------------------------------------------------------------------------------------------

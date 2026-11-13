@@ -423,6 +423,24 @@ final class ServerGameTests {
     // Suit modules
     // ---------------------------------------------------------------------------------------------------------
 
+    /** Asserts that a module's single requirement is the expected item. */
+    private static void assertRequirement(String moduleName, Item expected) {
+        Module module = ExtraPlanets_Modules.getModuleByName(moduleName);
+        TestReporter.assertNotNull("module " + moduleName, module);
+        List<ItemStack> requirements = module.getRequirements();
+        TestReporter.assertEquals("requirement count of " + moduleName, 1, requirements.size());
+        TestReporter.assertHasItem("requirement of " + moduleName, requirements.get(0));
+        TestReporter.assertTrue(
+            "requirement of " + moduleName
+                + " is "
+                + requirements.get(0)
+                    .getItem()
+                    .getUnlocalizedName()
+                + ", expected the item the config names",
+            requirements.get(0)
+                .getItem() == expected);
+    }
+
     private static void modules(TestReporter reporter) {
         reporter.check("modules: the registry is populated", () -> {
             TestReporter.assertTrue(
@@ -441,6 +459,15 @@ final class ServerGameTests {
                     TestReporter.assertHasItem("requirement of " + module.getName(), requirement);
                 }
             }
+        });
+
+        reporter.check("modules: the extraplanets item requirements resolved to the real items", () -> {
+            // The registry is built in preInit, before these three items exist; their costs are declared lazily
+            // (see ModuleRequirementOrderTest) and resolve on first read. This asserts the resolution picked up the
+            // right item rather than a null or a stale one.
+            assertRequirement("radiation_shield", ExtraPlanets_Items.tier1RadiationLayer);
+            assertRequirement("pressure_seal", ExtraPlanets_Items.tier1PressureLayer);
+            assertRequirement("battery_expansion", ExtraPlanets_Items.advancedBattery);
         });
 
         reporter.check("modules: install and uninstall round trip through NBT", () -> {

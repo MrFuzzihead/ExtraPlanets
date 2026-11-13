@@ -26,22 +26,22 @@ public class ExtraPlanets_Modules {
         modules.add(new ModuleProtectionPlus("protection_plus_diamond", 1));
         modules.add(new ModuleBatteryExpansion("battery_expansion"));
 
-        // -- Helmet (slot 3) ----------------------------------------------------
+        // -- Helmet (armorType 0) ------------------------------------------------
         modules.add(new ModuleNightVision("night_vision"));
         modules.add(new ModuleSensorGlasses("sensor_glasses"));
         modules.add(new ModuleSolarPanel("basic_solar_panel", 0));
         modules.add(new ModuleSolarPanel("advanced_solar_panel", 1));
 
-        // -- Chestplate (slot 2) ------------------------------------------------
+        // -- Chestplate (armorType 1) --------------------------------------------
         modules.add(new ModuleJetpack("jetpack_t1", 1));
         modules.add(new ModuleJetpack("jetpack_t2", 2));
 
-        // -- Leggings (slot 1) --------------------------------------------------
+        // -- Leggings (armorType 2) ----------------------------------------------
         modules.add(new ModuleSpeedBoost("speed_boost_t1", 1));
         modules.add(new ModuleSpeedBoost("speed_boost_t2", 2));
         modules.add(new ModuleStepAssist("step_assist"));
 
-        // -- Boots (slot 0) -----------------------------------------------------
+        // -- Boots (armorType 3) -------------------------------------------------
         modules.add(new ModuleGravityController("gravity_controller"));
         modules.add(new ModuleEnhancedGravity("enhanced_gravity"));
         modules.add(new ModuleAntiGravityJump("anti_gravity_jump"));

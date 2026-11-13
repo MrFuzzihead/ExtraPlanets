@@ -1,8 +1,5 @@
 package com.mjr.extraplanets.items.armor.modules;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.init.Items;
@@ -35,9 +32,7 @@ public class ModulePressureSeal extends Module {
         super(name, -1, new ItemStack(Items.iron_ingot), true, 5, 0);
         this.setSubType(1); // default tier
         // Default requirement — tier 1. The GUI will accept any tier's item and set the subType accordingly.
-        List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(ExtraPlanets_Items.tier1PressureLayer, 1));
-        this.setRequirements(reqs);
+        this.setRequirementSupplier(() -> requirementOf(ExtraPlanets_Items.tier1PressureLayer, 1));
     }
 
     @Override

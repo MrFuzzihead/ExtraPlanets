@@ -27,7 +27,7 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 91 headless JUnit 4 tests in `src/test/java` (was 0) |
+| Tests | 108 headless JUnit 4 tests in `src/test/java` (was 0) |
 | In-game tests | New never-shipped test mod in `src/gameTest/java`, 24 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
@@ -41,7 +41,7 @@ All three commands pass on a clean checkout:
 ```
 ./gradlew test               # 91 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 24/24 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 27/27 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -130,11 +130,12 @@ three for the same reasons:
 | Class | Covers |
 |---|---|
 | `ConfigDefaultsTest` (9) | The real `config/ExtraPlanets.cfg` defaults: planet/station dimension ids unique, 49 biome ids unique **and inside 0-255**, schematic GUI/page ids unique, `Config.init()` idempotent |
-| `ConfigSyncContractTest` (8) | The server→client config sync: every synced name resolves to a `public static int`, the value list and decode-class array stay the same length, a full round trip, and the tolerance for null/short packets |
+| `ConfigSyncContractTest` (18) | The server→client config sync: every synced name resolves to a real `public static int`, no name is synced twice, every `...ID` field is covered, each field round-trips through its own getter **and** setter, pair order is irrelevant, a missing/unknown/non-numeric pair affects nothing, a legacy positional payload is ignored, null/empty/odd-length packets change nothing, and save/restore around a remote session |
 | `ExtraPlanets_BiomesTest` (10) | In-range ids are kept verbatim, out-of-range ids are relocated into the array, a collision with another mod's biome is reported but **not** remapped, name lookups are cached |
-| `ModuleHelperInstallTest` (14) | `installModule`/`uninstallModule`/`consumeFromInventory`: wrong-slot and duplicate rejection, requirement consumption and refund, drop-when-inventory-full |
+| `ModuleHelperInstallTest` (15) | `installModule`/`uninstallModule`/`consumeFromInventory`: wrong-slot and duplicate rejection, requirement consumption and refund (including a lazily declared cost), drop-when-inventory-full |
 | `ModuleHelperTest` (24) | The suit-module NBT format: setup, add/replace/remove, active flag, subtype, unknown names, wrong tag types, copies-not-prototypes, slot compatibility |
-| `ModuleRegistryTest` (12) | `init()` idempotency, 17 modules, unique lower_snake_case names, slot types match the `ItemArmor.armorType` convention per piece, every module has an icon and requirements, copies do not share lists |
+| `ModuleRegistryTest` (12) | `init()` idempotency, 17 modules, unique lower_snake_case names, slot types match the `ModuleHelper`/`ItemArmor.armorType` convention per piece, every module has an icon and requirements, copies do not share lists |
+| `ModuleRequirementOrderTest` (6) | Requirements resolve after the item they reference is registered, a config-disabled item drops its requirement instead of keeping a null stack, a declaration is evaluated once, `setRequirements` overrides a declaration, `copy()` of an unresolved module resolves |
 | `PacketSimpleCodecTest` (10) | Real codec round trip for every packet type, plus truncated/out-of-range/negative ordinals are discarded instead of throwing |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
@@ -142,13 +143,13 @@ three for the same reasons:
 
 | Group | Checks |
 |---|---|
-| config | biome ids inside the array, dimension ids negative, config file created, sync list length |
+| config | biome ids inside the array, dimension ids negative, config file created, the sync payload is name/value pairs, the payload survives the real packet codec, replaying it over a scribbled config restores every id |
 | blocks | mercury block set registered in the right namespace, every body block has a name, machine blocks registered |
 | items | rocket line registered, space suit pieces registered, item ids round trip through `Item.getItemById` |
 | tile entities | refinery survives `writeToNBT` → `TileEntity.createAndLoadEntity`, tank capacities preserved, solar panel round trips |
 | ore dictionary | planet ores and blocks registered, every entry points at a real stack |
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
-| modules | registry populated, every requirement resolves to a real item **in game**, install/uninstall round trip, a fresh suit has no modules |
+| modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 
 ### 3.3 Production fixes required by the tests
 
@@ -158,45 +159,63 @@ three for the same reasons:
 * `Module.copy()` deep-copies the requirement list. It used to be a bare `super.clone()`, so a copy shared — and could
   mutate — the registry prototype's `List<ItemStack>`. Any GUI code that edited a copy's requirements silently
   changed the recipe for every suit of that type for the rest of the session.
+* Config sync, module requirements and the slot-convention docs were fixed in the P1 pass below.
 
 ---
 
 ## 4. Bugs found and still open
 
-Ordered by severity. Items marked ✅ were already fixed in earlier passes (the fix is verified again here); the rest
-are new findings from this review.
+Ordered by severity. Items marked ✅ were already fixed (in an earlier pass, or in the P1 pass recorded below); the
+rest are still open.
 
-### P1 — Config sync can silently mis-assign every ID after a broken field
+### P1 — Config sync can silently mis-assign every ID after a broken field — ✅ FIXED
 
-`Config.getServerConfigOverride()` reads 111 fields by name with `Field.getInt(null)`, and **skips** any field that
-throws. `Config.setConfigOverride(List)` then walks the *name* list by index while reading the *value* list by the
-same index. If one field is renamed, retyped (`int` → `boolean`) or removed, the server sends 110 values and the
-client assigns value *n* to key *n+1* from the gap onwards — silently mapping, say, the biome id onto the schematic GUI
-id. There is no length check on either side.
+**Was:** `Config.getServerConfigOverride()` read 111 fields by name with `Field.getInt(null)` and **skipped** any field
+that threw; `Config.setConfigOverride(List)` then walked the *name* list by index while reading the *value* list by the
+same index. A single renamed, retyped or removed field made the server send 110 values and the client assign value *n*
+to key *n+1* from the gap onwards — silently mapping, say, a biome id onto the schematic GUI id. Nothing crashed.
 
-Some of this is now covered: `ConfigSyncContractTest` fails the build if the name list and value list lengths diverge,
-if a name no longer resolves to a `public static int`, or if the positional mapping shifts. Closing the hole in
-production code as well would mean sending name→value pairs (or a version byte) instead of a bare positional list.
-**Recommendation:** treat the test as the guard for now, and switch the payload to `name,value` pairs the next time the
-packet format is touched.
+**Now:** the payload is a list of `(name, value)` pairs and the client keys every value by name, so there is no
+position to shift. The names, and the getters/setters behind them, live in one table
+(`Config.SYNC_ENTRIES`, built by `buildSyncEntries()`): the values are no longer read reflectively, so a renamed or
+retyped field is a compile error instead of a skipped value. An unknown, non-string, non-numeric or odd-length payload
+is reported and skipped entry by entry — a legacy positional payload is ignored outright rather than half-applied.
 
-### P1 — `Config` is a 118 KB wall of mutable public statics
+**Guarded by:** `ConfigSyncContractTest` (18 tests) — every name resolves to a real `public static int`, no name is
+synced twice, **every `...ID` field in `Config` must be in the payload** (so a new id cannot be forgotten), each field
+round-trips through its own getter *and* setter (catching a copy-pasted entry), pair order does not matter, and a
+dropped pair cannot shift the rest. In game, `gameTestServer` encodes the real payload through the real
+`PacketSimple`/`NetworkUtil` codec and replays it over a scribbled config, which is what a login does.
+
+### P1 — `Config` is a 118 KB wall of mutable public statics — OPEN
 
 `Config.java` has 317 `public static` fields, read directly by ~600 files. There is no way to reload config, no way to
-have two configs (client and server) in one JVM, and `ConfigState` had to be written for the tests to snapshot/restore
-111 of them. This is the root cause of the sync bug above and of the item/module ordering bug below.
+have two configs (client and server) in one JVM, and `ConfigState` exists only so the tests can snapshot/restore the
+`public static` values they touch. The sync half of this problem is now solved properly (the `SyncEntry` table is the
+sanctioned way to read and write a config value that other sides must agree with), but the statics remain.
 **Recommendation:** an instance-based `Config` (one per side) is the long-term fix; a `Config.get()` facade over the
-existing fields would be a safe, incremental first step.
+existing fields would be a safe, incremental first step. Deliberately not attempted in this pass — it touches ~600
+files and no test can prove a mechanical 600-file edit is behaviour-preserving.
 
-### P1 — `ExtraPlanets_Modules.init()` depends on `ExtraPlanets_Items.init()` having run first
+### P1 — `ExtraPlanets_Modules.init()` depends on `ExtraPlanets_Items.init()` having run first — ✅ FIXED
 
-The module prototypes are built out of `ExtraPlanets_Items.tier1RadiationLayer`, `.tier1PressureLayer` and
-`.advancedBattery`, which are assigned **inside** `ExtraPlanets_Items.init()`. If the order in
-`ExtraPlanets.preInit` is ever changed — or if those items are disabled by config — `new ItemStack(null)` is created
-and every requirement silently becomes a null stack: the module costs nothing and the GUI renders an empty slot.
-`ModuleRegistryTest` documents this with stubs; the real fix is to build the requirement stacks lazily (on first
-`installModule`) or to convert `ExtraPlanets_Items` to field initialisers so `ExtraPlanets_Items` can be referenced
-from a constructor safely.
+**Was:** the module prototypes were built out of `ExtraPlanets_Items.tier1RadiationLayer`, `.tier1PressureLayer` and
+`.advancedBattery`, which are assigned **inside** `ExtraPlanets_Items.init()`. Reordering `ExtraPlanets.preInit`, or
+disabling those items by config, produced `new ItemStack(null)` and every requirement became a null stack: the module
+cost nothing in the GUI and could never be installed, because `ModuleHelper.installModule` cannot match a null item.
+
+**Now:** requirements are declared, not built. `Module.setRequirementSupplier(...)` stores a lambda that
+`getRequirements()` evaluates once, on first read — long after preInit. The three ExtraPlanets-item costs go through
+`Module.requirementOf(Item, int)`, which checks the item *reference* (null unambiguously means "never assigned") and
+returns an empty list when the item is disabled, instead of a stack that can never be satisfied. Resolution is
+`synchronized` and swaps the list reference rather than mutating in place, because a single-player client and its
+integrated server share these prototypes across two threads; `copy()` resolves, so a copy is always complete.
+
+**Guarded by:** `ModuleRequirementOrderTest` (6 tests) — construction before the item exists followed by resolution
+after it appears, all three ExtraPlanets-item modules, the disabled-item drop, one-shot evaluation, `setRequirements`
+overriding a declaration, and `copy()` of an unresolved module; plus `ModuleHelperInstallTest.installingConsumesADeferredRequirement`
+for the install/refund path. In game, `gameTestServer` asserts each of the three resolved to the *actual* registered
+item, which is the part a headless suite cannot see (`ItemStack#getItem()` is null outside a loaded game).
 
 ### P2 — `ModuleHelper` casts `IModularArmor` to `ElectricArmorBase` without checking
 
@@ -254,7 +273,7 @@ means the client decodes garbage. It should `GCLog.severe` and return without se
 **Recommendation:** make it a hard failure in dev (`Config.debugMode`) and a `severe` log plus empty packet in
 production.
 
-### P2 — Module slot-convention documentation is inverted in two places
+### P2 — Module slot-convention documentation is inverted in two places — ✅ FIXED
 
 `Module`'s javadoc says "0 = feet, 1 = legs, 2 = chest, 3 = head", and `ExtraPlanets_Modules.init()` groups the
 registrations under `// -- Helmet (slot 3) --`, `// -- Chestplate (slot 2) --`, `// -- Leggings (slot 1) --`,
@@ -263,7 +282,7 @@ registrations under `// -- Helmet (slot 3) --`, `// -- Chestplate (slot 2) --`, 
 convention correctly. The code is right and the docs are wrong — which is worse, because the next contributor will
 "fix" the code. `ModuleRegistryTest.theSlotTypeOfEveryModuleMatchesTheArmourPieceItBelongsTo` now pins the real
 convention.
-**Recommendation:** correct both comments.
+**Fixed:** both comments now say `armorType` and the real values (helmet 0, chestplate 1, leggings 2, boots 3).
 
 ### P3 — Naming that has become part of the save format
 
@@ -343,11 +362,9 @@ static analysis. Delete it locally; nothing references it.
 
 ### 6.1 Correctness / performance
 
-1. **`Config.getServerConfigOverride()` uses reflection per call.** It is only called on player login and on
-   disconnect, so this is not hot — but the *getter* is also reachable from `/reload`-style paths. Replace the
-   `SYNC_CONFIG_FIELD_NAMES` + `Field.getInt` mechanism with an explicit `int[] provideSyncValues()` and
-   `void applySyncValues(int[])`. That removes 111 string lookups, makes the compiler enforce the types, and deletes
-   the whole class of bug in §4/P1.
+1. **`Config` sync no longer uses reflection** (§4/P1, done). `SYNC_ENTRIES` holds a typed getter and setter per
+   field, and the wire format is `(name, value)` pairs, so there are no string lookups and no positional mapping.
+   A future `Config` facade should read and write through the same table.
 2. **`ElectricArmorBase.getElectricityStored`** writes the damage bar on every read (§4). Split the read from the
    write.
 3. **`ExtraPlanets_MicroBlocks` is ~430 lines of copy-paste reflection.** It is one `register(...)` call per block
@@ -428,7 +445,7 @@ Ordered by (value ÷ effort). None of these are implemented in this pass.
    client and does not apply thrust server-side, which is exploitable (the client can claim to be thrusting for
    free). Moving the thrust application into `tickServer` and validating `hasPower` there closes the hole and makes
    the T2 jetpack's higher max acceleration meaningful.
-5. **Schematic pages for the rovers 2.0 / rocket 11.** The schematic id plumbing (`SYNC_CONFIG_FIELD_NAMES`,
+5. **Schematic pages for the rovers 2.0 / rocket 11.** The schematic id plumbing (`Config.SYNC_ENTRIES`,
    `SchematicRegistry`, `SchematicPage` config ids) is fully generic; adding a page is currently a 6-file change that
    could be a 1-file change with a small builder.
 6. **In-game coverage in CI.** See §8.5 — the machinery is in place, only the class-dump flag is missing.
@@ -489,18 +506,19 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | Order | Item | Effort | Risk |
 |---|---|---|---|
 | 1 | `ModuleHelper` blind cast to `ElectricArmorBase` (§4 P2) | 10 lines | none |
-| 2 | Correct the inverted slot-convention docs (§4 P2) | 20 lines | none |
-| 3 | Guard the rover's client-only call with `isWorldRemote` (§4 P2) | 5 lines | none |
-| 4 | **Delete the 9 unreferenced classes** (§5.1) | mechanical | none |
-| 5 | Route `System.out`/`printStackTrace` through `GCLog`, add `debugMode` gating (§6.2) | 1 day | low |
-| 6 | Split `getElectricityStored`'s read from its write (§4 P2) | 1 hour | low (touches the HUD) |
-| 7 | Decide on biome id `0` (§4 P2) | 30 min + a decision | medium — behaviour change |
-| 8 | Make `ExtraPlanets_Modules.init()` order-independent (§4 P1) | 2 hours | medium |
-| 9 | `Config` instance facade + `int[]` sync payload (§4 P1, §6.1) | 2-3 days | medium |
-| 10 | Refactor the 44 worldgen copies (§6.3) | 1 week | medium, mechanical |
-| 11 | Delete / implement the dead config keys (§5.4) | depends | low |
-| 12 | Add `gameTestServer` + `smokeTest` to CI (§6.4) | 1 hour | none |
-| 13 | Delete the local `migrate/` tree (§5.3) | 1 min | none |
+| 2 | Guard the rover's client-only call with `isWorldRemote` (§4 P2) | 5 lines | none |
+| 3 | **Delete the 9 unreferenced classes** (§5.1) | mechanical | none |
+| 4 | Route `System.out`/`printStackTrace` through `GCLog`, add `debugMode` gating (§6.2) | 1 day | low |
+| 5 | Split `getElectricityStored`'s read from its write (§4 P2) | 1 hour | low (touches the HUD) |
+| 6 | Decide on biome id `0` (§4 P2) | 30 min + a decision | medium — behaviour change |
+| 7 | `Config` instance facade (§4 P1) | 2-3 days | medium |
+| 8 | Refactor the 44 worldgen copies (§6.3) | 1 week | medium, mechanical |
+| 9 | Delete / implement the dead config keys (§5.4) | depends | low |
+| 10 | Add `gameTestServer` + `smokeTest` to CI (§6.4) | 1 hour | none |
+| 11 | Delete the local `migrate/` tree (§5.3) | 1 min | none |
+| ✅ | Make `ExtraPlanets_Modules.init()` order-independent (§4 P1) | 2 hours | medium |
+| ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
+| ✅ | Correct the inverted slot-convention docs (§4 P2) | 20 lines | none |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
 on a config-id collision, a broken sync contract, a module-registry duplicate, a packet-codec regression, and a

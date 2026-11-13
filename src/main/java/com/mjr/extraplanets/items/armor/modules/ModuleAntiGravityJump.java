@@ -1,7 +1,6 @@
 package com.mjr.extraplanets.items.armor.modules;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -29,9 +28,7 @@ public class ModuleAntiGravityJump extends Module {
             true,
             5,
             0);
-        List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Blocks.sticky_piston, 1));
-        this.setRequirements(reqs);
+        this.setRequirementSupplier(() -> Collections.singletonList(new ItemStack(Blocks.sticky_piston, 1)));
     }
 
     @Override
