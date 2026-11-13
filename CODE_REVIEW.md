@@ -33,7 +33,7 @@
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.46 % of 68,296 lines, 0.66 % of 31,254 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.55 % of 65,922 lines, 0.69 % of 30,050 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
@@ -483,7 +483,7 @@ contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLo
 * **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
   where a failure means "this structure silently never generates".
 
-### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-2 done, 69% removed)
+### 6.3 The worldgen copy-paste (the big one) — IN PROGRESS (steps 0-3 done, 76% removed)
 
 **Measured:** 308 files under `**/village/`, **131,287 lines**, for 22 bodies x 14 classes. Their shape is now known
 exactly:
@@ -519,20 +519,29 @@ building, taking the body's block as a parameter. The 22 per-body bases are 138 
 lookup, and the 21 non-Kepler22b houses are 62 lines each. Jupiter's odd ground-level fast path survives as a
 `snapsGroundLevelToAir()` override rather than being silently unified.
 
-**Result so far: 131,287 -> 40,523 lines in the village tree (69% gone), 308 files -> 308 much smaller files, with all
-286 golden snapshots unchanged.** Kepler22b's house and wood hut are untouched on purpose - they are the only pair with
-their own metadata scheme, and they go last.
+**Step 3 - the other block-placing components (done).** `buildTorch`, `buildField`, `buildField2`, `buildPath` and
+`buildWell` join `buildHouse` in the shared base, so torch, field, field2, path and well are one implementation each
+plus a per-body delegate (62 lines -> a handful). Two things the snapshot harness caught while wiring this up: Field2's
+crop types had to move to the base with its build code (its constructor picks them from the `Random`), and the shared
+crop helper needed a distinct name because Io's own copy is `private`. `buildWell` takes the body's block as a
+parameter - it is the only one of the five that names `ExtraPlanets_Blocks`.
+
+**Result so far: 131,287 -> 31,583 lines in the village tree (76% gone), 4.6 MB -> 1.16 MB, 308 files -> 308 much
+smaller files, with all 286 golden snapshots unchanged.** Still untouched on purpose: Kepler22b's house and wood hut
+(the only pair with their own metadata scheme) and its well, plus Io's five components (Io's buildings genuinely
+differ - different blocks, not different formatting).
 
 **Remaining, in order:**
 
-1. Kepler22b's house + wood hut: the 498 diff lines are metadata values, so this wants the palette expressed through
+1. The non-block-placing classes: `StructureVillagePieces` (242 lines x 22 = the largest item left), `MapGenVillage`
+   (83 x 22), `Start` (69 x 22), `StartPiece` (46 x 22), `PieceWeight` (24 x 22), `RoadPiece` (11 x 22) and the
+   `Village` base (138 x 22). These place no blocks, so the golden snapshots cannot see them: they need a *piece
+   dispatch* harness first - build a `StructureVillageStart` against a stub `WorldChunkManager` that always reports
+   viable biomes, and hash the ordered list of (component class, bounding box) it produces. That covers the factories,
+   the piece weights and the `getNextComponent*` dispatch, all of which is what these classes are.
+2. Kepler22b's house + wood hut: the 498 diff lines are metadata values, so this wants the palette expressed through
    `getBiomeSpecificBlockMetadata` first (prove the mapping is a pure function of block+metadata; if it is not, leave
    the two files alone).
-2. The other 12 classes per body (~1,420 lines x 22 = 31,000 lines, the bulk of what is left), smallest first
-   (`RoadPiece` 11 lines, `PieceWeight` 24, `StartPiece` 46, `Start` 69, `Torch` 79, `MapGenVillage` 83, `Field` 160,
-   `Well` 186, `PathGen` 227, `Pieces` 242, `Village` 138 now, `Field2` 293). Each needs its golden entries added
-   before it is touched, and `Start`/`Pieces`/`StartPiece` are not block-placing, so they need the *piece dispatch*
-   covered instead (a generated village, or a per-body dispatch check).
 3. Only then collapse the 22 thin subclasses into configuration keys.
 
 Do not reorder these: the harness covers a class before that class is touched.

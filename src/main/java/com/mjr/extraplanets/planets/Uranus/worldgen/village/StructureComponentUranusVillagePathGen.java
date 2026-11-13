@@ -3,19 +3,13 @@ package com.mjr.extraplanets.planets.Uranus.worldgen.village;
 import java.util.List;
 import java.util.Random;
 
-import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 
-import micdoodle8.mods.galacticraft.core.blocks.GCBlocks;
-
 public class StructureComponentUranusVillagePathGen extends StructureComponentUranusVillageRoadPiece {
-
-    private int averageGroundLevel;
 
     public StructureComponentUranusVillagePathGen() {}
 
@@ -205,23 +199,6 @@ public class StructureComponentUranusVillagePathGen extends StructureComponentUr
     @Override
     public boolean addComponentParts(World par1World, Random par2Random,
         StructureBoundingBox par3StructureBoundingBox) {
-        final Block var4 = this.getBiomeSpecificBlock(Blocks.planks, 0);
-
-        for (int var5 = this.boundingBox.minX; var5 <= this.boundingBox.maxX; ++var5) {
-            for (int var6 = this.boundingBox.minZ; var6 <= this.boundingBox.maxZ; ++var6) {
-                if (par3StructureBoundingBox.isVecInside(var5, 64, var6)
-                    && (par1World.getBlock(var5, par1World.getTopSolidOrLiquidBlock(var5, var6) - 1, var6)
-                        == GCBlocks.blockMoon
-                        && par1World.getBlockMetadata(var5, par1World.getTopSolidOrLiquidBlock(var5, var6) - 1, var6)
-                            == 5
-                        || Blocks.air
-                            == par1World.getBlock(var5, par1World.getTopSolidOrLiquidBlock(var5, var6) - 1, var6))) {
-                    final int var7 = par1World.getTopSolidOrLiquidBlock(var5, var6) - 1;
-                    par1World.setBlock(var5, var7, var6, var4, 1, 3);
-                }
-            }
-        }
-
-        return true;
+        return this.buildPath(par1World, par2Random, par3StructureBoundingBox);
     }
 }

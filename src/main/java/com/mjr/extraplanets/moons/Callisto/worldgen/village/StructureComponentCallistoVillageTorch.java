@@ -3,17 +3,12 @@ package com.mjr.extraplanets.moons.Callisto.worldgen.village;
 import java.util.List;
 import java.util.Random;
 
-import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 
-import micdoodle8.mods.galacticraft.core.blocks.GCBlocks;
-
 public class StructureComponentCallistoVillageTorch extends StructureComponentCallistoVillage {
-
-    private int averageGroundLevel = -1;
 
     public StructureComponentCallistoVillageTorch() {}
 
@@ -55,25 +50,6 @@ public class StructureComponentCallistoVillageTorch extends StructureComponentCa
     @Override
     public boolean addComponentParts(World par1World, Random par2Random,
         StructureBoundingBox par3StructureBoundingBox) {
-        if (this.averageGroundLevel < 0) {
-            this.averageGroundLevel = this.getAverageGroundLevel(par1World, par3StructureBoundingBox);
-
-            if (this.averageGroundLevel < 0) {
-                return true;
-            }
-
-            this.boundingBox.offset(0, this.averageGroundLevel - this.boundingBox.maxY + 4 - 1, 0);
-        }
-
-        this.fillWithBlocks(par1World, par3StructureBoundingBox, 0, 0, 0, 2, 3, 1, Blocks.air, Blocks.air, false);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 0, 0, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 1, 0, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 2, 0, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.wool, 15, 1, 3, 0, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 0, 3, 0, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 1, 3, 1, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 2, 3, 0, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 1, 3, -1, par3StructureBoundingBox);
-        return true;
+        return this.buildTorch(par1World, par2Random, par3StructureBoundingBox);
     }
 }

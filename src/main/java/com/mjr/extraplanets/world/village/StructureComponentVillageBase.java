@@ -5,6 +5,7 @@ import java.util.Random;
 import net.minecraft.block.Block;
 import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
+import net.minecraft.util.MathHelper;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
@@ -622,6 +623,448 @@ public abstract class StructureComponentVillageBase extends StructureComponent {
         }
 
         this.spawnVillagers(par1World, par3StructureBoundingBox, 6, 5, 6, 4);
+        return true;
+    }
+
+    protected boolean buildTorch(World par1World, Random par2Random, StructureBoundingBox par3StructureBoundingBox) {
+        if (this.averageGroundLevel < 0) {
+            this.averageGroundLevel = this.getAverageGroundLevel(par1World, par3StructureBoundingBox);
+
+            if (this.averageGroundLevel < 0) {
+                return true;
+            }
+
+            this.boundingBox.offset(0, this.averageGroundLevel - this.boundingBox.maxY + 4 - 1, 0);
+        }
+
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 0, 0, 0, 2, 3, 1, Blocks.air, Blocks.air, false);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 0, 0, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 1, 0, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 2, 0, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.wool, 15, 1, 3, 0, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 0, 3, 0, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 1, 3, 1, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 2, 3, 0, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, GCBlocks.glowstoneTorch, 0, 1, 3, -1, par3StructureBoundingBox);
+        return true;
+    }
+
+    protected boolean buildField(World par1World, Random par2Random, StructureBoundingBox par3StructureBoundingBox) {
+        if (this.averageGroundLevel < 0) {
+            this.averageGroundLevel = this.getAverageGroundLevel(par1World, par3StructureBoundingBox);
+
+            if (this.averageGroundLevel < 0) {
+                return true;
+            }
+
+            this.boundingBox.offset(0, this.averageGroundLevel - this.boundingBox.maxY + 7 - 1, 0);
+        }
+
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 0, 1, 0, 12, 4, 8, Blocks.air, Blocks.air, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 1, 0, 1, 2, 0, 7, Blocks.dirt, Blocks.dirt, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 4, 0, 1, 5, 0, 7, Blocks.dirt, Blocks.dirt, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 7, 0, 1, 8, 0, 7, Blocks.dirt, Blocks.dirt, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 10, 0, 1, 11, 0, 7, Blocks.dirt, Blocks.dirt, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 0, 0, 0, 0, 0, 8, Blocks.planks, Blocks.planks, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 6, 0, 0, 6, 0, 8, Blocks.planks, Blocks.planks, false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            12,
+            0,
+            0,
+            12,
+            0,
+            8,
+            Blocks.planks,
+            Blocks.planks,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            0,
+            0,
+            11,
+            0,
+            0,
+            Blocks.planks,
+            Blocks.planks,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            0,
+            8,
+            11,
+            0,
+            8,
+            Blocks.planks,
+            Blocks.planks,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            3,
+            0,
+            1,
+            3,
+            0,
+            7,
+            Blocks.flowing_water,
+            Blocks.flowing_water,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            9,
+            0,
+            1,
+            9,
+            0,
+            7,
+            Blocks.flowing_water,
+            Blocks.flowing_water,
+            false);
+        int var4;
+
+        for (var4 = 1; var4 <= 7; ++var4) {
+            for (int i = 1; i < 12; i++) {
+                if (i % 3 != 0) {
+                    if (par2Random.nextInt(3) == 0) {
+                        this.placeBlockAtCurrentPosition(
+                            par1World,
+                            Blocks.sapling,
+                            MathHelper.getRandomIntegerInRange(par2Random, 0, 2),
+                            i,
+                            1,
+                            var4,
+                            par3StructureBoundingBox);
+                    }
+                }
+            }
+        }
+
+        for (var4 = 0; var4 < 9; ++var4) {
+            for (int var5 = 0; var5 < 13; ++var5) {
+                this.clearCurrentPositionBlocksUpwards(par1World, var5, 4, var4, par3StructureBoundingBox);
+                this.func_151554_b(par1World, Blocks.dirt, 0, var5, -1, var4, par3StructureBoundingBox);
+            }
+        }
+
+        return true;
+    }
+
+    protected boolean buildPath(World par1World, Random par2Random, StructureBoundingBox par3StructureBoundingBox) {
+        final Block var4 = this.getBiomeSpecificBlock(Blocks.planks, 0);
+
+        for (int var5 = this.boundingBox.minX; var5 <= this.boundingBox.maxX; ++var5) {
+            for (int var6 = this.boundingBox.minZ; var6 <= this.boundingBox.maxZ; ++var6) {
+                if (par3StructureBoundingBox.isVecInside(var5, 64, var6)
+                    && (par1World.getBlock(var5, par1World.getTopSolidOrLiquidBlock(var5, var6) - 1, var6)
+                        == GCBlocks.blockMoon
+                        && par1World.getBlockMetadata(var5, par1World.getTopSolidOrLiquidBlock(var5, var6) - 1, var6)
+                            == 5
+                        || Blocks.air
+                            == par1World.getBlock(var5, par1World.getTopSolidOrLiquidBlock(var5, var6) - 1, var6))) {
+                    final int var7 = par1World.getTopSolidOrLiquidBlock(var5, var6) - 1;
+                    par1World.setBlock(var5, var7, var6, var4, 1, 3);
+                }
+            }
+        }
+
+        return true;
+    }
+
+    // -- field crops ---------------------------------------------------------------
+
+    protected Block cropTypeA;
+    protected Block cropTypeB;
+    protected Block cropTypeC;
+    protected Block cropTypeD;
+
+    protected Block getRandomFieldCrop(Random par1Random) {
+        switch (par1Random.nextInt(5)) {
+            case 0:
+                return Blocks.carrots;
+            case 1:
+                return Blocks.potatoes;
+            default:
+                return Blocks.wheat;
+        }
+    }
+
+    protected boolean buildField2(World par1World, Random par2Random, StructureBoundingBox par3StructureBoundingBox) {
+        if (this.averageGroundLevel < 0) {
+            this.averageGroundLevel = this.getAverageGroundLevel(par1World, par3StructureBoundingBox);
+
+            if (this.averageGroundLevel < 0) {
+                return true;
+            }
+
+            this.boundingBox.offset(0, this.averageGroundLevel - this.boundingBox.maxY + 4 - 1, 0);
+        }
+
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 0, 1, 0, 12, 4, 8, Blocks.air, Blocks.air, false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            0,
+            1,
+            2,
+            0,
+            7,
+            Blocks.farmland,
+            Blocks.farmland,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            4,
+            0,
+            1,
+            5,
+            0,
+            7,
+            Blocks.farmland,
+            Blocks.farmland,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            7,
+            0,
+            1,
+            8,
+            0,
+            7,
+            Blocks.farmland,
+            Blocks.farmland,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            10,
+            0,
+            1,
+            11,
+            0,
+            7,
+            Blocks.farmland,
+            Blocks.farmland,
+            false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 0, 0, 0, 0, 0, 8, Blocks.planks, Blocks.planks, false);
+        this.fillWithBlocks(par1World, par3StructureBoundingBox, 6, 0, 0, 6, 0, 8, Blocks.planks, Blocks.planks, false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            12,
+            0,
+            0,
+            12,
+            0,
+            8,
+            Blocks.planks,
+            Blocks.planks,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            0,
+            0,
+            11,
+            0,
+            0,
+            Blocks.planks,
+            Blocks.planks,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            0,
+            8,
+            11,
+            0,
+            8,
+            Blocks.planks,
+            Blocks.planks,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            3,
+            0,
+            1,
+            3,
+            0,
+            7,
+            Blocks.flowing_water,
+            Blocks.flowing_water,
+            false);
+        this.fillWithBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            9,
+            0,
+            1,
+            9,
+            0,
+            7,
+            Blocks.flowing_water,
+            Blocks.flowing_water,
+            false);
+        int i;
+
+        for (i = 1; i <= 7; ++i) {
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeA,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                1,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeA,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                2,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeB,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                4,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeB,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                5,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeC,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                7,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeC,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                8,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeD,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                10,
+                1,
+                i,
+                par3StructureBoundingBox);
+            this.placeBlockAtCurrentPosition(
+                par1World,
+                this.cropTypeD,
+                MathHelper.getRandomIntegerInRange(par2Random, 2, 7),
+                11,
+                1,
+                i,
+                par3StructureBoundingBox);
+        }
+
+        for (i = 0; i < 9; ++i) {
+            for (int j = 0; j < 13; ++j) {
+                this.clearCurrentPositionBlocksUpwards(par1World, j, 4, i, par3StructureBoundingBox);
+                this.func_151554_b(par1World, Blocks.dirt, 0, j, -1, i, par3StructureBoundingBox);
+            }
+        }
+
+        return true;
+    }
+
+    protected boolean buildWell(World par1World, Random par2Random, StructureBoundingBox par3StructureBoundingBox,
+        Block bodyBlock) {
+        if (this.averageGroundLevel < 0) {
+            this.averageGroundLevel = this.getAverageGroundLevel(par1World, par3StructureBoundingBox);
+
+            if (this.averageGroundLevel < 0) {
+                return true;
+            }
+
+            this.boundingBox.offset(0, this.averageGroundLevel - this.boundingBox.maxY + 3, 0);
+        }
+
+        this.fillWithMetadataBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            0,
+            1,
+            4,
+            12,
+            4,
+            bodyBlock,
+            2,
+            Blocks.flowing_water,
+            0,
+            false);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 2, 12, 2, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 3, 12, 2, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 2, 12, 3, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 3, 12, 3, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 13, 1, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 14, 1, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 13, 1, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 14, 1, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 13, 4, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 14, 4, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 13, 4, par3StructureBoundingBox);
+        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 14, 4, par3StructureBoundingBox);
+        this.fillWithMetadataBlocks(
+            par1World,
+            par3StructureBoundingBox,
+            1,
+            15,
+            1,
+            4,
+            15,
+            4,
+            bodyBlock,
+            2,
+            bodyBlock,
+            2,
+            false);
+
+        for (int var4 = 0; var4 <= 5; ++var4) {
+            for (int var5 = 0; var5 <= 5; ++var5) {
+                if (var5 == 0 || var5 == 5 || var4 == 0 || var4 == 5) {
+                    this.placeBlockAtCurrentPosition(
+                        par1World,
+                        Blocks.gravel,
+                        0,
+                        var5,
+                        11,
+                        var4,
+                        par3StructureBoundingBox);
+                    this.clearCurrentPositionBlocksUpwards(par1World, var5, 12, var4, par3StructureBoundingBox);
+                }
+            }
+        }
+
         return true;
     }
 }
