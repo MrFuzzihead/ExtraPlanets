@@ -21,8 +21,12 @@ import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.items.armor.modules.ExtraPlanets_Modules;
 import com.mjr.extraplanets.items.armor.modules.Module;
 import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
+import com.mjr.extraplanets.network.PacketSimple;
 import com.mjr.extraplanets.tileEntities.machines.TileEntityAdvancedRefinery;
 import com.mjr.extraplanets.tileEntities.machines.TileEntitySolar;
+
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.Unpooled;
 
 /**
  * Everything the in-game test asserts about registries, recipes and tile entities.
@@ -112,13 +116,76 @@ final class ServerGameTests {
             TestReporter.assertTrue("expected the config file at " + expected.getAbsolutePath(), expected.isFile());
         });
 
-        reporter.check("config: config sync covers every biome and dimension id", () -> {
-            TestReporter.assertEquals(
-                "decode class count",
-                Config.getConfigSyncDecodeClasses().length,
-                Config.getServerConfigOverride()
-                    .size());
+        reporter.check("config: the sync payload is name/value pairs", () -> {
+            List<Object> payload = Config.getServerConfigOverride();
+            String[] names = Config.getConfigSyncNames();
+
+            TestReporter.assertEquals("decode class count", Config.getConfigSyncDecodeClasses().length, payload.size());
+            TestReporter.assertEquals("payload size", names.length * 2, payload.size());
+            for (int i = 0; i < payload.size(); i += 2) {
+                TestReporter.assertEquals("key at pair " + (i / 2), names[i / 2], payload.get(i));
+                TestReporter.assertTrue(
+                    "value at pair " + (i / 2) + " must be a number, was " + payload.get(i + 1),
+                    payload.get(i + 1) instanceof Integer);
+            }
         });
+
+        reporter.check("config: the sync payload survives the real packet codec", () -> {
+            // The headless suite round-trips the payload too, but only here is it the *real* config of a running
+            // server, encoded by the real PacketSimple path the login handler uses.
+            List<Object> payload = Config.getServerConfigOverride();
+            PacketSimple out = new PacketSimple(PacketSimple.EnumSimplePacket.C_UPDATE_CONFIGS, payload);
+
+            ByteBuf buffer = Unpooled.buffer();
+            out.encodeInto(null, buffer);
+
+            PacketSimple in = new PacketSimple();
+            in.decodeInto(null, buffer);
+            TestReporter.assertEquals("bytes left after decoding", 0, buffer.readableBytes());
+            TestReporter.assertEquals("decoded payload", payload, packetData(in));
+        });
+
+        reporter.check("config: a scribbled config is restored by replaying the wire payload", () -> {
+            // What a login actually does: whatever the client had is replaced by the server's values, keyed by name.
+            List<Object> payload = Config.getServerConfigOverride();
+            String[] names = Config.getConfigSyncNames();
+
+            List<Object> scribble = new ArrayList<Object>();
+            for (String name : names) {
+                scribble.add(name);
+                scribble.add(Integer.valueOf(Integer.MIN_VALUE));
+            }
+
+            try {
+                Config.setConfigOverride(scribble);
+                for (String name : names) {
+                    TestReporter.assertEquals(
+                        "the scribbled value must be applied to " + name,
+                        Integer.valueOf(Integer.MIN_VALUE),
+                        Config.getConfigSyncValue(name));
+                }
+            } finally {
+                // Always restore, even if an assertion above failed: the rest of the run depends on these ids.
+                Config.setConfigOverride(payload);
+            }
+
+            for (int i = 0; i < names.length; i++) {
+                TestReporter
+                    .assertEquals("value of " + names[i], payload.get(i * 2 + 1), Config.getConfigSyncValue(names[i]));
+            }
+        });
+    }
+
+    /** Reads a decoded packet's payload; PacketSimple has no getter and this is a test. */
+    @SuppressWarnings("unchecked")
+    private static List<Object> packetData(PacketSimple packet) {
+        try {
+            java.lang.reflect.Field field = PacketSimple.class.getDeclaredField("data");
+            field.setAccessible(true);
+            return (List<Object>) field.get(packet);
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalStateException("PacketSimple.data is gone", e);
+        }
     }
 
     private static void assertInRange(String name, int value, int max) {

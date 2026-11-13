@@ -19,8 +19,8 @@ import java.util.Map;
  */
 public final class ConfigState {
 
-    /** The (reflection-order) names of the synced fields, as declared by Config itself. */
-    public static final String[] SYNC_FIELD_NAMES = readPrivateSyncNameArray();
+    /** The synced config keys, in wire order, straight from {@link Config} itself. */
+    public static final String[] SYNC_FIELD_NAMES = Config.getConfigSyncNames();
 
     private final Map<String, Integer> intValues = new HashMap<String, Integer>();
     private final Map<String, Object> otherValues = new HashMap<String, Object>();
@@ -82,21 +82,6 @@ public final class ConfigState {
                 .setInt(null, value);
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException("cannot write Config." + name, e);
-        }
-    }
-
-    /**
-     * The sync field list is private; the contract tests need the names in the exact order the packets use.
-     */
-    @SuppressWarnings("unchecked")
-    private static String[] readPrivateSyncNameArray() {
-        try {
-            Field field = Config.class.getDeclaredField("SYNC_CONFIG_FIELD_NAMES");
-            field.setAccessible(true);
-            String[] names = (String[]) field.get(null);
-            return names.clone();
-        } catch (ReflectiveOperationException e) {
-            throw new IllegalStateException("Config.SYNC_CONFIG_FIELD_NAMES is gone", e);
         }
     }
 

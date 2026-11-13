@@ -66,8 +66,10 @@ public class PacketSimpleCodecTest {
 
     @Test
     public void theConfigSyncPayloadRoundTrips() {
-        List<Object> values = new ArrayList<Object>();
-        for (int i = 0; i < Config.getConfigSyncDecodeClasses().length; i++) values.add(Integer.valueOf(i * 3));
+        // The real payload, not a synthetic one: 111 UTF-8 keys interleaved with 111 ints. This is the only test
+        // that proves the name strings survive the codec, and the names are what the client keys off.
+        List<Object> values = Config.getServerConfigOverride();
+        Assert.assertFalse("the config sync payload must not be empty", values.isEmpty());
 
         PacketSimple in = roundTrip(
             new PacketSimple(PacketSimple.EnumSimplePacket.C_UPDATE_CONFIGS, new ArrayList<Object>(values)));

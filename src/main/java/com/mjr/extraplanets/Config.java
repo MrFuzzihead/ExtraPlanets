@@ -1,18 +1,17 @@
 package com.mjr.extraplanets;
 
 import java.io.File;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import net.minecraftforge.common.config.Configuration;
 
 import com.mjr.extraplanets.moons.ExtraPlanets_Moons;
 import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
 
-import cpw.mods.fml.relauncher.Side;
-import cpw.mods.fml.relauncher.SideOnly;
 import micdoodle8.mods.galacticraft.core.util.GCLog;
 
 public class Config {
@@ -2646,121 +2645,424 @@ public class Config {
     }
 
     // -------------------------------------------------------------
-    // P1 — Server/client config synchronization (IDs only)
+    // P1 - Server/client config synchronization (IDs only)
     // -------------------------------------------------------------
-    // Canonical, ordered list of the server-authoritative numeric config values the
-    // client MUST agree with (dimension IDs, space-station IDs, biome IDs, schematic
-    // GUI/page IDs). Both the server-side serialisation and the client-side apply are
-    // driven by THIS ONE list, so their ordering can never drift apart.
+    // The server owns the numeric IDs: dimension, space-station, biome and schematic GUI/page ids. A client
+    // that disagrees with them cannot reach the server's planets - its rockets point at dimensions that do
+    // not exist there - so the server pushes its values on login and the client adopts them.
     //
-    // It is intentionally the *IDs only* subset. Client-only rendering / preference
-    // options (e.g. useCustomCelestialSelection, jupiterLightingClient, customFog,
-    // jupiterClouds*, neiSupport, debugMode) are NOT included and are never sent.
-    private static final String[] SYNC_CONFIG_FIELD_NAMES = new String[] {
-        // Dimension IDs
-        "mercuryID", "venusID", "ceresID", "jupiterID", "saturnID", "uranusID", "neptuneID", "plutoID", "erisID",
-        "tritonID", "europaID", "ioID", "deimosID", "phobosID", "callistoID", "ganymedeID", "rheaID", "titanID",
-        "oberonID", "titaniaID", "iapetusID", "kepler22bID",
-        // Space-station IDs (normal + static)
-        "mercurySpaceStationID", "mercurySpaceStationStaticID", "venusSpaceStationID", "venusSpaceStationStaticID",
-        "ceresSpaceStationID", "ceresSpaceStationStaticID", "marsSpaceStationID", "marsSpaceStationStaticID",
-        "jupiterSpaceStationID", "jupiterSpaceStationStaticID", "saturnSpaceStationID", "saturnSpaceStationStaticID",
-        "uranusSpaceStationID", "uranusSpaceStationStaticID", "neptuneSpaceStationID", "neptuneSpaceStationStaticID",
-        "plutoSpaceStationID", "plutoSpaceStationStaticID", "erisSpaceStationID", "erisSpaceStationStaticID",
-        "kepler22bSpaceStationID", "kepler22bSpaceStationStaticID",
-        // Biome IDs
-        "mercuryBiomeID", "venusBiomeID", "ceresBiomeID", "jupiterBiomeID", "jupiterSeaBiomeID", "jupiterSandsBiomeID",
-        "saturnBiomeID", "saturnHydrocarbonSeaBiomeID", "saturnNuclearLandBiomeID", "uranusBiomeID",
-        "uranusFrozenSeaBiomeID", "uranusSnowLandsBiomeID", "neptuneBiomeID", "neptuneRadioActiveWaterSeaBiomeID",
-        "neptuneLayeredHillsBiomeID", "plutoBiomeID", "erisBiomeID", "tritonBiomeID", "tritonIceLandsBiomeID",
-        "tritonIceSeaBiomeID", "europaBiomeID", "ioBiomeID", "ioAshLandsBiomeID", "ioBurningPlainsBiomeID",
-        "deimosBiomeID", "phobosBiomeID", "callistoBiomeID", "ganymedeBiomeID", "rheaBiomeID", "titanBiomeID",
-        "titanSeaBiomeID", "titanMethaneHillsBiomeID", "oberonBiomeID", "oberonValleysBiomeID",
-        "oberonLargeMountainBiomeID", "titaniaBiomeID", "iapetusBiomeID", "kepler22bPlainsBiomeID",
-        "kepler22bBlueForestBiomeID", "kepler22bPurpleForestBiomeID", "kepler22bRedForestBiomeID",
-        "kepler22bYellowForestBiomeID", "kepler22bRedDesertBiomeID", "kepler22bWasteLandsBiomeID",
-        "kepler22bDiamondPlainsBiomeID", "kepler22bCoalPlainsBiomeID", "kepler22bIronPlainsBiomeID",
-        "kepler22bGoldPlainsBiomeID", "kepler22bEmeraldPlainsBiomeID",
-        // Schematic GUI IDs
-        "schematicTier4GUIID", "schematicTier5GUIID", "schematicTier6GUIID", "schematicTier7GUIID",
-        "schematicTier8GUIID", "schematicTier9GUIID", "schematicTier10GUIID", "schematicMarsRoverGUIID",
-        "schematicVenusRoverGUIID",
-        // Schematic page IDs
-        "schematicTier4PageID", "schematicTier5PageID", "schematicTier6PageID", "schematicTier7PageID",
-        "schematicTier8PageID", "schematicTier9PageID", "schematicTier10PageID", "schematicMarsRoverPageID",
-        "schematicVenusRoverPageID", };
+    // The payload is a list of (name, value) pairs, never a bare positional list, and every pair is routed
+    // through one SyncEntry that holds a typed getter and setter for the field. Both properties matter:
+    //
+    // * Keying by NAME means a field that one side does not send can no longer shift every following value
+    // onto its neighbour's config key. The old implementation read 111 names reflectively and wrote them
+    // back positionally, so a single renamed or retyped field silently mapped, say, a biome id onto a
+    // schematic GUI id.
+    // * The getter/setter pair is checked by the compiler, so a renamed or retyped field is a compile error
+    // instead of a value that Field.getInt() throws on and getServerConfigOverride() silently skips.
+    //
+    // Adding a synced field means adding one line to buildSyncEntries(). ConfigSyncContractTest fails the
+    // build if a name does not resolve to a real public static int, if a getter and its setter disagree, or
+    // if a name appears twice.
+    //
+    // This is deliberately the *IDs only* subset. Client-only rendering and preference options
+    // (useCustomCelestialSelection, jupiterLightingClient, customFog, jupiterClouds*, neiSupport, debugMode)
+    // are never sent. The radiation/pressure amounts and the rocket tiers are ints too and are also not sent:
+    // the HUD overlays read those client-side (see CODE_REVIEW.md section 7), so a client/server
+    // disagreement there is a display difference, not a player sent to the wrong dimension.
 
-    private static ArrayList<Object> clientConfigOverrideSave;
+    /** Reads one synced field. A local interface keeps Config off java.util.function. */
+    private interface SyncGetter {
+
+        int get();
+    }
+
+    /** Writes one synced field. */
+    private interface SyncSetter {
+
+        void set(int value);
+    }
+
+    /** One synced config field: the wire key plus non-reflective access to the static that holds it. */
+    private static final class SyncEntry {
+
+        private final String name;
+        private final SyncGetter getter;
+        private final SyncSetter setter;
+
+        private SyncEntry(String name, SyncGetter getter, SyncSetter setter) {
+            this.name = name;
+            this.getter = getter;
+            this.setter = setter;
+        }
+
+        private int get() {
+            return this.getter.get();
+        }
+
+        private void set(int value) {
+            this.setter.set(value);
+        }
+    }
 
     /**
-     * Decode-class array for the C_UPDATE_CONFIGS packet. Every synced value is an int.
+     * Every synced field, in wire order. Built once; each entry's lambda reads or writes the static field at call
+     * time, so this table's position in the file relative to the field declarations does not matter.
+     */
+    private static final List<SyncEntry> SYNC_ENTRIES = buildSyncEntries();
+
+    private static final Map<String, SyncEntry> SYNC_ENTRIES_BY_NAME = indexSyncEntries();
+
+    /** Terser call site for {@link #buildSyncEntries()}. The field name appears three times per line on purpose. */
+    private static SyncEntry entry(String name, SyncGetter getter, SyncSetter setter) {
+        return new SyncEntry(name, getter, setter);
+    }
+
+    private static List<SyncEntry> buildSyncEntries() {
+        List<SyncEntry> entries = new ArrayList<SyncEntry>(111);
+        // Dimension IDs
+        entries.add(entry("mercuryID", () -> mercuryID, v -> mercuryID = v));
+        entries.add(entry("venusID", () -> venusID, v -> venusID = v));
+        entries.add(entry("ceresID", () -> ceresID, v -> ceresID = v));
+        entries.add(entry("jupiterID", () -> jupiterID, v -> jupiterID = v));
+        entries.add(entry("saturnID", () -> saturnID, v -> saturnID = v));
+        entries.add(entry("uranusID", () -> uranusID, v -> uranusID = v));
+        entries.add(entry("neptuneID", () -> neptuneID, v -> neptuneID = v));
+        entries.add(entry("plutoID", () -> plutoID, v -> plutoID = v));
+        entries.add(entry("erisID", () -> erisID, v -> erisID = v));
+        entries.add(entry("tritonID", () -> tritonID, v -> tritonID = v));
+        entries.add(entry("europaID", () -> europaID, v -> europaID = v));
+        entries.add(entry("ioID", () -> ioID, v -> ioID = v));
+        entries.add(entry("deimosID", () -> deimosID, v -> deimosID = v));
+        entries.add(entry("phobosID", () -> phobosID, v -> phobosID = v));
+        entries.add(entry("callistoID", () -> callistoID, v -> callistoID = v));
+        entries.add(entry("ganymedeID", () -> ganymedeID, v -> ganymedeID = v));
+        entries.add(entry("rheaID", () -> rheaID, v -> rheaID = v));
+        entries.add(entry("titanID", () -> titanID, v -> titanID = v));
+        entries.add(entry("oberonID", () -> oberonID, v -> oberonID = v));
+        entries.add(entry("titaniaID", () -> titaniaID, v -> titaniaID = v));
+        entries.add(entry("iapetusID", () -> iapetusID, v -> iapetusID = v));
+        entries.add(entry("kepler22bID", () -> kepler22bID, v -> kepler22bID = v));
+
+        // Space-station IDs (normal + static)
+        entries.add(entry("mercurySpaceStationID", () -> mercurySpaceStationID, v -> mercurySpaceStationID = v));
+        entries.add(
+            entry(
+                "mercurySpaceStationStaticID",
+                () -> mercurySpaceStationStaticID,
+                v -> mercurySpaceStationStaticID = v));
+        entries.add(entry("venusSpaceStationID", () -> venusSpaceStationID, v -> venusSpaceStationID = v));
+        entries.add(
+            entry("venusSpaceStationStaticID", () -> venusSpaceStationStaticID, v -> venusSpaceStationStaticID = v));
+        entries.add(entry("ceresSpaceStationID", () -> ceresSpaceStationID, v -> ceresSpaceStationID = v));
+        entries.add(
+            entry("ceresSpaceStationStaticID", () -> ceresSpaceStationStaticID, v -> ceresSpaceStationStaticID = v));
+        entries.add(entry("marsSpaceStationID", () -> marsSpaceStationID, v -> marsSpaceStationID = v));
+        entries
+            .add(entry("marsSpaceStationStaticID", () -> marsSpaceStationStaticID, v -> marsSpaceStationStaticID = v));
+        entries.add(entry("jupiterSpaceStationID", () -> jupiterSpaceStationID, v -> jupiterSpaceStationID = v));
+        entries.add(
+            entry(
+                "jupiterSpaceStationStaticID",
+                () -> jupiterSpaceStationStaticID,
+                v -> jupiterSpaceStationStaticID = v));
+        entries.add(entry("saturnSpaceStationID", () -> saturnSpaceStationID, v -> saturnSpaceStationID = v));
+        entries.add(
+            entry("saturnSpaceStationStaticID", () -> saturnSpaceStationStaticID, v -> saturnSpaceStationStaticID = v));
+        entries.add(entry("uranusSpaceStationID", () -> uranusSpaceStationID, v -> uranusSpaceStationID = v));
+        entries.add(
+            entry("uranusSpaceStationStaticID", () -> uranusSpaceStationStaticID, v -> uranusSpaceStationStaticID = v));
+        entries.add(entry("neptuneSpaceStationID", () -> neptuneSpaceStationID, v -> neptuneSpaceStationID = v));
+        entries.add(
+            entry(
+                "neptuneSpaceStationStaticID",
+                () -> neptuneSpaceStationStaticID,
+                v -> neptuneSpaceStationStaticID = v));
+        entries.add(entry("plutoSpaceStationID", () -> plutoSpaceStationID, v -> plutoSpaceStationID = v));
+        entries.add(
+            entry("plutoSpaceStationStaticID", () -> plutoSpaceStationStaticID, v -> plutoSpaceStationStaticID = v));
+        entries.add(entry("erisSpaceStationID", () -> erisSpaceStationID, v -> erisSpaceStationID = v));
+        entries
+            .add(entry("erisSpaceStationStaticID", () -> erisSpaceStationStaticID, v -> erisSpaceStationStaticID = v));
+        entries.add(entry("kepler22bSpaceStationID", () -> kepler22bSpaceStationID, v -> kepler22bSpaceStationID = v));
+        entries.add(
+            entry(
+                "kepler22bSpaceStationStaticID",
+                () -> kepler22bSpaceStationStaticID,
+                v -> kepler22bSpaceStationStaticID = v));
+
+        // Biome IDs
+        entries.add(entry("mercuryBiomeID", () -> mercuryBiomeID, v -> mercuryBiomeID = v));
+        entries.add(entry("venusBiomeID", () -> venusBiomeID, v -> venusBiomeID = v));
+        entries.add(entry("ceresBiomeID", () -> ceresBiomeID, v -> ceresBiomeID = v));
+        entries.add(entry("jupiterBiomeID", () -> jupiterBiomeID, v -> jupiterBiomeID = v));
+        entries.add(entry("jupiterSeaBiomeID", () -> jupiterSeaBiomeID, v -> jupiterSeaBiomeID = v));
+        entries.add(entry("jupiterSandsBiomeID", () -> jupiterSandsBiomeID, v -> jupiterSandsBiomeID = v));
+        entries.add(entry("saturnBiomeID", () -> saturnBiomeID, v -> saturnBiomeID = v));
+        entries.add(
+            entry(
+                "saturnHydrocarbonSeaBiomeID",
+                () -> saturnHydrocarbonSeaBiomeID,
+                v -> saturnHydrocarbonSeaBiomeID = v));
+        entries
+            .add(entry("saturnNuclearLandBiomeID", () -> saturnNuclearLandBiomeID, v -> saturnNuclearLandBiomeID = v));
+        entries.add(entry("uranusBiomeID", () -> uranusBiomeID, v -> uranusBiomeID = v));
+        entries.add(entry("uranusFrozenSeaBiomeID", () -> uranusFrozenSeaBiomeID, v -> uranusFrozenSeaBiomeID = v));
+        entries.add(entry("uranusSnowLandsBiomeID", () -> uranusSnowLandsBiomeID, v -> uranusSnowLandsBiomeID = v));
+        entries.add(entry("neptuneBiomeID", () -> neptuneBiomeID, v -> neptuneBiomeID = v));
+        entries.add(
+            entry(
+                "neptuneRadioActiveWaterSeaBiomeID",
+                () -> neptuneRadioActiveWaterSeaBiomeID,
+                v -> neptuneRadioActiveWaterSeaBiomeID = v));
+        entries.add(
+            entry("neptuneLayeredHillsBiomeID", () -> neptuneLayeredHillsBiomeID, v -> neptuneLayeredHillsBiomeID = v));
+        entries.add(entry("plutoBiomeID", () -> plutoBiomeID, v -> plutoBiomeID = v));
+        entries.add(entry("erisBiomeID", () -> erisBiomeID, v -> erisBiomeID = v));
+        entries.add(entry("tritonBiomeID", () -> tritonBiomeID, v -> tritonBiomeID = v));
+        entries.add(entry("tritonIceLandsBiomeID", () -> tritonIceLandsBiomeID, v -> tritonIceLandsBiomeID = v));
+        entries.add(entry("tritonIceSeaBiomeID", () -> tritonIceSeaBiomeID, v -> tritonIceSeaBiomeID = v));
+        entries.add(entry("europaBiomeID", () -> europaBiomeID, v -> europaBiomeID = v));
+        entries.add(entry("ioBiomeID", () -> ioBiomeID, v -> ioBiomeID = v));
+        entries.add(entry("ioAshLandsBiomeID", () -> ioAshLandsBiomeID, v -> ioAshLandsBiomeID = v));
+        entries.add(entry("ioBurningPlainsBiomeID", () -> ioBurningPlainsBiomeID, v -> ioBurningPlainsBiomeID = v));
+        entries.add(entry("deimosBiomeID", () -> deimosBiomeID, v -> deimosBiomeID = v));
+        entries.add(entry("phobosBiomeID", () -> phobosBiomeID, v -> phobosBiomeID = v));
+        entries.add(entry("callistoBiomeID", () -> callistoBiomeID, v -> callistoBiomeID = v));
+        entries.add(entry("ganymedeBiomeID", () -> ganymedeBiomeID, v -> ganymedeBiomeID = v));
+        entries.add(entry("rheaBiomeID", () -> rheaBiomeID, v -> rheaBiomeID = v));
+        entries.add(entry("titanBiomeID", () -> titanBiomeID, v -> titanBiomeID = v));
+        entries.add(entry("titanSeaBiomeID", () -> titanSeaBiomeID, v -> titanSeaBiomeID = v));
+        entries
+            .add(entry("titanMethaneHillsBiomeID", () -> titanMethaneHillsBiomeID, v -> titanMethaneHillsBiomeID = v));
+        entries.add(entry("oberonBiomeID", () -> oberonBiomeID, v -> oberonBiomeID = v));
+        entries.add(entry("oberonValleysBiomeID", () -> oberonValleysBiomeID, v -> oberonValleysBiomeID = v));
+        entries.add(
+            entry("oberonLargeMountainBiomeID", () -> oberonLargeMountainBiomeID, v -> oberonLargeMountainBiomeID = v));
+        entries.add(entry("titaniaBiomeID", () -> titaniaBiomeID, v -> titaniaBiomeID = v));
+        entries.add(entry("iapetusBiomeID", () -> iapetusBiomeID, v -> iapetusBiomeID = v));
+        entries.add(entry("kepler22bPlainsBiomeID", () -> kepler22bPlainsBiomeID, v -> kepler22bPlainsBiomeID = v));
+        entries.add(
+            entry("kepler22bBlueForestBiomeID", () -> kepler22bBlueForestBiomeID, v -> kepler22bBlueForestBiomeID = v));
+        entries.add(
+            entry(
+                "kepler22bPurpleForestBiomeID",
+                () -> kepler22bPurpleForestBiomeID,
+                v -> kepler22bPurpleForestBiomeID = v));
+        entries.add(
+            entry("kepler22bRedForestBiomeID", () -> kepler22bRedForestBiomeID, v -> kepler22bRedForestBiomeID = v));
+        entries.add(
+            entry(
+                "kepler22bYellowForestBiomeID",
+                () -> kepler22bYellowForestBiomeID,
+                v -> kepler22bYellowForestBiomeID = v));
+        entries.add(
+            entry("kepler22bRedDesertBiomeID", () -> kepler22bRedDesertBiomeID, v -> kepler22bRedDesertBiomeID = v));
+        entries.add(
+            entry("kepler22bWasteLandsBiomeID", () -> kepler22bWasteLandsBiomeID, v -> kepler22bWasteLandsBiomeID = v));
+        entries.add(
+            entry(
+                "kepler22bDiamondPlainsBiomeID",
+                () -> kepler22bDiamondPlainsBiomeID,
+                v -> kepler22bDiamondPlainsBiomeID = v));
+        entries.add(
+            entry("kepler22bCoalPlainsBiomeID", () -> kepler22bCoalPlainsBiomeID, v -> kepler22bCoalPlainsBiomeID = v));
+        entries.add(
+            entry("kepler22bIronPlainsBiomeID", () -> kepler22bIronPlainsBiomeID, v -> kepler22bIronPlainsBiomeID = v));
+        entries.add(
+            entry("kepler22bGoldPlainsBiomeID", () -> kepler22bGoldPlainsBiomeID, v -> kepler22bGoldPlainsBiomeID = v));
+        entries.add(
+            entry(
+                "kepler22bEmeraldPlainsBiomeID",
+                () -> kepler22bEmeraldPlainsBiomeID,
+                v -> kepler22bEmeraldPlainsBiomeID = v));
+
+        // Schematic GUI IDs
+        entries.add(entry("schematicTier4GUIID", () -> schematicTier4GUIID, v -> schematicTier4GUIID = v));
+        entries.add(entry("schematicTier5GUIID", () -> schematicTier5GUIID, v -> schematicTier5GUIID = v));
+        entries.add(entry("schematicTier6GUIID", () -> schematicTier6GUIID, v -> schematicTier6GUIID = v));
+        entries.add(entry("schematicTier7GUIID", () -> schematicTier7GUIID, v -> schematicTier7GUIID = v));
+        entries.add(entry("schematicTier8GUIID", () -> schematicTier8GUIID, v -> schematicTier8GUIID = v));
+        entries.add(entry("schematicTier9GUIID", () -> schematicTier9GUIID, v -> schematicTier9GUIID = v));
+        entries.add(entry("schematicTier10GUIID", () -> schematicTier10GUIID, v -> schematicTier10GUIID = v));
+        entries.add(entry("schematicMarsRoverGUIID", () -> schematicMarsRoverGUIID, v -> schematicMarsRoverGUIID = v));
+        entries
+            .add(entry("schematicVenusRoverGUIID", () -> schematicVenusRoverGUIID, v -> schematicVenusRoverGUIID = v));
+
+        // Schematic page IDs
+        entries.add(entry("schematicTier4PageID", () -> schematicTier4PageID, v -> schematicTier4PageID = v));
+        entries.add(entry("schematicTier5PageID", () -> schematicTier5PageID, v -> schematicTier5PageID = v));
+        entries.add(entry("schematicTier6PageID", () -> schematicTier6PageID, v -> schematicTier6PageID = v));
+        entries.add(entry("schematicTier7PageID", () -> schematicTier7PageID, v -> schematicTier7PageID = v));
+        entries.add(entry("schematicTier8PageID", () -> schematicTier8PageID, v -> schematicTier8PageID = v));
+        entries.add(entry("schematicTier9PageID", () -> schematicTier9PageID, v -> schematicTier9PageID = v));
+        entries.add(entry("schematicTier10PageID", () -> schematicTier10PageID, v -> schematicTier10PageID = v));
+        entries
+            .add(entry("schematicMarsRoverPageID", () -> schematicMarsRoverPageID, v -> schematicMarsRoverPageID = v));
+        entries.add(
+            entry("schematicVenusRoverPageID", () -> schematicVenusRoverPageID, v -> schematicVenusRoverPageID = v));
+
+        return Collections.unmodifiableList(entries);
+    }
+
+    private static Map<String, SyncEntry> indexSyncEntries() {
+        Map<String, SyncEntry> byName = new LinkedHashMap<String, SyncEntry>(SYNC_ENTRIES.size());
+        for (SyncEntry entry : SYNC_ENTRIES) {
+            if (byName.put(entry.name, entry) != null) {
+                // A programming error, not a runtime condition: two entries would fight over one field.
+                throw new IllegalStateException("[ExtraPlanets] duplicate synced config key '" + entry.name + "'");
+            }
+        }
+        return Collections.unmodifiableMap(byName);
+    }
+
+    /**
+     * Decode-class array for the C_UPDATE_CONFIGS packet: a String key followed by an Integer value, per synced
+     * field, in the order {@link #getServerConfigOverride()} writes them.
      */
     public static Class<?>[] getConfigSyncDecodeClasses() {
-        int n = Config.SYNC_CONFIG_FIELD_NAMES.length;
-        Class<?>[] classes = new Class<?>[n];
-        Arrays.fill(classes, Integer.class);
+        Class<?>[] classes = new Class<?>[SYNC_ENTRIES.size() * 2];
+        for (int i = 0; i < classes.length; i += 2) {
+            classes[i] = String.class;
+            classes[i + 1] = Integer.class;
+        }
         return classes;
     }
 
     /**
-     * Ordered, server-authoritative values to push to a connecting client. Mirrored by
-     * {@link #setConfigOverride(List)} and driven by the same shared name list.
+     * @return the synced keys, in wire order. Exposed so tests (and a future /reload) can enumerate them without
+     *         reflection.
+     */
+    public static String[] getConfigSyncNames() {
+        String[] names = new String[SYNC_ENTRIES.size()];
+        for (int i = 0; i < names.length; i++) {
+            names[i] = SYNC_ENTRIES.get(i).name;
+        }
+        return names;
+    }
+
+    /**
+     * @return this side's current value for one synced key, or {@code null} if the key is not synced.
+     */
+    public static Integer getConfigSyncValue(String name) {
+        SyncEntry entry = SYNC_ENTRIES_BY_NAME.get(name);
+        return entry == null ? null : Integer.valueOf(entry.get());
+    }
+
+    /**
+     * Ordered {@code (name, value)} pairs holding this server's authoritative IDs. Mirrored exactly by
+     * {@link #setConfigOverride(List)}, which keys by name rather than by position.
      */
     public static List<Object> getServerConfigOverride() {
-        ArrayList<Object> data = new ArrayList<Object>();
-        for (String name : Config.SYNC_CONFIG_FIELD_NAMES) {
-            try {
-                data.add(
-                    Config.class.getField(name)
-                        .getInt(null));
-            } catch (Exception e) {
-                GCLog.severe("[ExtraPlanets] Config sync: cannot read field '" + name + "': " + e.getMessage());
-            }
+        List<Object> data = new ArrayList<Object>(SYNC_ENTRIES.size() * 2);
+        for (SyncEntry entry : SYNC_ENTRIES) {
+            data.add(entry.name);
+            data.add(Integer.valueOf(entry.get()));
         }
         return data;
     }
 
+    /** The client's own values, captured before the server's are applied; null when not on a remote server. */
+    private static ArrayList<Object> clientConfigOverrideSave;
+
     /**
-     * Snapshot the client's current values before they are overridden, so they can be
-     * restored when the player leaves the (remote) server.
+     * Snapshot the client's current values before they are overridden, so they can be restored when the player
+     * leaves the (remote) server.
      */
     public static void saveClientConfigOverrideable() {
         if (Config.clientConfigOverrideSave == null) {
-            Config.clientConfigOverrideSave = (ArrayList<Object>) Config.getServerConfigOverride();
+            Config.clientConfigOverrideSave = new ArrayList<Object>(Config.getServerConfigOverride());
         }
     }
 
     /**
-     * Apply the server's authoritative ID values on the client. Any value that differs
-     * from the client's locally-configured one is logged by name so the mismatch is
-     * visible (the file itself is NOT modified).
+     * Apply the server's authoritative ID values on the client. Any value that differs from the client's
+     * locally-configured one is logged by name so the mismatch is visible (the file itself is NOT modified).
+     * <p>
+     * Every value is applied by name. A malformed, truncated or unknown entry is skipped and reported, and it
+     * cannot affect any other key - which is the whole point of not using positions.
+     * <p>
+     * Deliberately not {@code @SideOnly(Side.CLIENT)}: nothing here touches client-only classes, and FML's side
+     * transformer deletes {@code @SideOnly} methods on the other side, which would turn
+     * {@link #restoreClientConfigOverrideable} into a {@code NoSuchMethodError} if it were ever reached from a
+     * dedicated server.
      */
-    @SideOnly(Side.CLIENT)
     public static void setConfigOverride(List<Object> configs) {
-        if (configs == null) return;
-        int i = 0;
-        for (String name : Config.SYNC_CONFIG_FIELD_NAMES) {
-            if (i >= configs.size()) break;
-            try {
-                Field field = Config.class.getField(name);
-                field.setAccessible(true);
-                int newValue = ((Number) configs.get(i)).intValue();
-                int oldValue = field.getInt(null);
-                if (oldValue != newValue) {
-                    GCLog.info(
-                        "[ExtraPlanets] Config override (" + name
-                            + "): "
-                            + oldValue
-                            + " -> "
-                            + newValue
-                            + " (server is authoritative; adjust config/ExtraPlanets.cfg to match)");
-                }
-                field.setInt(null, newValue);
-            } catch (Exception e) {
-                GCLog.severe("[ExtraPlanets] Config sync: cannot apply field '" + name + "': " + e.getMessage());
-            }
-            i++;
+        if (configs == null || configs.isEmpty()) {
+            return;
         }
+        if ((configs.size() & 1) != 0) {
+            GCLog.severe(
+                "[ExtraPlanets] Config sync: received " + configs.size()
+                    + " values, which is not a whole number of (name, value) pairs. Ignoring the packet so that no"
+                    + " config key is changed by mistake.");
+            return;
+        }
+
+        int applied = 0;
+        int skipped = 0;
+        for (int i = 0; i < configs.size(); i += 2) {
+            Object key = configs.get(i);
+            Object value = configs.get(i + 1);
+            if (!(key instanceof String)) {
+                GCLog.severe(
+                    "[ExtraPlanets] Config sync: entry " + (i / 2)
+                        + " has a '"
+                        + describe(key)
+                        + "' key instead of a name. Skipping it.");
+                skipped++;
+                continue;
+            }
+            if (!(value instanceof Number)) {
+                GCLog.severe(
+                    "[ExtraPlanets] Config sync: '" + key
+                        + "' has a '"
+                        + describe(value)
+                        + "' value instead of a number. Skipping it.");
+                skipped++;
+                continue;
+            }
+
+            SyncEntry entry = SYNC_ENTRIES_BY_NAME.get(key);
+            if (entry == null) {
+                // A newer server, or a key this client version does not know. Leaving the client's own value in
+                // place is the safe answer, and no other key is affected.
+                GCLog.info(
+                    "[ExtraPlanets] Config sync: ignoring unknown key '" + key + "' (the two config lists differ).");
+                skipped++;
+                continue;
+            }
+
+            int newValue = ((Number) value).intValue();
+            int oldValue = entry.get();
+            if (oldValue != newValue) {
+                GCLog.info(
+                    "[ExtraPlanets] Config override (" + key
+                        + "): "
+                        + oldValue
+                        + " -> "
+                        + newValue
+                        + " (server is authoritative; adjust config/ExtraPlanets.cfg to match)");
+            }
+            entry.set(newValue);
+            applied++;
+        }
+
+        if (skipped > 0) {
+            GCLog.severe(
+                "[ExtraPlanets] Config sync: applied " + applied
+                    + " of "
+                    + (configs.size() / 2)
+                    + " config values; "
+                    + skipped
+                    + " were skipped (see above).");
+        }
+    }
+
+    private static String describe(Object value) {
+        return value == null ? "null"
+            : value.getClass()
+                .getSimpleName();
     }
 
     /**
