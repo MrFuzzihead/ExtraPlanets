@@ -6,12 +6,11 @@ import java.util.Random;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.biome.WorldChunkManager;
 
+import com.mjr.extraplanets.world.village.StructureVillagePieceWeightBase;
+
 public class StructureComponentKepler22bVillageStartPiece extends StructureComponentKepler22bVillageWell {
 
     public WorldChunkManager worldChunkMngr;
-    public int terrainType;
-    public StructureVillagePieceWeightKepler22b structVillagePieceWeight;
-    public ArrayList<StructureVillagePieceWeightKepler22b> structureVillageWeightedPieceList;
 
     public StructureComponentKepler22bVillageStartPiece() {}
 
@@ -20,7 +19,9 @@ public class StructureComponentKepler22bVillageStartPiece extends StructureCompo
         int par7) {
         super((StructureComponentKepler22bVillageStartPiece) null, 0, par3Random, par4, par5);
         this.worldChunkMngr = par1WorldChunkManager;
-        this.structureVillageWeightedPieceList = par6ArrayList;
+        // A copy, because the shared growth code removes exhausted piece types as it goes.
+        this.structureVillageWeightedPieceList = new java.util.ArrayList<StructureVillagePieceWeightBase>(
+            par6ArrayList);
         this.terrainType = par7;
         this.startPiece = this;
     }

@@ -45,6 +45,24 @@ public abstract class StructureComponentVillageBase extends StructureComponent {
 
     // -- piece lookup ---------------------------------------------------------------
 
+    // -- piece state ----------------------------------------------------------------
+
+    /**
+     * The village's remaining piece weights, and the last one used.
+     *
+     * <p>
+     * These used to live on each body's start piece, typed to that body's components. The shared growth code only
+     * reads {@code villagePieceClass}, {@code villagePieceWeight} and the spawn counters, so they are typed to the
+     * shared base instead - one copy, and no shadowing field in the subclasses.
+     * </p>
+     */
+    public java.util.List<StructureVillagePieceWeightBase> structureVillageWeightedPieceList;
+
+    public StructureVillagePieceWeightBase structVillagePieceWeight;
+
+    /** Terrain type the village was started with; part of how far paths are allowed to grow. */
+    public int terrainType;
+
     /** The pieces waiting to be extended from each end of this component; drained by the village start. */
     public ArrayList<Object> field_74932_i = new ArrayList<Object>();
     public ArrayList<Object> field_74930_j = new ArrayList<Object>();
