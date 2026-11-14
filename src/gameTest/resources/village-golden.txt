@@ -1,4 +1,4 @@
-# Village component golden hashes - see gametest/VillageSnapshots.java
+# Golden hashes - see gametest/GoldenFiles.java
 # key<TAB>hash. Regenerate only with ./gradlew gameTestServer -PrecordGoldens.
 Callisto/VillageField/r0	64d1ceee6276aee6
 Callisto/VillageField/r1	96513bc98ff8fccb

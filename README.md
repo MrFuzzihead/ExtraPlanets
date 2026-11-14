@@ -59,9 +59,9 @@ tests run on a Java 8 launcher.
 
 | Command | What it runs |
 |---|---|
-| `./gradlew test` | 122 headless JUnit 4 tests (JUnit 4.13.2 + Mockito 4.11.0, Java 8 launcher) |
+| `./gradlew test` | 129 headless JUnit 4 tests (JUnit 4.13.2 + Mockito 4.11.0, Java 8 launcher) |
 | `./gradlew check` | the above plus Spotless, Checkstyle, the coverage floor and the gameTest compile |
-| `./gradlew gameTestServer` | boots a real dedicated server, runs 36 in-game checks (including 396 golden village snapshots), then exits with the result |
+| `./gradlew gameTestServer` | boots a real dedicated server, runs 38 in-game checks (including 396 village and 63 microblock goldens), then exits with the result |
 | `./gradlew gameTestServer -PrecordGoldens` | re-records the village golden hashes - only after a change you trust |
 | `./gradlew runServer -PsmokeTest` | boots a real server, prints `EXTRAPLANETS_SMOKE_TEST_OK` and exits |
 

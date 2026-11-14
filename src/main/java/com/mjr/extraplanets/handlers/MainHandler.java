@@ -8,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
 
+import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.api.item.IModularArmor;
 import com.mjr.extraplanets.api.world.IPressureWorld;
 import com.mjr.extraplanets.api.world.ISolarRadiationWorld;
@@ -206,28 +207,29 @@ public class MainHandler {
      * Returns null (unknown) if the world has no pressure hazard.
      */
     private static Integer getWorldPressureLevel(net.minecraft.world.WorldProvider provider) {
-        if (provider instanceof IPressureWorld) {
-            int level = ((IPressureWorld) provider).getPressureLevel();
-            return level <= 0 ? null : level;
+        // The provider type decides *where* the level comes from; that answer is cached, the level itself is read
+        // fresh because the server syncs the config values at runtime.
+        final int level;
+        switch (WorldHazards.pressureSource(provider.getClass())) {
+            case FROM_PROVIDER:
+                level = ((IPressureWorld) provider).getPressureLevel();
+                break;
+            case MOON:
+                level = Config.moonPressureAmount;
+                break;
+            case MARS:
+                level = Config.marsPressureAmount;
+                break;
+            case ASTEROIDS:
+                level = Config.asteroidsPressureAmount;
+                break;
+            case SPACE_STATION:
+                level = Config.spaceStationPressureAmount;
+                break;
+            default:
+                return null;
         }
-        // Fall back to known GC world providers
-        if (provider instanceof micdoodle8.mods.galacticraft.core.dimension.WorldProviderMoon) {
-            int level = com.mjr.extraplanets.Config.moonPressureAmount;
-            return level <= 0 ? null : level;
-        }
-        if (provider instanceof micdoodle8.mods.galacticraft.planets.mars.dimension.WorldProviderMars) {
-            int level = com.mjr.extraplanets.Config.marsPressureAmount;
-            return level <= 0 ? null : level;
-        }
-        if (provider instanceof micdoodle8.mods.galacticraft.planets.asteroids.dimension.WorldProviderAsteroids) {
-            int level = com.mjr.extraplanets.Config.asteroidsPressureAmount;
-            return level <= 0 ? null : level;
-        }
-        if (provider instanceof micdoodle8.mods.galacticraft.core.dimension.WorldProviderSpaceStation) {
-            int level = com.mjr.extraplanets.Config.spaceStationPressureAmount;
-            return level <= 0 ? null : level;
-        }
-        return null;
+        return level <= 0 ? null : level;
     }
 
     /**
@@ -440,28 +442,28 @@ public class MainHandler {
      * Returns null (unknown) if the world has no radiation.
      */
     private static Integer getWorldRadiationLevel(net.minecraft.world.WorldProvider provider) {
-        if (provider instanceof ISolarRadiationWorld) {
-            int level = ((ISolarRadiationWorld) provider).getSolarRadiationLevel();
-            return level <= 0 ? null : level;
+        // See getWorldPressureLevel: the source is cached by provider type, the level is not.
+        final int level;
+        switch (WorldHazards.radiationSource(provider.getClass())) {
+            case FROM_PROVIDER:
+                level = ((ISolarRadiationWorld) provider).getSolarRadiationLevel();
+                break;
+            case MOON:
+                level = Config.moonRadiationAmount;
+                break;
+            case MARS:
+                level = Config.marsRadiationAmount;
+                break;
+            case ASTEROIDS:
+                level = Config.asteroidsRadiationAmount;
+                break;
+            case SPACE_STATION:
+                level = Config.spaceStationRadiationAmount;
+                break;
+            default:
+                return null;
         }
-        // Fall back to known GC world providers
-        if (provider instanceof micdoodle8.mods.galacticraft.core.dimension.WorldProviderMoon) {
-            int level = com.mjr.extraplanets.Config.moonRadiationAmount;
-            return level <= 0 ? null : level;
-        }
-        if (provider instanceof micdoodle8.mods.galacticraft.planets.mars.dimension.WorldProviderMars) {
-            int level = com.mjr.extraplanets.Config.marsRadiationAmount;
-            return level <= 0 ? null : level;
-        }
-        if (provider instanceof micdoodle8.mods.galacticraft.planets.asteroids.dimension.WorldProviderAsteroids) {
-            int level = com.mjr.extraplanets.Config.asteroidsRadiationAmount;
-            return level <= 0 ? null : level;
-        }
-        if (provider instanceof micdoodle8.mods.galacticraft.core.dimension.WorldProviderSpaceStation) {
-            int level = com.mjr.extraplanets.Config.spaceStationRadiationAmount;
-            return level <= 0 ? null : level;
-        }
-        return null;
+        return level <= 0 ? null : level;
     }
 
     /**

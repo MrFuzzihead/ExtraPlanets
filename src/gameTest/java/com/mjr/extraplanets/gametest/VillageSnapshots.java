@@ -118,36 +118,7 @@ final class VillageSnapshots {
      */
     private static void verify(Map<String, Long> actual, String whatChanged,
         java.util.function.Predicate<String> belongsToThisFamily) {
-        File goldenFile = goldenFile();
-        if (Boolean.getBoolean("extraplanets.recordGoldens")) {
-            Map<String, Long> merged = goldenFile.isFile() ? read(goldenFile) : new TreeMap<String, Long>();
-            merged.putAll(actual);
-            write(goldenFile, merged);
-            TestReporter.assertTrue("recorded " + merged.size() + " hashes to " + goldenFile, goldenFile.isFile());
-            return;
-        }
-
-        TestReporter.assertTrue(
-            "missing " + goldenFile + "; record it with ./gradlew gameTestServer -PrecordGoldens",
-            goldenFile.isFile());
-
-        Map<String, Long> expected = read(goldenFile);
-        List<String> failures = new ArrayList<String>();
-        for (String key : actual.keySet()) {
-            Long was = expected.get(key);
-            if (was == null) {
-                failures.add(key + ": no golden for this case (record goldens deliberately)");
-            } else if (!was.equals(actual.get(key))) {
-                failures.add(key + " changed: " + Long.toHexString(was) + " -> " + Long.toHexString(actual.get(key)));
-            }
-        }
-        // The golden file holds several families; only report the ones this check owns.
-        for (String key : expected.keySet()) {
-            if (belongsToThisFamily.test(key) && !actual.containsKey(key)) {
-                failures.add(key + ": no longer produced");
-            }
-        }
-        TestReporter.assertEquals(whatChanged + ":\n  " + String.join("\n  ", failures), 0, failures.size());
+        GoldenFiles.verify(actual, "village-golden.txt", belongsToThisFamily, whatChanged);
     }
 
     // ---------------------------------------------------------------------------------------------------------

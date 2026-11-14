@@ -27,21 +27,21 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 122 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 36 checks, run by `./gradlew gameTestServer` |
+| Tests | 129 headless JUnit 4 tests in `src/test/java` (was 0) |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 38 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
 Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.65 % of 63,512 lines, 0.73 % of 28,454 branches**. That is expected for a mod that is 5 MB of worldgen and
+**2.73 % of 63,418 lines, 0.81 % of 28,438 branches**. That is expected for a mod that is 5 MB of worldgen and
 rendering; the ratchet is set just below it so it can only go up.
 
 All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 122 tests, 0 failures
+./gradlew test               # 129 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 36/36 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 38/38 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -143,7 +143,7 @@ three for the same reasons:
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (36 checks, incl. 396 golden village snapshots, `./gradlew gameTestServer`):
+`src/gameTest/java` (38 checks, incl. 396 village + 63 microblock goldens, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -155,6 +155,7 @@ three for the same reasons:
 | recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
+| microblocks | every registered microblock material resolves back to its block and metadata in ForgeMultipart, and the whole registered set matches its golden |
 | worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **396 golden village snapshots**: every block-placing component per body in both coordinate branches, the piece dispatch per body for four fixed villages, and the spawn-grid set per body |
 
 ### 3.3 Production fixes required by the tests
@@ -448,22 +449,33 @@ static analysis. Delete it locally; nothing references it.
 
 ## 6. Optimizations and refactors
 
-### 6.1 Correctness / performance
+### 6.1 Correctness / performance — ✅ DONE
 
 1. **`Config` sync no longer uses reflection** (§4/P1, done). `SYNC_ENTRIES` holds a typed getter and setter per
    field, and the wire format is `(name, value)` pairs, so there are no string lookups and no positional mapping.
    A future `Config` facade should read and write through the same table.
 2. **`ElectricArmorBase.getElectricityStored`** writes the damage bar on every read (§4). Split the read from the
    write.
-3. **`ExtraPlanets_MicroBlocks` is ~430 lines of copy-paste reflection.** It is one `register(...)` call per block
-   metadata value, eight times per body, 15 bodies. A single `Object[][] { {block, meta, "tile.name"} }` table plus a
-   loop would shrink it by ~90 % and make a new planet a one-line change. It also currently swallows every failure
-   (§6.2), so a typo in a tile name is invisible.
-4. **`MainHandler` fog/thermal handlers** recompute `world.provider instanceof ...` chains every frame. Caching the
-   "is this an ExtraPlanets body, and which" answer per dimension id would remove a handful of `instanceof` per frame
-   on the client — small, but free.
+3. **`ExtraPlanets_MicroBlocks` was 369 lines of copy-paste reflection** — 63 reflective registrations, eight lines
+   each, inside one bare `catch (Exception e) {}`. **Done:** one `register(...)` call per run of contiguous metadata
+   (35 of them) driven by a name list, so the file is 189 lines and a new body is one line. Failures are logged
+   per material instead of swallowed, and the absence of ForgeMultipart is a debug line rather than a silent catch.
+   The table was generated mechanically from the pre-refactor file (63 parsed calls in, 63 registrations out), and the
+   in-game suite now checks that every registered material resolves *back* to the block and metadata it was registered
+   for, plus a golden of the whole set (mutation-tested with a tile-name typo).
+   **Found while doing it:** `uranusBlocks` metadata 0 is registered **twice**, once correctly as
+   `tile.uranus.surface` and once as `tile.uranusBlocks` (not a valid translation key). Left exactly as it is:
+   ForgeMultipart assigns material ids in registration order, so deleting the stray entry would renumber every
+   material registered after it and break microblocks in existing worlds. Worth removing only alongside a version bump
+   that accepts that.
+4. **`MainHandler`'s per-tick `instanceof` chains. Done:** `WorldHazards` answers "where does this world's pressure /
+   radiation come from" from the provider *type*, memoised per class, and the level itself is still read from `Config`
+   every call (the server syncs those at runtime, so the value must not be cached). Taking the class instead of the
+   instance is also what makes it testable: `SomeProvider.class` loads a type without initialising it, so
+   `WorldHazardsTest` covers all six cases headless.
 5. **`ExtraPlanets_Recipes` is 172 KB in one class.** Splitting it per body (the rocket recipes already are) would make
-   it navigable and would let a per-body recipe class be loaded only when that body is enabled.
+   it navigable and would let a per-body recipe class be loaded only when that body is enabled. *Still open — the last
+   item of §6.1.*
 
 ### 6.2 Logging hygiene — ✅ printStackTrace/System.out done, empty catches OPEN
 
@@ -701,6 +713,7 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
 | ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
 | ✅ | Village refactor steps 0-6 (§6.3): three snapshot harnesses + 105,542 lines of duplication removed (80%) | 3 days | none (harness-gated) |
+| ✅ | §6.1: microblock table + `WorldHazards`, with goldens and a headless classifier test | 1 day | none |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
