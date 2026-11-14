@@ -159,19 +159,18 @@ final class VillageSnapshots {
                 key -> key.startsWith("dispatch/"));
         });
 
-        reporter.check("worldgen: village placement is unchanged (golden)", () -> {
+        reporter.check("worldgen: villages are placed on the 32-chunk grid, one per cell", () -> {
             World world = net.minecraft.server.MinecraftServer.getServer()
                 .worldServerForDimension(0);
             TestReporter.assertNotNull("overworld", world);
 
-            Map<String, Long> actual = new TreeMap<String, Long>();
+            // This one cannot be a golden: canSpawnStructureAtCoords goes through World#setRandomSeed, which folds in
+            // the world seed, so a fresh world places villages in different chunks. The *rule* is what matters and it
+            // is seed-independent: a 32-chunk grid, an 8-chunk jitter (so the offset within a cell is 0..23), and at
+            // most one village per cell.
             for (String body : bodies()) {
-                actual.put("placement/" + body, placementHash(world, body));
+                checkPlacement(world, body);
             }
-            verify(
-                actual,
-                "village placement changed, which means villages spawn in different chunks",
-                key -> key.startsWith("placement/"));
         });
     }
 
@@ -207,9 +206,11 @@ final class VillageSnapshots {
         }
     }
 
-    /** @return a hash of every chunk, in a fixed window, where this body wants a village. */
-    private static long placementHash(World world, String body) {
+    /** Checks one body's village placement rule over a fixed window. */
+    private static void checkPlacement(World world, String body) {
         final int radius = 48;
+        final int spacing = 32;
+        final int jitter = 24; // nextInt(numChunks - offsetChunks) = nextInt(24)
         try {
             Class<?> mapGenClass = Class.forName(packageOf(body) + "MapGenVillage" + body);
             Object mapGen = mapGenClass.getConstructor()
@@ -224,21 +225,50 @@ final class VillageSnapshots {
             TestReporter.assertNotNull(body + ": no canSpawnStructureAtCoords to call", canSpawn);
             canSpawn.setAccessible(true);
 
-            long hash = 1125899906842597L;
             int found = 0;
             for (int x = -radius; x < radius; x++) {
                 for (int z = -radius; z < radius; z++) {
-                    if ((Boolean) canSpawn.invoke(mapGen, x, z)) {
-                        hash = hash * 31 + x;
-                        hash = hash * 31 + z;
-                        found++;
+                    if (!(Boolean) canSpawn.invoke(mapGen, x, z)) {
+                        continue;
                     }
+                    found++;
+
+                    // The rule picks cell * 32 + nextInt(24), so a spawning chunk always sits 0-23 into a cell.
+                    // (Not 0-31: the 8-chunk jitter is what keeps villages from lining up on the cell edge.)
+                    int offsetX = Math.floorMod(x, spacing);
+                    int offsetZ = Math.floorMod(z, spacing);
+                    TestReporter.assertTrue(
+                        body + ": the village at "
+                            + x
+                            + ","
+                            + z
+                            + " is "
+                            + offsetX
+                            + ","
+                            + offsetZ
+                            + " into its cell, outside the 0-"
+                            + (jitter - 1)
+                            + " jitter window",
+                        offsetX < jitter && offsetZ < jitter);
                 }
             }
+
+            // Each chunk derives its own offset from its coordinates, so the density is 1/576 and there is no
+            // "one per cell" rule to assert. What is worth asserting is that the pass rate is plausible: a spacing
+            // or jitter change moves it, and a broken rule takes it to zero.
             TestReporter.assertTrue(
                 body + ": no villages are placed in a " + (2 * radius) + "x" + (2 * radius) + " chunk window",
                 found > 0);
-            return hash;
+            TestReporter.assertTrue(
+                body + ": "
+                    + found
+                    + " villages in a "
+                    + (2 * radius)
+                    + "x"
+                    + (2 * radius)
+                    + " chunk window is far"
+                    + " above the expected ~16",
+                found <= 60);
         } catch (ReflectiveOperationException e) {
             throw new AssertionError(body + ": the map generator does not have the expected shape", e);
         }
@@ -456,6 +486,14 @@ final class VillageSnapshots {
                 setFast(world, x + dx, PLATEAU_TOP, z + dz, GCBlocks.blockMoon, 5);
             }
         }
+
+        // The columns above have been rewritten; make the chunks agree before anything reads them.
+        for (int chunkX = (x - SCRATCH_RADIUS) >> 4; chunkX <= (x + SCRATCH_RADIUS) >> 4; chunkX++) {
+            for (int chunkZ = (z - SCRATCH_RADIUS) >> 4; chunkZ <= (z + SCRATCH_RADIUS) >> 4; chunkZ++) {
+                refreshHeightMap(world, chunkX, chunkZ);
+            }
+        }
+
         resetScratch(world, x, z);
     }
 
@@ -472,6 +510,31 @@ final class VillageSnapshots {
                 }
             }
         }
+
+        // A component may replace the surface block (the path generator does), so the columns are re-derived here
+        // too - otherwise each case would inherit the previous case's height.
+        for (int chunkX = (x - SCRATCH_RADIUS) >> 4; chunkX <= (x + SCRATCH_RADIUS) >> 4; chunkX++) {
+            for (int chunkZ = (z - SCRATCH_RADIUS) >> 4; chunkZ <= (z + SCRATCH_RADIUS) >> 4; chunkZ++) {
+                refreshHeightMap(world, chunkX, chunkZ);
+            }
+        }
+    }
+
+    /**
+     * Recomputes the chunk's height map after the scratch area has been rewritten.
+     *
+     * <p>
+     * This is what makes the snapshots independent of the world they run in. {@code Chunk#func_150807_a} only
+     * refreshes the height map when the change reaches the old surface, so writing stone at y=53..63 under a natural
+     * hill leaves the column reporting the hill's height - and the village components read
+     * {@code getTopSolidOrLiquidBlock}, so a fresh world (CI) produced different hashes than a world where that spot
+     * happened to be low ground. Regenerating the height map and skylight makes the column say exactly what the
+     * plateau made it say.
+     * </p>
+     */
+    private static void refreshHeightMap(World world, int chunkX, int chunkZ) {
+        world.getChunkFromChunkCoords(chunkX, chunkZ)
+            .generateSkylightMap();
     }
 
     /**

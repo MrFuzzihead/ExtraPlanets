@@ -1,0 +1,63 @@
+# The in-game test suite: boots a real dedicated server with the `src/gameTest` test mod installed, runs its checks,
+# and fails the build if any of them fail.
+#
+# This is a separate workflow because the GTNH reusable `build-and-test` workflow does not know about `gameTestServer`.
+# It is worth a job of its own: the checks it covers - real block/item/tile-entity registries, the ore dictionary,
+# recipes, the village golden snapshots and the microblock registrations - cannot run headless at all.
+name: In-game test
+
+on:
+  pull_request:
+    branches: [ master, main ]
+  push:
+    branches: [ master, main ]
+
+# A superseded push does not need to finish; in-game runs are the slowest thing here.
+concurrency:
+  group: game-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  game-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gradle 9 and RetroFuturaGradle need 17+ to start. The build itself targets Java 8 bytecode and provisions its
+      # own toolchains, so this only has to be able to run Gradle.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      # RetroFuturaGradle creates run/server on first use; the server refuses to start until the EULA is accepted.
+      # Writing it before the run (rather than letting the first attempt fail) keeps the output readable.
+      - name: Accept the Minecraft server EULA
+        run: |
+          mkdir -p run/server
+          echo "eula=true" > run/server/eula.txt
+
+      - name: Run the in-game suite
+        run: ./gradlew gameTestServer --stacktrace
+
+      # Belt and braces: the task already fails when a check fails (the test mod exits with status 1), but the marker
+      # is what a person greps for, and this also catches a run that somehow exited cleanly without reporting.
+      # Forge writes it to fml-server-latest.log rather than latest.log, so search the directory.
+      - name: Check the result marker
+        run: |
+          grep -rqs "EXTRAPLANETS_GAMETEST_OK" run/server/logs/
+
+      - name: Upload the server log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: game-test-logs
+          path: |
+            run/server/logs/
+            run/server/crash-reports/
+          if-no-files-found: ignore
+          retention-days: 7

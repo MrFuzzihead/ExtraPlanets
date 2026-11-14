@@ -1,2 +1,17 @@
+# JitPack build configuration.
+#
+# Two things matter here:
+#
+#  * the JDK. Gradle 9 and RetroFuturaGradle refuse to start below Java 17, and JitPack's default for Gradle projects
+#    is Java 8, so without this the build dies inside `setupCIWorkspace` before any of our code is reached.
+#  * `build` runs the whole verification suite (unit tests, the coverage ratchet, Spotless). That belongs to GitHub
+#    Actions, which has the full test matrix; JitPack only needs the artifact, and a failing golden there would block
+#    everyone who depends on this mod. `-x check` skips the verification subtree but still assembles and publishes.
+jdk:
+  - openjdk21
+
 before_install:
   - ./gradlew setupCIWorkspace
+
+install:
+  - ./gradlew build -x check

@@ -619,18 +619,30 @@ different formatting).
 
 Do not reorder these: the harness covers a class before that class is touched.
 
-### 6.4 Build / repo hygiene
+### 6.4 Build / repo hygiene — ✅ DONE (`autoUpdateBuildScript` kept on purpose)
 
-* `gradle.properties` has `autoUpdateBuildScript = true`, which rewrites the build script on every run for everyone.
-  For a fork that is actively diverging (this one has an `addon.gradle.kts` now) that is a constant merge hazard.
-  Consider `false` plus a scheduled `updateBuildScript` job.
-* `.github/workflows/build-and-test.yml` runs `build-and-test` from `GTNH-Actions-Workflows`, which does not know
-  about `gameTestServer`. Adding one `./gradlew gameTestServer` step (with an `eula.txt` pre-created) would put the
-  in-game suite in CI.
-* `jitpack.yml` still calls `setupCIWorkspace25`; the project does not use lwjgl3ify, so plain
-  `./gradlew setupCIWorkspace build` is enough and avoids downloading a modern-JDK launcher.
-
----
+* **`autoUpdateBuildScript`**: left at `true` deliberately. It rewrites the build script from the GTNH template on
+  every run, which is a merge hazard for a fork that has its own `addon.gradle.kts` - but it is also how the
+  buildscript stays current, and this project follows the template closely enough that the rewrites are no-ops in
+  practice. Turning it off would mean hand-tracking convention changes. Not a TODO; a decision, recorded here so it
+  is not "fixed" by accident later.
+* **The in-game suite now runs in CI**: `.github/workflows/game-test.yml` boots a dedicated server with the
+  `src/gameTest` mod installed and runs `gameTestServer` (which fails the job on any failed check), greps for the
+  `EXTRAPLANETS_GAMETEST_OK` marker, and uploads the server log. It is a separate workflow because the GTNH reusable
+  `build-and-test` workflow has no hook for it, and the checks it covers - real registries, the ore dictionary,
+  recipes, the village snapshots, the microblock registrations - cannot run headless at all.
+* **`jitpack.yml` fixed.** The real defect was not the task name (it already used plain `setupCIWorkspace`) but that
+  no JDK was specified: Gradle 9 and RetroFuturaGradle refuse to start below Java 17 and JitPack defaults to Java 8
+  for Gradle projects, so `setupCIWorkspace` died before reaching our code. It now pins `openjdk21` (what the build is
+  developed and tested on) and declares the install step explicitly - `build -x check`, so the verification suite stays
+  in GitHub Actions instead of gating JitPack consumers on the goldens.
+* **CI-readiness, which this surfaced:** the village snapshots turned out to depend on the world they ran in. The
+  scratch plateau's *height map* still reported the natural terrain, so a fresh world (which is what CI gets) produced
+  different village hashes - the run failed on a world it had never seen. The plateau prep now regenerates the
+  chunk's height map and skylight, and the whole in-game suite was verified against a **fresh world** from an empty
+  `run/server/world`. The placement check was also a golden keyed on world-seed-dependent data; it is now an
+  invariant check (villages land 0-23 chunks into a 32-chunk cell, and the density is plausible), which is what the
+  rule actually promises and does not care about the seed.
 
 ## 7. Feature ideas
 
@@ -733,6 +745,7 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | Village refactor steps 0-6 (§6.3): three snapshot harnesses + 105,542 lines of duplication removed (80%) | 3 days | none (harness-gated) |
 | ✅ | §6.1: microblock table + `WorldHazards` + recipe split, with goldens and a headless classifier test | 1 day | none |
 | ✅ | §6.2: empty catch blocks logged, `NoStrayTracesTest` extended to forbid them | 2 hours | none |
+| ✅ | §6.4: in-game suite in CI, `jitpack.yml` JDK/install fixed, snapshots made world-independent | 3 hours | none |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
