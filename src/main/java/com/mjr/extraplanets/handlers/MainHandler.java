@@ -1,5 +1,6 @@
 package com.mjr.extraplanets.handlers;
 
+import java.util.List;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -7,6 +8,7 @@ import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.StatCollector;
+import net.minecraft.world.World;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.api.item.IModularArmor;
@@ -17,12 +19,15 @@ import com.mjr.extraplanets.items.armor.modules.Module;
 import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
 import com.mjr.extraplanets.items.armor.modules.ModulePressureSeal;
 import com.mjr.extraplanets.items.armor.modules.ModuleRadiationShield;
+import com.mjr.extraplanets.planets.Jupiter.JupiterStorms;
+import com.mjr.extraplanets.planets.Jupiter.WorldProviderJupiter;
 import com.mjr.extraplanets.util.DamageSourceEP;
 import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
 import cpw.mods.fml.common.gameevent.TickEvent.PlayerTickEvent;
+import cpw.mods.fml.relauncher.Side;
 import micdoodle8.mods.galacticraft.api.world.IGalacticraftWorldProvider;
 import micdoodle8.mods.galacticraft.core.entities.player.GCPlayerHandler.ThermalArmorEvent;
 import micdoodle8.mods.galacticraft.planets.asteroids.items.AsteroidsItems;
@@ -247,6 +252,47 @@ public class MainHandler {
             && chest.getItem() instanceof com.mjr.extraplanets.api.item.IPressureSuit
             && leggings.getItem() instanceof com.mjr.extraplanets.api.item.IPressureSuit
             && boots.getItem() instanceof com.mjr.extraplanets.api.item.IPressureSuit;
+    }
+
+    /**
+     * Server-side Jupiter lightning.
+     *
+     * <p>
+     * Jupiter never thunders - {@code canRainOrSnow()} is false and vanilla only strikes while a world is thundering -
+     * so this is driven from the world tick instead. {@code WorldProvider} has no {@code onUpdate()} in 1.7.10, which
+     * is what the old plan assumed; the FML world tick is the hook that actually exists.
+     * </p>
+     *
+     * <p>
+     * A bolt is spawned through {@link World#addWeatherEffect}, which on a server broadcasts the spawn to everyone
+     * within 512 blocks and lets the bolt do the vanilla damage/fire work. "Every 5 seconds, one time in four" keeps
+     * it atmospheric rather than a hazard: a strike averages one per 20 seconds, always 16-64 blocks away from the
+     * player rather than on top of them.
+     * </p>
+     */
+    @SubscribeEvent
+    public void onWorldTick(TickEvent.WorldTickEvent event) {
+        if (event.phase != TickEvent.Phase.END || event.side != Side.SERVER) {
+            return;
+        }
+        World world = event.world;
+        if (world == null) {
+            return;
+        }
+        if (!JupiterStorms.shouldStrike(
+            world.getTotalWorldTime(),
+            Config.jupiterLightingServer,
+            world.provider instanceof WorldProviderJupiter,
+            world.rand.nextInt(JupiterStorms.ONE_IN))) {
+            return;
+        }
+
+        List players = world.playerEntities;
+        if (players == null || players.isEmpty()) {
+            return;
+        }
+        EntityPlayer target = (EntityPlayer) players.get(world.rand.nextInt(players.size()));
+        JupiterStorms.strikeNear(world, target.posX, target.posZ, world.rand);
     }
 
     @SubscribeEvent

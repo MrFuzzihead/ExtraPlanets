@@ -71,6 +71,7 @@ final class ServerGameTests {
         run(reporter, "worldgen");
         run(reporter, "microblocks");
         run(reporter, "recipes-golden");
+        run(reporter, "storms");
 
         System.out.println(
             "[EP-GAMETEST] server checks: " + (reporter.checks() - reporter.failures())
@@ -114,6 +115,9 @@ final class ServerGameTests {
                 break;
             case "recipes-golden":
                 RecipeSnapshots.run(reporter);
+                break;
+            case "storms":
+                storms(reporter);
                 break;
             default:
                 throw new IllegalArgumentException(group);
@@ -469,6 +473,54 @@ final class ServerGameTests {
                 + ", expected the item the config names",
             requirements.get(0)
                 .getItem() == expected);
+    }
+
+    // ---------------------------------------------------------------------------------------------------------
+    // Jupiter lightning
+    // ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * The bolt placement rule, exercised against a real world. The server and client paths share this, so checking it
+     * here covers both: a bolt must land 16-64 blocks from the target, on solid ground, and be a real lightning entity.
+     */
+    private static void storms(TestReporter reporter) {
+        reporter.check("storms: a Jupiter bolt lands on solid ground, 16-64 blocks from the target", () -> {
+            net.minecraft.world.World world = net.minecraft.server.MinecraftServer.getServer()
+                .worldServerForDimension(0);
+            TestReporter.assertNotNull("overworld", world);
+
+            int sizeBefore = world.weatherEffects.size();
+            int centreX = world.getSpawnPoint().posX;
+            int centreZ = world.getSpawnPoint().posZ;
+
+            boolean struck = false;
+            for (int seed = 0; seed < 20 && !struck; seed++) {
+                struck = com.mjr.extraplanets.planets.Jupiter.JupiterStorms
+                    .strikeNear(world, centreX, centreZ, new java.util.Random(seed));
+            }
+            TestReporter.assertTrue("no bolt was placed in 20 attempts", struck);
+            TestReporter.assertTrue("no weather effect was added", world.weatherEffects.size() > sizeBefore);
+
+            net.minecraft.entity.Entity bolt = world.weatherEffects.get(world.weatherEffects.size() - 1);
+            TestReporter.assertTrue(
+                "the weather effect is not a lightning bolt: " + bolt.getClass()
+                    .getSimpleName(),
+                bolt instanceof net.minecraft.entity.effect.EntityLightningBolt);
+
+            double distance = Math
+                .sqrt((bolt.posX - centreX) * (bolt.posX - centreX) + (bolt.posZ - centreZ) * (bolt.posZ - centreZ));
+            TestReporter.assertTrue("the bolt landed " + distance + " blocks away", distance >= 15.0D);
+            TestReporter.assertTrue("the bolt landed " + distance + " blocks away", distance <= 66.0D);
+
+            int blockX = net.minecraft.util.MathHelper.floor_double(bolt.posX);
+            int blockZ = net.minecraft.util.MathHelper.floor_double(bolt.posZ);
+            int surface = world.getTopSolidOrLiquidBlock(blockX, blockZ);
+            TestReporter.assertFalse(
+                "the bolt landed over liquid",
+                world.getBlock(blockX, surface - 1, blockZ)
+                    .getMaterial()
+                    .isLiquid());
+        });
     }
 
     // ---------------------------------------------------------------------------------------------------------

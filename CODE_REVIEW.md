@@ -27,8 +27,8 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 130 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 40 checks, run by `./gradlew gameTestServer` |
+| Tests | 137 headless JUnit 4 tests in `src/test/java` (was 0) |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 41 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
@@ -39,9 +39,9 @@ rendering; the ratchet is set just below it so it can only go up.
 All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 130 tests, 0 failures
+./gradlew test               # 137 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 40/40 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 41/41 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -156,6 +156,7 @@ three for the same reasons:
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
 | microblocks | every registered microblock material resolves back to its block and metadata in ForgeMultipart, and the whole registered set matches its golden |
+| storms | a Jupiter bolt lands on solid ground 16-64 blocks from the target and never over open liquid |
 | worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **396 golden village snapshots**: every block-placing component per body in both coordinate branches, the piece dispatch per body for four fixed villages, and the spawn-grid set per body |
 
 ### 3.3 Production fixes required by the tests
@@ -359,7 +360,8 @@ without a migration. Worth a comment on each saying so.
 ✅ Space-suit render state is per-entity (`WeakHashMap`) with `glPushAttrib`/`glPopAttrib` in `finally`.
 ✅ `getArmorTexture` can no longer return `null`.
 
-Still open from that earlier list: `Config.jupiterLightingServer` is read but never used (§5.4).
+From that earlier list, `Config.jupiterLightingServer` was the last dead entry; it is implemented now - real
+server-spawned bolts on Jupiter, with the client-only effect as the fallback (§5.4).
 
 ---
 
@@ -436,8 +438,14 @@ static analysis. Delete it locally; nothing references it.
 
 ### 5.4 Dead configuration
 
-* `Config.jupiterLightingServer` — read from the config file, never used. Either implement it (there is a plan in
-  `docs/JUPITER_LIGHTING_PLAN.md`) or delete the key.
+* `Config.jupiterLightingServer` — **implemented.** Jupiter never thunders (`canRainOrSnow()` is false and vanilla
+  only strikes while thundering) and `WorldProvider` has no `onUpdate()` in 1.7.10, so the server side is driven from
+  the FML world tick: one real bolt per 20 seconds on average, 16-64 blocks from a random player, never over open
+  liquid, spawned through `World#addWeatherEffect` (which broadcasts to everyone within 512 blocks and lets the bolt
+  do the vanilla damage/fire work). The client-only fake path is now the fallback, used only when the server key is
+  off, so the two cannot double up. Placement and throttle live in `planets/Jupiter/JupiterStorms`, covered by
+  `JupiterStormsTest` and one in-game check; `docs/JUPITER_LIGHTING_PLAN.md` records the two corrections to the
+  original plan.
 * `Config.morePlanetsCompatibility`, `…Adv143`, `…New` — three overlapping flags that all disable a similar set of
   bodies, with subtly different which-bodies lists in `checkCompatibility()`. `morePlanetsCompatibilityAdv143`
   additionally disables the rocket *registration*, which is the only difference most users will notice. Collapse to
@@ -746,6 +754,7 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | §6.1: microblock table + `WorldHazards` + recipe split, with goldens and a headless classifier test | 1 day | none |
 | ✅ | §6.2: empty catch blocks logged, `NoStrayTracesTest` extended to forbid them | 2 hours | none |
 | ✅ | §6.4: in-game suite in CI, `jitpack.yml` JDK/install fixed, snapshots made world-independent | 3 hours | none |
+| ✅ | Jupiter lightning (the last dead config key): server-spawned real bolts + client fallback | 4 hours | low |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails

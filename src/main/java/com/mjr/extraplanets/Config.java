@@ -1095,14 +1095,18 @@ public class Config {
             Constants.CONFIG_CATEGORY_DIMENSION_SETTINGS,
             "Enable Client Fake Lighting Effects & Thunder sounds on Jupiter",
             true,
-            "Setting this option to false will disable & remove Fake Lighting Effects & Thunder sounds on Jupiter (CLIENT SIDE)")
+            "Client-side Jupiter lightning: fake bolts, rendering and thunder only, no damage or fire. It is used as a"
+                + " fallback when 'Enable Server Real Lighting Bolts on Jupiter' is off - with that on, the synced real"
+                + " bolts already render here and this is skipped to avoid doubling them.")
             .getBoolean(true);
         jupiterLightingServer = config
             .get(
                 Constants.CONFIG_CATEGORY_DIMENSION_SETTINGS,
                 "Enable Server Real Lighting Bolts on Jupiter",
                 true,
-                "Setting this option to false will disable & remove Real Lighting Bolts on Jupiter (SERVER SIDE)")
+                "Server-side Jupiter lightning: real bolts, spawned by the server 16-64 blocks from a random player,"
+                    + " averaging one every 20 seconds. They damage and can start fires like vanilla lightning, and are"
+                    + " synced to everyone within 512 blocks. Turning this off falls back to the client-only effect.")
             .getBoolean(true);
 
         jupiterClouds = config
