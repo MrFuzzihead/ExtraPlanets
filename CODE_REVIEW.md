@@ -27,8 +27,8 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 129 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 38 checks, run by `./gradlew gameTestServer` |
+| Tests | 130 headless JUnit 4 tests in `src/test/java` (was 0) |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 40 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
@@ -39,9 +39,9 @@ rendering; the ratchet is set just below it so it can only go up.
 All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 129 tests, 0 failures
+./gradlew test               # 130 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 38/38 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 40/40 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -143,7 +143,7 @@ three for the same reasons:
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
 | `MachineTileEntityTest` (4) | Every machine constructs without a world, refinery tanks are per-instance, `readFromNBT` tolerates an empty tag |
 
-`src/gameTest/java` (38 checks, incl. 396 village + 63 microblock goldens, `./gradlew gameTestServer`):
+`src/gameTest/java` (40 checks, incl. 396 village + 63 microblock + 100 recipe goldens, `./gradlew gameTestServer`):
 
 | Group | Checks |
 |---|---|
@@ -152,7 +152,7 @@ three for the same reasons:
 | items | rocket line registered, space suit pieces registered, item ids round trip through `Item.getItemById` |
 | tile entities | refinery survives `writeToNBT` → `TileEntity.createAndLoadEntity`, tank capacities preserved, solar panel round trips |
 | ore dictionary | planet ores and blocks registered, every entry points at a real stack |
-| recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot |
+| recipes | crafting recipes exist, planet ore blocks smelt into the matching ore-dictionary ingot, the mod's own ore smelts into its ingot, plus a golden of this mod's crafting list **in order** and of its furnace recipes |
 | modules | registry populated, every requirement resolves to a real item **in game**, the three ExtraPlanets-item requirements resolved to the actual registered items, install/uninstall round trip, a fresh suit has no modules |
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
 | microblocks | every registered microblock material resolves back to its block and metadata in ForgeMultipart, and the whole registered set matches its golden |
@@ -473,11 +473,20 @@ static analysis. Delete it locally; nothing references it.
    every call (the server syncs those at runtime, so the value must not be cached). Taking the class instead of the
    instance is also what makes it testable: `SomeProvider.class` loads a type without initialising it, so
    `WorldHazardsTest` covers all six cases headless.
-5. **`ExtraPlanets_Recipes` is 172 KB in one class.** Splitting it per body (the rocket recipes already are) would make
-   it navigable and would let a per-body recipe class be loaded only when that body is enabled. *Still open — the last
-   item of §6.1.*
+5. **`ExtraPlanets_Recipes` was 2,844 lines in one class. Done**, split into one class per registration pass
+   (`RecipesFurnace`, `RecipesCrafting`, `RecipesSpaceSuit`, `RecipesLayers`, `RecipesCompressor`,
+   `RecipesCircuitFabricator`, `RecipesSatellites`), leaving `ExtraPlanets_Recipes.init()` as the ordered call list.
+   Deliberately **not** split per body, which is what this section originally suggested: crafting recipes are matched
+   by *position* in the list, and grouping by body instead of by pass would reorder them, which is a behaviour change
+   (a dropped or moved recipe lets an earlier vague recipe match something it never used to). The split is covered by
+   a new golden of the recipe list - 12 fingerprints over this mod's crafting recipes in order plus 87 furnace
+   entries - which is what proves the move was inert. `RecipesCrafting` is still 2,122 lines; splitting *that* per
+   body is order-safe (bodies appear in sequence) and is a follow-up if wanted.
+   **Found while doing it:** 7 of this mod's crafting recipes produce an `ItemStack` whose item is not registered, so
+   they can never be crafted, and `getItemDamage()` on one of those stacks throws (it goes through the registry
+   delegate). The test counts them and prints the total.
 
-### 6.2 Logging hygiene — ✅ printStackTrace/System.out done, empty catches OPEN
+### 6.2 Logging hygiene — ✅ DONE
 
 `GCLog` has no `(String, Throwable)` overload, which is why every `catch` block in this mod called
 `e.printStackTrace()`: it writes to the console, so the trace never reaches `logs/fml-*.log` and a user crash report
@@ -492,8 +501,17 @@ contains no evidence of what happened. `com.mjr.extraplanets.util.ExtraPlanetsLo
   `SmokeTestHook`'s marker, which is a deliberate CI contract.
 * **`NoStrayTracesTest`** fails the build if either habit returns, with `file:line` for each offence. Verified by
   adding a violation and watching it fail.
-* **Still open:** 11 empty `catch` blocks and 44 `catch (Throwable t)` sites, mostly in worldgen static initialisers,
-  where a failure means "this structure silently never generates".
+* **Empty `catch` blocks are gone** (they are how a failure becomes invisible: the mod loads, the feature silently
+  does nothing, and there is no log line to search for). The last four were `CustomCelestialSelection`'s two
+  per-frame reads (they now log once per session through `logRenderInfoFailure`, because logging per frame would bury
+  the log), `RenderEvolvedPowerSkeleton`'s Battlegear2 probe (an absent mod is a debug line, a *changed API* is an
+  error - the two used to be the same empty block), and two `GuiModuleManager` reflective lookups that degraded a
+  ModularUI2 feature silently.
+* **The 44 `catch (Throwable)` sites are all in the village registration blocks** and all log now (steps 0-6 of §6.3
+  converted them). `SmokeTestHook`'s one is documented and deliberate: outside FML a throw is the expected answer.
+* **`NoStrayTracesTest` now also fails the build on an empty `catch` block**, with `file:line`, after stripping
+  comments (javadoc legitimately quotes the pattern it forbids). Verified by planting an empty catch and watching it
+  name the line.
 
 ### 6.3 The worldgen copy-paste (the big one) — DONE (80% removed; Kepler22b's two variant buildings kept)
 
@@ -713,7 +731,8 @@ pointing `classDirectories` at a production jar) is the remaining step.
 | ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
 | ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
 | ✅ | Village refactor steps 0-6 (§6.3): three snapshot harnesses + 105,542 lines of duplication removed (80%) | 3 days | none (harness-gated) |
-| ✅ | §6.1: microblock table + `WorldHazards`, with goldens and a headless classifier test | 1 day | none |
+| ✅ | §6.1: microblock table + `WorldHazards` + recipe split, with goldens and a headless classifier test | 1 day | none |
+| ✅ | §6.2: empty catch blocks logged, `NoStrayTracesTest` extended to forbid them | 2 hours | none |
 | | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails

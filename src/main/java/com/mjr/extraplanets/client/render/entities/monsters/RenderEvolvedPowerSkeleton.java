@@ -13,6 +13,8 @@ import net.minecraft.util.ResourceLocation;
 
 import org.lwjgl.opengl.GL11;
 
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
+
 import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
@@ -43,7 +45,14 @@ public class RenderEvolvedPowerSkeleton extends RenderBiped {
             // accessing this: public static final int Skell_Arrow_Datawatcher = 25;
             RenderEvolvedPowerSkeleton.isBG2Loaded = clazz.getField("Skell_Arrow_Datawatcher")
                 .getInt(null);
-        } catch (Exception e) {}
+        } catch (ClassNotFoundException e) {
+            // Battlegear2 is optional; without it the skeleton keeps the vanilla arrow hook.
+            ExtraPlanetsLog
+                .debug("Battlegear2 is not installed; the evolved power skeleton uses the default arrow hook");
+        } catch (Exception e) {
+            ExtraPlanetsLog
+                .severe("Battlegear2 is present but its MobHookContainerClass does not have the expected field", e);
+        }
     }
 
     protected ResourceLocation func_110779_a(EntitySkeleton par1EntityArrow) {

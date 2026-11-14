@@ -67,6 +67,46 @@ public class NoStrayTracesTest {
     }
 
     @Test
+    public void noSourceFileSwallowsAnException() throws IOException {
+        // An empty catch block is how a failure becomes invisible: the mod loads, the feature silently does nothing,
+        // and the log has no line to search for. Comments are stripped first, because javadoc legitimately quotes the
+        // pattern it forbids ("this used to sit inside a bare catch (Exception e) {}").
+        List<String> offences = new ArrayList<String>();
+        for (File file : javaSources()) {
+            String source = stripComments(new String(Files.readAllBytes(file.toPath()), Charset.forName("UTF-8")));
+            java.util.regex.Matcher matcher = SWALLOWED.matcher(source);
+            while (matcher.find()) {
+                offences.add(
+                    relativise(file) + ":"
+                        + lineOf(source, matcher.start())
+                        + "  catch ("
+                        + matcher.group(1)
+                        + ") with an empty body");
+            }
+        }
+
+        Assert.assertEquals(
+            "Log the failure with ExtraPlanetsLog (or, for an expected failure, say so at debug level):\n"
+                + String.join("\n", offences),
+            0,
+            offences.size());
+    }
+
+    /** {@code catch (X) {}} with nothing but whitespace in the body. */
+    private static final java.util.regex.Pattern SWALLOWED = java.util.regex.Pattern
+        .compile("catch \\(([^)]*)\\) \\{\\s*}");
+
+    private static String stripComments(String source) {
+        return source.replaceAll("(?s)/\\*.*?\\*/", "")
+            .replaceAll("//[^\\n]*", "");
+    }
+
+    private static int lineOf(String source, int index) {
+        return source.substring(0, index)
+            .split("\\n", -1).length;
+    }
+
+    @Test
     public void theSourceScanActuallySeesTheSources() throws IOException {
         // Guards the guard: a silently empty file list would make the test above pass forever.
         Assert.assertTrue("expected a few hundred production sources", javaSources().size() > 200);
