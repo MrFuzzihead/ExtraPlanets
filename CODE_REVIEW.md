@@ -161,6 +161,7 @@ three for the same reasons:
 | armor | reading the charge never writes the damage bar, charging does, a read never invents an NBT tag, a stale bar can be repaired (cannot run headless - see §8) |
 | microblocks | every registered microblock material resolves back to its block and metadata in ForgeMultipart, and the whole registered set matches its golden |
 | storms | a Jupiter bolt lands on solid ground 16-64 blocks from the target and never over open liquid |
+| features | every world feature generator (19 of them: huts, towers, trees, igloo, ice spike, piles, volcano, desh tower) is run on a prepared plateau and must place its blocks |
 | worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **396 golden village snapshots**: every block-placing component per body in both coordinate branches, the piece dispatch per body for four fixed villages, and the spawn-grid set per body |
 
 ### 3.3 Production fixes required by the tests
@@ -729,13 +730,27 @@ cannot (fluids must be created in the game test).
 
 ### 8.6 In-game coverage
 
-The `gameTestServer` run writes `build/jacoco/gameTest.exec` with the agent restricted to `com.mjr.extraplanets.*`, and
-`jacocoGameTestReport` reports it. That report is **empty today** because it needs RFB's post-transform class dump
-under `<run dir>/RFB_CLASS_DUMP/Launch`, and RFB only writes it when class dumping is explicitly enabled. Reason: in a
-1.7.10 dev launch the `LaunchClassLoader` rewrites every class through ASM, so the class ids in the exec file do not
-match the class files on disk; reporting against the on-disk classes produces only
-"Classes in bundle do not match with execution data" warnings. Enabling RFB's dump flag for gameTest runs (or
-pointing `classDirectories` at a production jar) is the remaining step.
+The in-game suite has its own coverage report and its own floor (`./gradlew gameTestServer
+jacocoGameTestCoverageVerification`). It needs its own class directory, and the reason is not obvious:
+
+* FML's `SideTransformer` **re-emits every class through ASM** whether or not it changed anything (it always ends with
+  `ClassWriter.toByteArray()`), so the bytes the JVM defines are never the bytes in `build/classes/java/main`.
+* JaCoCo keys its data by a hash of the class it instrumented, so a report pointed at the compiled classes matches
+  **nothing**: measured, 862 of 862 classes reported "execution data does not match".
+* The agent's own `classdumpdir` *is* those loaded bytes, so `jacocoGameTestReport` is built from that dump (renaming
+  away the 16-hex-digit id the agent appends).
+
+Consequences, all deliberate:
+
+* the in-game number covers the **server-side view** of the classes - client-only members are stripped, which is why
+  the sky providers and other `@SideOnly(CLIENT)` code show 0 % even when the client renders them;
+* it **cannot be merged** with the unit-test data: the probe arrays are laid out per class version, and the stripped
+  classes have fewer probes. Two numbers, two floors;
+* the denominator is "every class the server loaded", so a run that loads more classes lowers the percentage. The floor
+  is kept just under the measured value (45.01 % -> 0.43) for that reason.
+
+The report is what showed the biggest gap in the whole suite: `world.features` sat at 0 % until the feature sweep was
+added, and is now at 93.4 %. `MapGenDungeon` (7 x 297 lines) is the next thing it exposes as untested.
 
 ---
 

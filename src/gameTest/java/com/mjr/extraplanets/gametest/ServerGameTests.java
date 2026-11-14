@@ -72,6 +72,7 @@ final class ServerGameTests {
         run(reporter, "microblocks");
         run(reporter, "recipes-golden");
         run(reporter, "storms");
+        run(reporter, "features");
 
         System.out.println(
             "[EP-GAMETEST] server checks: " + (reporter.checks() - reporter.failures())
@@ -118,6 +119,9 @@ final class ServerGameTests {
                 break;
             case "storms":
                 storms(reporter);
+                break;
+            case "features":
+                WorldFeatureSnapshots.run(reporter);
                 break;
             default:
                 throw new IllegalArgumentException(group);

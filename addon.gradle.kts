@@ -55,7 +55,10 @@ abstract class JacocoAgentArgumentProvider : CommandLineArgumentProvider {
                 "=destfile=" + destFile.get() +
                 ",append=" + append.get() +
                 ",dumponexit=true" +
-                ",includes=" + includes.get()
+                ",includes=" + includes.get() +
+                // The bytes the agent actually sees, i.e. after FML's transformers. Diffing one of these against the
+                // compiled class is how we find out what rewrites our classes at load time.
+                ",classdumpdir=" + java.io.File(destFile.get()).parentFile.resolve("gameTest-classes").absolutePath
         )
     }
 
@@ -186,15 +189,6 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     }
 }
 
-// `check` runs the tests and enforces the floor, so CI catches coverage regressions.
-tasks.named("check").configure {
-    dependsOn(tasks.named("jacocoTestCoverageVerification"))
-}
-
-// ---------------------------------------------------------------------------------------------------------
-// In-game test mod (never shipped)
-// ---------------------------------------------------------------------------------------------------------
-
 val gameTestSourceSet = project.extensions.getByType(SourceSetContainer::class.java).create("gameTest")
 
 configurations.getByName(gameTestSourceSet.compileClasspathConfigurationName)
@@ -209,6 +203,9 @@ gameTestSourceSet.runtimeClasspath += mainSourceSet.runtimeClasspath
 // auto-load it through ServiceLoader, which then needs ByteBuddy's agent (not present here).
 gameTestSourceSet.compileClasspath = gameTestSourceSet.compileClasspath
     .filter { !it.name.contains("jabel") }
+
+// Where the in-game agent dumps the classes it actually loaded (see the report section below).
+val gameTestClassDump = layout.buildDirectory.dir("jacoco/gameTest-classes")
 
 val isGameTestRun = project.hasProperty("gameTest") ||
     gradle.startParameter.taskNames.any { it.contains("gameTestServer") }
@@ -238,6 +235,11 @@ if (isGameTestRun) {
             // not about that, so answer FML's "continue anyway?" prompt up front instead of blocking on stdin.
             systemProperty("fml.queryResult", "confirm")
             jvmArgumentProviders.add(jacocoProvider)
+            // The agent appends to its class dump, so a class that was recompiled between runs leaves two copies with
+            // different ids behind. Start each run from an empty dump so the report sees exactly what this run loaded.
+            // A plain File (not the Provider) is captured, or the configuration cache refuses to store the closure.
+            val dumpDir = gameTestClassDump.get().asFile
+            doFirst { dumpDir.deleteRecursively() }
         }
     }
 }
@@ -249,21 +251,38 @@ tasks.named("check").configure {
 // ---------------------------------------------------------------------------------------------------------
 // In-game coverage report
 // ---------------------------------------------------------------------------------------------------------
-// To report in-game coverage the class files on disk have to be the *post-transform* bytes JaCoCo saw. The GTNH boot
-// layer (RFB) can dump those under <run dir>/RFB_CLASS_DUMP/<loader>/, but only when class dumping is explicitly
-// enabled. Until that flag is set for gameTest runs this report has no class directories and skips itself; the exec
-// file above is still written, so a production (untransformed) build can be merged by pointing executionData at it.
-val inGameDump = project.file(
-    "${findProperty("runServerWorkingDirectory") ?: "run"}/RFB_CLASS_DUMP/Launch"
-)
+// Why this needs its own class directory: FML's SideTransformer re-emits *every* class through ASM (it does not
+// check whether it changed anything), so the bytes the JVM defines are never the bytes on disk - and JaCoCo keys its
+// data by a hash of the class it instrumented. Pointing a report at `build/classes/java/main` therefore matches
+// nothing at all (measured: 862 of 862 classes "do not match").
+//
+// The agent's own class dump is exactly those loaded bytes, though, so the report is built against that. The dump is
+// per-load-side: on a dedicated server the client-only members are gone, which means this report is a *server-side*
+// view and must not be merged with the unit-test data (the probe arrays differ). It stands on its own, and the
+// game-test workflow enforces a floor on it.
+val gameTestClassesUnpacked = layout.buildDirectory.dir("jacoco/gameTest-classes-unpacked")
+
+val unpackGameTestClasses = tasks.register<Copy>("unpackGameTestClasses") {
+    group = "verification"
+    description = "Strips JaCoCo's class-id suffix from the in-game class dump so a report can use it"
+    from(gameTestClassDump)
+    into(gameTestClassesUnpacked)
+    // The dump names files "<internal name>.<16 hex digits>.class"; the report wants "<internal name>.class".
+    rename { name -> name.replace(Regex("""\.[0-9a-f]{16}\.class$"""), ".class") }
+    // A leftover dump can hold two ids for one class; either copy is the same code, so keep the first.
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
 
 tasks.register<JacocoReport>("jacocoGameTestReport") {
     group = "verification"
-    description = "Reports coverage from the in-game game test run, using the post-transform classes FML loaded"
-    val execFile = project.layout.buildDirectory.file("jacoco/gameTest.exec").get().asFile
+    description = "Reports coverage from the in-game game test run, against the classes the JVM actually loaded"
+    dependsOn(unpackGameTestClasses)
+
     // No `onlyIf`: a script closure cannot be stored in the configuration cache. An empty execution-data
     // collection makes JaCoCo skip the task instead, which is the same outcome.
-    executionData.setFrom(project.files(execFile).filter { it.exists() })
+    executionData.setFrom(project.files(project.layout.buildDirectory.file("jacoco/gameTest.exec")).filter { it.exists() })
+    classDirectories.setFrom(gameTestClassesUnpacked)
+    sourceDirectories.setFrom(mainSourceSet.allJava.srcDirs)
 
     reports {
         xml.required.set(true)
@@ -272,19 +291,30 @@ tasks.register<JacocoReport>("jacocoGameTestReport") {
         xml.outputLocation.set(project.layout.buildDirectory.file("reports/jacoco/gameTest/jacocoGameTestReport.xml"))
         html.outputLocation.set(project.layout.buildDirectory.dir("reports/jacoco/gameTest/html"))
     }
+}
 
-    // The dump carries every loader's classes; only this mod's are ours.
-    classDirectories.setFrom(
-        project.files(inGameDump).asFileTree.matching {
-            include("com/mjr/extraplanets/**")
-            exclude(
-                "com/mjr/extraplanets/Tags.class",
-                // The in-game test mod itself is not part of the mod.
-                "com/mjr/extraplanets/gametest/**"
-            )
-        }
-    )
+// A floor for the in-game suite, kept separate from `check` because it needs a game run. The game-test workflow runs
+// `gameTestServer jacocoGameTestCoverageVerification`.
+tasks.register<JacocoCoverageVerification>("jacocoGameTestCoverageVerification") {
+    group = "verification"
+    description = "Fails when in-game coverage of the server-side classes drops below the recorded baseline"
+    dependsOn(unpackGameTestClasses)
+
+    executionData.setFrom(project.files(project.layout.buildDirectory.file("jacoco/gameTest.exec")).filter { it.exists() })
+    classDirectories.setFrom(gameTestClassesUnpacked)
     sourceDirectories.setFrom(mainSourceSet.allJava.srcDirs)
+
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                value = "COVEREDRATIO"
+                // Measured at 45.01% of the server-side classes (23,697 of 52,651 lines). The denominator is every
+                // class the server actually loaded, so it moves if the run loads more; keep this under the measurement.
+                minimum = BigDecimal("0.43")
+            }
+        }
+    }
 }
 
 tasks.register("gameTestServer") {

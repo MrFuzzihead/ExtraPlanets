@@ -41,8 +41,11 @@ jobs:
           mkdir -p run/server
           echo "eula=true" > run/server/eula.txt
 
+      # The verification also enforces the in-game coverage floor: the report is built from the agent's class dump
+      # (the classes the server actually loaded), because FML re-emits every class through ASM so the compiled class
+      # files can never match the execution data.
       - name: Run the in-game suite
-        run: ./gradlew gameTestServer --stacktrace
+        run: ./gradlew gameTestServer jacocoGameTestCoverageVerification --stacktrace
 
       # Belt and braces: the task already fails when a check fails (the test mod exits with status 1), but the marker
       # is what a person greps for, and this also catches a run that somehow exited cleanly without reporting.
