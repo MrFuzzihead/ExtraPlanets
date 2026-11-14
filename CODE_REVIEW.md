@@ -639,11 +639,11 @@ Do not reorder these: the harness covers a class before that class is touched.
   `EXTRAPLANETS_GAMETEST_OK` marker, and uploads the server log. It is a separate workflow because the GTNH reusable
   `build-and-test` workflow has no hook for it, and the checks it covers - real registries, the ore dictionary,
   recipes, the village snapshots, the microblock registrations - cannot run headless at all.
-* **`jitpack.yml` fixed.** The real defect was not the task name (it already used plain `setupCIWorkspace`) but that
-  no JDK was specified: Gradle 9 and RetroFuturaGradle refuse to start below Java 17 and JitPack defaults to Java 8
-  for Gradle projects, so `setupCIWorkspace` died before reaching our code. It now pins `openjdk21` (what the build is
-  developed and tested on) and declares the install step explicitly - `build -x check`, so the verification suite stays
-  in GitHub Actions instead of gating JitPack consumers on the goldens.
+* **`jitpack.yml`: left as `before_install: ./gradlew setupCIWorkspace`.** The proposed fix (pin `jdk: openjdk21` -
+  Gradle 9 and RetroFuturaGradle refuse to start below Java 17 while JitPack defaults to Java 8 for Gradle projects -
+  and declare `install: ./gradlew build -x check` so the verification suite stays in Actions) was reverted, so the
+  file stays minimal and JitPack uses its own default JDK and install command. If a JitPack build ever fails inside
+  `setupCIWorkspace`, the JDK pin is the first thing to try.
 * **CI-readiness, which this surfaced:** the village snapshots turned out to depend on the world they ran in. The
   scratch plateau's *height map* still reported the natural terrain, so a fresh world (which is what CI gets) produced
   different village hashes - the run failed on a world it had never seen. The plateau prep now regenerates the
