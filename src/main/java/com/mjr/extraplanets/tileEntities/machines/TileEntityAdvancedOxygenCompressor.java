@@ -194,6 +194,10 @@ public class TileEntityAdvancedOxygenCompressor extends TileEntityOxygen
 
     @Override
     public boolean canExtractItem(int slotID, ItemStack itemstack, int side) {
+        // Hoppers and pipes ask this with a null stack when a slot empties.
+        if (itemstack == null) {
+            return false;
+        }
         switch (slotID) {
             case 0:
                 return itemstack.getItem() instanceof ItemOxygenTank && itemstack.getItemDamage() == 0;
@@ -209,6 +213,9 @@ public class TileEntityAdvancedOxygenCompressor extends TileEntityOxygen
 
     @Override
     public boolean isItemValidForSlot(int slotID, ItemStack itemstack) {
+        if (itemstack == null) {
+            return false;
+        }
         switch (slotID) {
             case 0:
                 return itemstack.getItem() instanceof ItemOxygenTank;

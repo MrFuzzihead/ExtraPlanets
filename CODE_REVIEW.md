@@ -27,7 +27,7 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 160 headless JUnit 4 tests in `src/test/java` (was 0) |
+| Tests | 171 headless JUnit 4 tests in `src/test/java` (was 0) |
 | In-game tests | New never-shipped test mod in `src/gameTest/java`, 41 checks, run by `./gradlew gameTestServer` |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
@@ -39,7 +39,7 @@ rendering; the ratchet is set just below it so it can only go up.
 All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 160 tests, 0 failures
+./gradlew test               # 171 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
 ./gradlew gameTestServer     # 41/41 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
@@ -140,6 +140,8 @@ three for the same reasons:
 | `PacketSimpleCodecTest` (13) | Real codec round trip for every packet type and for the real config payload, truncated/out-of-range/negative ordinals are discarded instead of throwing, and a payload of the wrong shape is refused rather than sent (loudly in `debugMode`) |
 | `RocketSchematicContainerTest` (10) | Every rocket bench tier: the 58-slot layout, the craft matrix, shift-click routing into and out of the player's inventory, the result slot and the close behaviour |
 | `TreasureChestTest` (12) | Every treasure chest tier: the 27-slot inventory and its clamping/splitting, the lock, the key contract (including consuming the last key), NBT load, and the client event that drives the lid |
+| `MachineBehaviourTest` (8) | Every inventory machine: the slot array, splitting, per-side access, null-stack rejection and loading from an empty/malformed tag |
+| `ItemContractTest` (4) | 35 items across seven families (planet items, keys, nose cones, rockets, thermal padding, wafers, canned food): construction, names, stack limits, icon registration and per-metadata icons |
 | `NoStrayTracesTest` (3) | Lints `src/main/java`: no `printStackTrace()`, no `System.out`/`System.err` outside the one documented CI marker, with `file:line` for each offence |
 | `SkyProviderWiringTest` (2) | Parses `SkyProviderHandler` and requires `WorldProviderX` -> `SkyProviderX` for every body (orbits excepted) and a branch for every provider on disk |
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |

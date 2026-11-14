@@ -105,7 +105,7 @@ public class TileEntityVehicleChanger extends TileBaseElectricBlockWithInventory
 
     @Override
     public boolean canInsertItem(int slotID, ItemStack itemstack, int side) {
-        return this.isItemValidForSlot(slotID, itemstack);
+        return itemstack != null && this.isItemValidForSlot(slotID, itemstack);
     }
 
     @Override
@@ -120,8 +120,12 @@ public class TileEntityVehicleChanger extends TileBaseElectricBlockWithInventory
 
     @Override
     public boolean isItemValidForSlot(int slotID, ItemStack itemstack) {
-        return (slotID == 1 && itemstack != null && itemstack.getItem() == GCItems.fuelCanister)
-            || (slotID == 0 ? ItemElectricBase.isElectricItem(itemstack.getItem()) : false);
+        // A null stack reaches this from canInsertItem (hoppers and pipes pass one when a slot empties).
+        if (itemstack == null) {
+            return false;
+        }
+        return (slotID == 1 && itemstack.getItem() == GCItems.fuelCanister)
+            || (slotID == 0 && ItemElectricBase.isElectricItem(itemstack.getItem()));
     }
 
     @Override

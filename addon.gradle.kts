@@ -168,19 +168,19 @@ tasks.named<JacocoCoverageVerification>("jacocoTestCoverageVerification") {
     violationRules {
         // A regression guard at the current baseline, not a target. ExtraPlanets is ~13 MB of worldgen,
         // rendering and registration code that needs a live game to execute at all; the honest headless
-        // ceiling for this codebase is low (measured: 4.22% of 63,463 lines, 2.13% of 28,464 branches).
+        // ceiling for this codebase is low (measured: 5.26% of 63,485 lines, 2.74% of 28,498 branches).
         // Raise these numbers as tests are added - never lower them. (The ratio moves when dead code is
         // deleted, which is why it jumped in the village refactor: fewer lines, not more tests.)
         rule {
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal("0.041")
+                minimum = BigDecimal("0.051")
             }
             limit {
                 counter = "BRANCH"
                 value = "COVEREDRATIO"
-                minimum = BigDecimal("0.020")
+                minimum = BigDecimal("0.026")
             }
         }
     }
