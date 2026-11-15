@@ -504,6 +504,12 @@ final class VillageSnapshots {
     private static void resetScratch(World world, int x, int z) {
         for (int dx = -SCRATCH_RADIUS; dx <= SCRATCH_RADIUS; dx++) {
             for (int dz = -SCRATCH_RADIUS; dz <= SCRATCH_RADIUS; dz++) {
+                // Components write under their own box (the foundation helper fills downwards), so the ground below
+                // the surface has to be restored as well - otherwise a case inherits the previous one's sub-surface
+                // and getTopSolidOrLiquidBlock answers differently.
+                for (int y = PLATEAU_TOP - 6; y < PLATEAU_TOP; y++) {
+                    setFast(world, x + dx, y, z + dz, Blocks.stone, 0);
+                }
                 setFast(world, x + dx, PLATEAU_TOP, z + dz, GCBlocks.blockMoon, 5);
                 for (int y = PLATEAU_TOP + 1; y <= PLATEAU_TOP + 24; y++) {
                     setFast(world, x + dx, y, z + dz, Blocks.air, 0);

@@ -41,7 +41,7 @@ All four commands pass on a clean checkout:
 ```
 ./gradlew test               # 171 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
-./gradlew gameTestServer     # 41/41 in-game checks, EXTRAPLANETS_GAMETEST_OK
+./gradlew gameTestServer     # 44/44 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
 ```
 
@@ -162,6 +162,8 @@ three for the same reasons:
 | microblocks | every registered microblock material resolves back to its block and metadata in ForgeMultipart, and the whole registered set matches its golden |
 | storms | a Jupiter bolt lands on solid ground 16-64 blocks from the target and never over open liquid |
 | features | every world feature generator (19 of them: huts, towers, trees, igloo, ice spike, piles, volcano, desh tower) is run on a prepared plateau and must place its blocks |
+| dungeons | each of the seven planet dungeons is generated through the body's real chunk provider until a seed lands on a dungeon site |
+| entities | every registered monster and boss is spawned and ticked 20 times - the check fails if anything in the update path throws |
 | worldgen | the Tower of Desh still generates (run against the live world, frame/desh/mast asserted), all nine bodies' biome layer chains return registered biomes/more than one biome/never the ocean fallback, and **396 golden village snapshots**: every block-placing component per body in both coordinate branches, the piece dispatch per body for four fixed villages, and the spawn-grid set per body |
 
 ### 3.3 Production fixes required by the tests
@@ -747,10 +749,13 @@ Consequences, all deliberate:
 * it **cannot be merged** with the unit-test data: the probe arrays are laid out per class version, and the stripped
   classes have fewer probes. Two numbers, two floors;
 * the denominator is "every class the server loaded", so a run that loads more classes lowers the percentage. The floor
-  is kept just under the measured value (45.01 % -> 0.43) for that reason.
+  is kept just under the measured value (50.86 % -> 0.49) for that reason.
 
 The report is what showed the biggest gap in the whole suite: `world.features` sat at 0 % until the feature sweep was
-added, and is now at 93.4 %. `MapGenDungeon` (7 x 297 lines) is the next thing it exposes as untested.
+added, and is now at 93.4 %. The report also says what the in-game suite *cannot* reach cheaply: the per-body biome decorators and cave carvers
+(~4,000 lines). Driving them needs the body's own world - the decorators NPE on the overworld because they expect the
+body's provider and its blocks, and eight of them use a different decorator base - so covering them means loading all
+21 dimensions in the test run, which costs minutes per run for a few thousand lines. Left out deliberately.
 
 ---
 

@@ -265,6 +265,9 @@ val gameTestClassesUnpacked = layout.buildDirectory.dir("jacoco/gameTest-classes
 val unpackGameTestClasses = tasks.register<Copy>("unpackGameTestClasses") {
     group = "verification"
     description = "Strips JaCoCo's class-id suffix from the in-game class dump so a report can use it"
+    // The dump is written while the game JVM exits; copying it before the run finishes races the writer (on Windows
+    // that surfaces as "could not get file mode").
+    mustRunAfter("runServer")
     from(gameTestClassDump)
     into(gameTestClassesUnpacked)
     // The dump names files "<internal name>.<16 hex digits>.class"; the report wants "<internal name>.class".
@@ -277,6 +280,7 @@ tasks.register<JacocoReport>("jacocoGameTestReport") {
     group = "verification"
     description = "Reports coverage from the in-game game test run, against the classes the JVM actually loaded"
     dependsOn(unpackGameTestClasses)
+    mustRunAfter("runServer")
 
     // No `onlyIf`: a script closure cannot be stored in the configuration cache. An empty execution-data
     // collection makes JaCoCo skip the task instead, which is the same outcome.
@@ -299,6 +303,7 @@ tasks.register<JacocoCoverageVerification>("jacocoGameTestCoverageVerification")
     group = "verification"
     description = "Fails when in-game coverage of the server-side classes drops below the recorded baseline"
     dependsOn(unpackGameTestClasses)
+    mustRunAfter("runServer")
 
     executionData.setFrom(project.files(project.layout.buildDirectory.file("jacoco/gameTest.exec")).filter { it.exists() })
     classDirectories.setFrom(gameTestClassesUnpacked)
@@ -309,9 +314,9 @@ tasks.register<JacocoCoverageVerification>("jacocoGameTestCoverageVerification")
             limit {
                 counter = "LINE"
                 value = "COVEREDRATIO"
-                // Measured at 45.01% of the server-side classes (23,697 of 52,651 lines). The denominator is every
-                // class the server actually loaded, so it moves if the run loads more; keep this under the measurement.
-                minimum = BigDecimal("0.43")
+                // Measured at 50.86% of the server-side classes (27,481 of 54,030 lines). The denominator is every
+                // class the server actually loaded, so it moves as checks load more; keep this under the measurement.
+                minimum = BigDecimal("0.49")
             }
         }
     }
