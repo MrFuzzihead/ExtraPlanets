@@ -60,6 +60,13 @@ jobs:
         run: |
           grep -rqs "EXTRAPLANETS_GAMETEST_OK" run/server/logs/
 
+      # The failing check names itself in the server log; surface it in the job annotation so a red run is
+      # diagnosable without downloading the artifact.
+      - name: Show failed checks
+        if: failure()
+        run: |
+          grep -h "EP-GAMETEST.*FAIL" run/server/logs/*.log | cut -c1-400 || true
+
       - name: Upload the server log
         if: always()
         uses: actions/upload-artifact@v4

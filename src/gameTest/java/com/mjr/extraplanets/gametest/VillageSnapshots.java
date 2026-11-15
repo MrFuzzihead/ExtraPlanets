@@ -281,6 +281,7 @@ final class VillageSnapshots {
     private static Map<String, Long> snapshot(World world) {
         Map<String, Long> hashes = new TreeMap<String, Long>();
         preparePlateau(world, SCRATCH_X, SCRATCH_Z);
+        assertScratchIsIsolated(world);
         int index = 0;
         for (String body : bodies()) {
             for (String component : COMPONENTS) {
@@ -473,6 +474,36 @@ final class VillageSnapshots {
     // ---------------------------------------------------------------------------------------------------------
     // Scratch terrain
     // ---------------------------------------------------------------------------------------------------------
+
+    /**
+     * Fails with a clear message if the scratch area could not be isolated from the world's own terrain.
+     *
+     * <p>
+     * Every component asks the world for the highest solid block in a column, so if any column inside the scratch
+     * area still has natural terrain above the plateau, the placement - and therefore every hash - depends on what
+     * the world generator happened to make at ({@value #SCRATCH_X}, {@value #SCRATCH_Z}) for that seed. That is
+     * exactly how this suite passed locally and failed on CI, on the same commit.
+     * </p>
+     */
+    private static void assertScratchIsIsolated(World world) {
+        for (int dx = -SCRATCH_RADIUS; dx <= SCRATCH_RADIUS; dx++) {
+            for (int dz = -SCRATCH_RADIUS; dz <= SCRATCH_RADIUS; dz++) {
+                int top = world.getTopSolidOrLiquidBlock(SCRATCH_X + dx, SCRATCH_Z + dz);
+                TestReporter.assertEquals(
+                    "the scratch area at " + (SCRATCH_X + dx)
+                        + ","
+                        + (SCRATCH_Z + dz)
+                        + " has terrain above it"
+                        + " (top solid block "
+                        + top
+                        + ", expected "
+                        + (PLATEAU_TOP + 1)
+                        + "), so the snapshots would depend on the world seed",
+                    PLATEAU_TOP + 1,
+                    top);
+            }
+        }
+    }
 
     /** Built once per run: solid ground below {@link #PLATEAU_TOP}, open air above. */
     private static void preparePlateau(World world, int x, int z) {
