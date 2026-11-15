@@ -59,7 +59,7 @@ tests run on a Java 8 launcher.
 
 | Command | What it runs |
 |---|---|
-| `./gradlew test` | 171 headless JUnit 4 tests (JUnit 4.13.2 + Mockito 4.11.0, Java 8 launcher) |
+| `./gradlew test` | 174 headless JUnit 4 tests (JUnit 4.13.2 + Mockito 4.11.0, Java 8 launcher) |
 | `./gradlew check` | the above plus Spotless, Checkstyle, the coverage floor and the gameTest compile |
 | `./gradlew gameTestServer` | boots a real dedicated server, runs 44 in-game checks (including 396 village, 63 microblock and 100 recipe goldens plus a sweep of every world feature), then exits with the result |
 | `./gradlew gameTestServer jacocoGameTestCoverageVerification` | the same run plus the in-game coverage report and its floor (49 % of the server-side classes) |

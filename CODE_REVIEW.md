@@ -27,7 +27,7 @@
 |---|---|
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
-| Tests | 171 headless JUnit 4 tests in `src/test/java` (was 0) |
+| Tests | 174 headless JUnit 4 tests in `src/test/java` (was 0) |
 | In-game tests | New never-shipped test mod in `src/gameTest/java`, 44 checks, run by `./gradlew gameTestServer`, with its own coverage report and floor |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
@@ -42,7 +42,7 @@ Coverage has two numbers, because the two suites cannot share one (see §8.6):
 All four commands pass on a clean checkout:
 
 ```
-./gradlew test               # 171 tests, 0 failures
+./gradlew test               # 174 tests, 0 failures
 ./gradlew check              # + spotless, checkstyle, coverage floor, gameTest compile
 ./gradlew gameTestServer     # 44/44 in-game checks, EXTRAPLANETS_GAMETEST_OK
 ./gradlew runServer -PsmokeTest   # EXTRAPLANETS_SMOKE_TEST_OK
@@ -145,6 +145,7 @@ three for the same reasons:
 | `TreasureChestTest` (12) | Every treasure chest tier: the 27-slot inventory and its clamping/splitting, the lock, the key contract (including consuming the last key), NBT load, and the client event that drives the lid |
 | `MachineBehaviourTest` (8) | Every inventory machine: the slot array, splitting, per-side access, null-stack rejection and loading from an empty/malformed tag |
 | `ItemContractTest` (4) | 35 items across seven families (planet items, keys, nose cones, rockets, thermal padding, wafers, canned food): construction, names, stack limits, icon registration and per-metadata icons |
+| `ClientOnlySeamTest` (3) | The proxy's server-side defaults are safe, no item or armour class reaches for the client, and the remaining `FMLClientHandler` uses in common code are exactly the documented, guarded ones |
 | `NoStrayTracesTest` (3) | Lints `src/main/java`: no `printStackTrace()`, no `System.out`/`System.err` outside the one documented CI marker, with `file:line` for each offence |
 | `SkyProviderWiringTest` (2) | Parses `SkyProviderHandler` and requires `WorldProviderX` -> `SkyProviderX` for every body (orbits excepted) and a branch for every provider on disk |
 | `StructureWiringTest` (2) | Every class in `world/features` must be called by real code somewhere; imports and comments do not count |
@@ -289,15 +290,17 @@ client-side tracker, so it works today by accident; a single future call from co
 `NetHandlerPlayClient` (verified against the decompiled source), so this removes the latent crash without changing
 behaviour.
 
-**The same pattern elsewhere, surveyed:** `TileEntitySolar`, `TileEntityPoweredChargingPad`,
+**The same pattern elsewhere, surveyed and since fixed:** `TileEntitySolar`, `TileEntityPoweredChargingPad`,
 `TileEntityTier2/3LandingPad` and `KuiperBeltEvents` already guard their `FMLClientHandler` use with
-`worldObj.isRemote` or `@SideOnly(CLIENT)` and are fine. Two families are still unguarded, both inside
-`addInformation` tooltips, which only ever run client-side: `SpaceSuitArmor` (reads the sneak-key binding via
-`FMLClientHandler.instance().getClient().gameSettings`) and the seven `Tier4..Tier10Rocket` item classes (builds a
-throw-away rocket entity in `FMLClientHandler.instance().getWorldClient()` to read its fuel NBT). Both are latent in
-exactly the way the vehicle code was. The clean fix is to route them through `CommonProxy` (a
-`getClientWorld()`/`getKeyDisplayString()` seam) rather than sprinkling more side checks, so they are scheduled
-together as one item below.
+`worldObj.isRemote` or `@SideOnly(CLIENT)` and are fine. The two families that did not - `SpaceSuitArmor` (sneak-key
+binding) and the seven `Tier4..Tier10Rocket` item classes (throw-away rocket entity in `getWorldClient()` to read a
+tank capacity) - both sat inside `addInformation` tooltips, which only ever run client-side, so they were latent in
+exactly the way the vehicle code was.
+**Fixed** with the seam this section suggested: `CommonProxy.getClientWorld()` returns `null` on a dedicated server and
+`CommonProxy.getSneakKeyName()` a plain fallback, `ClientProxy` resolves both from `Minecraft`/`GameSettings`, and the
+eight call sites go through `ExtraPlanets.proxy`. No item or armour class names a client class any more, and
+`ClientOnlySeamTest` fails the build if one starts to - including a "stale allowlist entry" check, which caught
+`CommonProxy` being listed as a user when it is only the seam.
 
 ### P2 — `getElectricityStored` mutates the stack it is asked to read — ✅ FIXED
 
@@ -770,21 +773,21 @@ Everything below is open. The order is by value ÷ effort.
 | # | Item | Effort | Risk | Notes |
 |---|---|---|---|---|
 | 1 | **Publish metadata** (§2.3): add `modrinthProjectId`, `curseForgeProjectId` and `curseForgeRelations` | 30 min | none | Without them the `release-tags` workflow cannot publish; Galacticraft is a hard requirement and should be declared |
-| 2 | **`CommonProxy` seam** for the 8 tooltip-only client calls (§4 P2) | 2 hours | low | `SpaceSuitArmor` and the seven `Tier4..10Rocket` classes reach `FMLClientHandler` inside `addInformation`. Latent, not broken - route them through the proxy instead of sprinkling `isRemote` checks |
-| 3 | **Collapse the three compatibility flags** (§5.4) | ~1 day | medium | `morePlanetsCompatibility`, `…Adv143` and `…New` overlap; one flag plus a "which bodies" list. Behavioural, so it needs a decision on which of the three wins |
-| 4 | **Comment the save-format typos** (§4 P3) | 30 min | none | `ExtraPlanetsUtli`, `veunsDungeonBrick`, `spaceSuitLegings` are in NBT/registry/translation keys. Do **not** rename; say so where they are declared |
-| 5 | **Server-side pressure/radiation** (§7.3) | 1-2 days | medium | The overlays and suit modules model both; the damage/drain side is only partly wired, so the layers are craftable-for-no-reason |
-| 6 | **Jetpack as a real flight controller** (§7.4) | 1 day | medium | Thrust is client-claimed today, which is exploitable; apply it in `tickServer` behind `hasPower` |
-| 7 | **`Config` instance facade** (§4 P1, the last open P1) | 2-3 days | medium | 317 public statics read by ~600 files. The sync half is solved; the facade is the safe first step of the rest. Cannot be proved behaviour-preserving by test, so it wants care, not speed |
-| 8 | **Module tiers instead of `_t1`/`_t2` variants** (§7.1) | 1 day | low | `subType` already exists and two modules use it |
-| 9 | **`/ep` command that reports the resolved ids** (§7.2) | 1 day | low | Turns the "biome ID conflict" log line into something actionable in game |
-| 10 | **Schematic page builder** (§7.5) | 1 day | low | Adding a page is a 6-file change |
-| 11 | **Kepler22b's own buildings** (§6.3) | 1 day | medium | Its house/wood hut/well differ by metadata; sharing them means proving the mapping is a pure function of block+metadata. Optional |
-| 12 | **Per-body split of `RecipesCrafting`** (§6.1) | 4 hours | low | 2,122 lines; order-safe because the bodies appear in sequence |
-| 13 | **Delete the local `migrate/` tree** (§5.3) | 1 min | none | 59 MB, already git-ignored; it is only in working copies |
-| 14 | **Biome-edge stabilisation** (§5.2) | 2 hours | medium | One shared class plus one line per chunk manager; changes worldgen for new chunks, and no release has ever shipped it enabled |
+| 2 | **Collapse the three compatibility flags** (§5.4) | ~1 day | medium | `morePlanetsCompatibility`, `…Adv143` and `…New` overlap; one flag plus a "which bodies" list. Behavioural, so it needs a decision on which of the three wins |
+| 3 | **Comment the save-format typos** (§4 P3) | 30 min | none | `ExtraPlanetsUtli`, `veunsDungeonBrick`, `spaceSuitLegings` are in NBT/registry/translation keys. Do **not** rename; say so where they are declared |
+| 4 | **Server-side pressure/radiation** (§7.3) | 1-2 days | medium | The overlays and suit modules model both; the damage/drain side is only partly wired, so the layers are craftable-for-no-reason |
+| 5 | **Jetpack as a real flight controller** (§7.4) | 1 day | medium | Thrust is client-claimed today, which is exploitable; apply it in `tickServer` behind `hasPower` |
+| 6 | **`Config` instance facade** (§4 P1, the last open P1) | 2-3 days | medium | 317 public statics read by ~600 files. The sync half is solved; the facade is the safe first step of the rest. Cannot be proved behaviour-preserving by test, so it wants care, not speed |
+| 7 | **Module tiers instead of `_t1`/`_t2` variants** (§7.1) | 1 day | low | `subType` already exists and two modules use it |
+| 8 | **`/ep` command that reports the resolved ids** (§7.2) | 1 day | low | Turns the "biome ID conflict" log line into something actionable in game |
+| 9 | **Schematic page builder** (§7.5) | 1 day | low | Adding a page is a 6-file change |
+| 10 | **Kepler22b's own buildings** (§6.3) | 1 day | medium | Its house/wood hut/well differ by metadata; sharing them means proving the mapping is a pure function of block+metadata. Optional |
+| 11 | **Per-body split of `RecipesCrafting`** (§6.1) | 4 hours | low | 2,122 lines; order-safe because the bodies appear in sequence |
+| 12 | **Delete the local `migrate/` tree** (§5.3) | 1 min | none | 59 MB, already git-ignored; it is only in working copies |
+| 13 | **Biome-edge stabilisation** (§5.2) | 2 hours | medium | One shared class plus one line per chunk manager; changes worldgen for new chunks, and no release has ever shipped it enabled |
+| ✅ | **`CommonProxy` seam** for the 8 tooltip-only client calls (§4 P2) | 2 hours | low | `getClientWorld()`/`getSneakKeyName()` on the proxy, eight call sites rewired, `ClientOnlySeamTest` guards it |
 
-Done in these passes, for the record: the config sync rewrite, the module-requirement ordering, the cast/biome/
+Done in these passes, for the record: the client-only seam, the config sync rewrite, the module-requirement ordering, the cast/biome/
 vehicle/armour/packet fixes, the logging sweep, the dead-code cleanup (17 classes, 728 KB of textures, three restored
 features), the village refactor (80 % of its duplication removed), the microblock and recipe splits, `WorldHazards`,
 Jupiter lightning, the in-game suite in CI, and the test infrastructure both suites run on.

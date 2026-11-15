@@ -5,7 +5,6 @@ import java.util.Map;
 import java.util.WeakHashMap;
 
 import net.minecraft.client.model.ModelBiped;
-import net.minecraft.client.settings.GameSettings;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityLivingBase;
 import net.minecraft.entity.player.EntityPlayer;
@@ -31,7 +30,6 @@ import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
 import com.mjr.extraplanets.items.armor.modules.ModulePressureSeal;
 import com.mjr.extraplanets.items.armor.modules.ModuleRadiationShield;
 
-import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import micdoodle8.mods.galacticraft.api.item.IArmorGravity;
@@ -366,11 +364,8 @@ public class SpaceSuitArmor extends ElectricArmorBase
             list.add(EnumColor.AQUA + StatCollector.translateToLocal("space.suit.information.extra.4"));
         } else {
             list.add(
-                EnumColor.YELLOW + StatCollector.translateToLocalFormatted(
-                    "item_desc.spacesuit.shift.name",
-                    GameSettings.getKeyDisplayString(
-                        FMLClientHandler.instance()
-                            .getClient().gameSettings.keyBindSneak.getKeyCode())));
+                EnumColor.YELLOW + StatCollector
+                    .translateToLocalFormatted("item_desc.spacesuit.shift.name", ExtraPlanets.proxy.getSneakKeyName()));
         }
         // Show installed modules
         List<Module> modules = ModuleHelper.getModules(itemStack);
