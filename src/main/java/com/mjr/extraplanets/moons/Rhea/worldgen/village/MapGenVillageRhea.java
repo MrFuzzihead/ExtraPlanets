@@ -2,27 +2,29 @@ package com.mjr.extraplanets.moons.Rhea.worldgen.village;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
 
 import net.minecraft.world.biome.BiomeGenBase;
-import net.minecraft.world.gen.structure.MapGenStructure;
 import net.minecraft.world.gen.structure.MapGenStructureIO;
 import net.minecraft.world.gen.structure.StructureStart;
 
 import com.mjr.extraplanets.Config;
 import com.mjr.extraplanets.moons.Rhea.worldgen.BiomeGenRhea;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 import com.mjr.extraplanets.util.MessageUtilities;
+import com.mjr.extraplanets.world.village.MapGenVillageBase;
 
-public class MapGenVillageRhea extends MapGenStructure {
+public class MapGenVillageRhea extends MapGenVillageBase {
 
     public static List<BiomeGenBase> villageSpawnBiomes = Arrays.asList(new BiomeGenBase[] { BiomeGenRhea.rhea });
-    private final int terrainType;
     private static boolean initialized;
 
     static {
         try {
             MapGenVillageRhea.initiateStructures();
-        } catch (Throwable e) {}
+        } catch (Throwable e) {
+            ExtraPlanetsLog
+                .severe("[ExtraPlanets] Rhea village structures failed to register; villages will not generate", e);
+        }
     }
 
     public static void initiateStructures() throws Throwable {
@@ -38,35 +40,6 @@ public class MapGenVillageRhea extends MapGenStructure {
             MapGenStructureIO.func_143031_a(StructureComponentRheaVillageWoodHut.class, "RheaWoodHut");
         }
         MapGenVillageRhea.initialized = true;
-    }
-
-    public MapGenVillageRhea() {
-        this.terrainType = 0;
-    }
-
-    @Override
-    protected boolean canSpawnStructureAtCoords(int i, int j) {
-        final byte numChunks = 32; // 32
-        final byte offsetChunks = 8; // 8
-        final int oldi = i;
-        final int oldj = j;
-
-        if (i < 0) {
-            i -= numChunks - 1;
-        }
-
-        if (j < 0) {
-            j -= numChunks - 1;
-        }
-
-        int randX = i / numChunks;
-        int randZ = j / numChunks;
-        final Random var7 = this.worldObj.setRandomSeed(i, j, 10387312);
-        randX *= numChunks;
-        randZ *= numChunks;
-        randX += var7.nextInt(numChunks - offsetChunks);
-        randZ += var7.nextInt(numChunks - offsetChunks);
-        return oldi == randX && oldj == randZ;
     }
 
     @Override

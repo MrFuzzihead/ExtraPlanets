@@ -282,10 +282,8 @@ public class EntityCustomBlueCreeper extends EntityMob {
                         (float) (posY + 10),
                         (float) (posZ + 10)));
                 if (list != null) {
-                    System.out.println(list.size());
                     for (int i = 0; i < list.size(); i++) {
                         if (list.get(i) instanceof EntityPlayer) {
-                            System.out.println(i + " = yes");
                             EntityPlayer entity = (EntityPlayer) list.get(i);
                             entity.addPotionEffect(new PotionEffect(Potion.weakness.getId(), 50, 1));
                         }

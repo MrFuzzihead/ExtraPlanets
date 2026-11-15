@@ -9,10 +9,26 @@ import net.minecraft.util.MathHelper;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
 import net.minecraft.world.gen.structure.StructureComponent;
 
-public class StructureVillagePiecesCeres {
+import com.mjr.extraplanets.world.village.StructureVillagePieceWeightBase;
+import com.mjr.extraplanets.world.village.StructureVillagePiecesBase;
+
+/**
+ * The Ceres piece table. The growth rules live in {@link StructureVillagePiecesBase}; this supplies what is
+ * genuinely Ceres-specific - which pieces may spawn and how often, the dispatch that builds them, and the two
+ * fallbacks.
+ */
+public class StructureVillagePiecesCeres extends StructureVillagePiecesBase {
+
+    public static final StructureVillagePiecesCeres INSTANCE = new StructureVillagePiecesCeres();
 
     public static ArrayList<StructureVillagePieceWeightCeres> getStructureVillageWeightedPieceList(Random par0Random,
         int par1) {
+        return INSTANCE.weightedPieceList(par0Random, par1);
+    }
+
+    @Override
+    public ArrayList<StructureVillagePieceWeightCeres> weightedPieceList(Random par0Random, int par1) {
+
         final ArrayList<StructureVillagePieceWeightCeres> var2 = new ArrayList<StructureVillagePieceWeightCeres>();
         var2.add(
             new StructureVillagePieceWeightCeres(
@@ -41,202 +57,69 @@ public class StructureVillagePiecesCeres {
         return var2;
     }
 
-    private static int func_75079_a(List<StructureVillagePieceWeightCeres> par0List) {
-        boolean var1 = false;
-        int var2 = 0;
-        StructureVillagePieceWeightCeres var4;
-
-        for (final Iterator<StructureVillagePieceWeightCeres> var3 = par0List.iterator(); var3
-            .hasNext(); var2 += var4.villagePieceWeight) {
-            var4 = var3.next();
-
-            if (var4.villagePiecesLimit > 0 && var4.villagePiecesSpawned < var4.villagePiecesLimit) {
-                var1 = true;
-            }
-        }
-
-        return var1 ? var2 : -1;
+    static int func_75079_a(List<StructureVillagePieceWeightCeres> par0List) {
+        return INSTANCE.sumLimits(par0List);
     }
 
-    private static StructureComponentCeresVillage func_75083_a(
-        StructureComponentCeresVillageStartPiece par0ComponentVillageStartPiece,
-        StructureVillagePieceWeightCeres par1StructureVillagePieceWeight, List<StructureComponent> par2List,
-        Random par3Random, int par4, int par5, int par6, int par7, int par8) {
-        final Class<?> var9 = par1StructureVillagePieceWeight.villagePieceClass;
-        Object var10 = null;
-
-        if (var9 == StructureComponentCeresVillageWoodHut.class) {
-            var10 = StructureComponentCeresVillageWoodHut
-                .func_74908_a(par0ComponentVillageStartPiece, par2List, par3Random, par4, par5, par6, par7, par8);
-        } else if (var9 == StructureComponentCeresVillageField.class) {
-            var10 = StructureComponentCeresVillageField
-                .func_74900_a(par0ComponentVillageStartPiece, par2List, par3Random, par4, par5, par6, par7, par8);
-        } else if (var9 == StructureComponentCeresVillageHouse.class) {
-            var10 = StructureComponentCeresVillageHouse
-                .func_74921_a(par0ComponentVillageStartPiece, par2List, par3Random, par4, par5, par6, par7, par8);
-        }
-
-        return (StructureComponentCeresVillage) var10;
-    }
-
-    private static StructureComponentCeresVillage getNextVillageComponent(
-        StructureComponentCeresVillageStartPiece par0ComponentVillageStartPiece, List<StructureComponent> par1List,
-        Random par2Random, int par3, int par4, int par5, int par6, int par7) {
-        final int var8 = StructureVillagePiecesCeres
-            .func_75079_a(par0ComponentVillageStartPiece.structureVillageWeightedPieceList);
-
-        if (var8 <= 0) {
-            return null;
-        } else {
-            int var9 = 0;
-
-            while (var9 < 5) {
-                ++var9;
-                int var10 = par2Random.nextInt(var8);
-                final Iterator<StructureVillagePieceWeightCeres> var11 = par0ComponentVillageStartPiece.structureVillageWeightedPieceList
-                    .iterator();
-
-                while (var11.hasNext()) {
-                    final StructureVillagePieceWeightCeres var12 = var11.next();
-                    var10 -= var12.villagePieceWeight;
-
-                    if (var10 < 0) {
-                        if (!var12.canSpawnMoreVillagePiecesOfType(par7)
-                            || var12 == par0ComponentVillageStartPiece.structVillagePieceWeight
-                                && par0ComponentVillageStartPiece.structureVillageWeightedPieceList.size() > 1) {
-                            break;
-                        }
-
-                        final StructureComponentCeresVillage var13 = StructureVillagePiecesCeres.func_75083_a(
-                            par0ComponentVillageStartPiece,
-                            var12,
-                            par1List,
-                            par2Random,
-                            par3,
-                            par4,
-                            par5,
-                            par6,
-                            par7);
-
-                        if (var13 != null) {
-                            ++var12.villagePiecesSpawned;
-                            par0ComponentVillageStartPiece.structVillagePieceWeight = var12;
-
-                            if (!var12.canSpawnMoreVillagePieces()) {
-                                par0ComponentVillageStartPiece.structureVillageWeightedPieceList.remove(var12);
-                            }
-
-                            return var13;
-                        }
-                    }
-                }
-            }
-
-            final StructureBoundingBox var14 = StructureComponentCeresVillageTorch
-                .func_74904_a(par0ComponentVillageStartPiece, par1List, par2Random, par3, par4, par5, par6);
-
-            if (var14 != null) {
-                return new StructureComponentCeresVillageTorch(
-                    par0ComponentVillageStartPiece,
-                    par7,
-                    par2Random,
-                    var14,
-                    par6);
-            } else {
-                return null;
-            }
-        }
-    }
-
-    /**
-     * attempts to find a next Structure Component to be spawned, private Village function
-     */
-    private static StructureComponent getNextVillageStructureComponent(
-        StructureComponentCeresVillageStartPiece par0ComponentVillageStartPiece, List<StructureComponent> par1List,
-        Random par2Random, int par3, int par4, int par5, int par6, int par7) {
-        if (par7 > 50) {
-            return null;
-        } else if (Math.abs(par3 - par0ComponentVillageStartPiece.getBoundingBox().minX) <= 112
-            && Math.abs(par5 - par0ComponentVillageStartPiece.getBoundingBox().minZ) <= 112) {
-                final StructureComponentCeresVillage var8 = StructureVillagePiecesCeres.getNextVillageComponent(
-                    par0ComponentVillageStartPiece,
-                    par1List,
-                    par2Random,
-                    par3,
-                    par4,
-                    par5,
-                    par6,
-                    par7 + 1);
-
-                if (var8 != null) {
-                    par1List.add(var8);
-                    par0ComponentVillageStartPiece.field_74932_i.add(var8);
-                    return var8;
-                }
-
-                return null;
-            } else {
-                return null;
-            }
-    }
-
-    private static StructureComponent getNextComponentVillagePath(
-        StructureComponentCeresVillageStartPiece par0ComponentVillageStartPiece, List<StructureComponent> par1List,
-        Random par2Random, int par3, int par4, int par5, int par6, int par7) {
-        if (par7 > 3 + par0ComponentVillageStartPiece.terrainType) {
-            return null;
-        } else if (Math.abs(par3 - par0ComponentVillageStartPiece.getBoundingBox().minX) <= 112
-            && Math.abs(par5 - par0ComponentVillageStartPiece.getBoundingBox().minZ) <= 112) {
-                final StructureBoundingBox var8 = StructureComponentCeresVillagePathGen
-                    .func_74933_a(par0ComponentVillageStartPiece, par1List, par2Random, par3, par4, par5, par6);
-
-                if (var8 != null && var8.minY > 10) {
-                    final StructureComponentCeresVillagePathGen var9 = new StructureComponentCeresVillagePathGen(
-                        par0ComponentVillageStartPiece,
-                        par7,
-                        par2Random,
-                        var8,
-                        par6);
-
-                    par1List.add(var9);
-                    par0ComponentVillageStartPiece.field_74930_j.add(var9);
-                    return var9;
-                }
-
-                return null;
-            } else {
-                return null;
-            }
-    }
-
-    /**
-     * attempts to find a next Structure Component to be spawned
-     */
     static StructureComponent getNextStructureComponent(
         StructureComponentCeresVillageStartPiece par0ComponentVillageStartPiece, List<StructureComponent> par1List,
         Random par2Random, int par3, int par4, int par5, int par6, int par7) {
-        return StructureVillagePiecesCeres.getNextVillageStructureComponent(
-            par0ComponentVillageStartPiece,
-            par1List,
-            par2Random,
-            par3,
-            par4,
-            par5,
-            par6,
-            par7);
+        return INSTANCE.next(par0ComponentVillageStartPiece, par1List, par2Random, par3, par4, par5, par6, par7);
     }
 
     static StructureComponent getNextStructureComponentVillagePath(
         StructureComponentCeresVillageStartPiece par0ComponentVillageStartPiece, List<StructureComponent> par1List,
         Random par2Random, int par3, int par4, int par5, int par6, int par7) {
-        return StructureVillagePiecesCeres.getNextComponentVillagePath(
-            par0ComponentVillageStartPiece,
-            par1List,
-            par2Random,
-            par3,
-            par4,
-            par5,
-            par6,
-            par7);
+        return INSTANCE.nextPath(par0ComponentVillageStartPiece, par1List, par2Random, par3, par4, par5, par6, par7);
+    }
+
+    @Override
+    protected StructureComponent create(StructureVillagePieceWeightBase weight, StructureComponent startPiece,
+        List<StructureComponent> components, Random rand, int x, int y, int z, int mode, int type) {
+        final Class<?> clazz = weight.villagePieceClass;
+        final StructureComponentCeresVillageStartPiece start = (StructureComponentCeresVillageStartPiece) startPiece;
+
+        if (clazz == StructureComponentCeresVillageWoodHut.class) {
+            return StructureComponentCeresVillageWoodHut.func_74908_a(start, components, rand, x, y, z, mode, type);
+        } else if (clazz == StructureComponentCeresVillageField.class) {
+            return StructureComponentCeresVillageField.func_74900_a(start, components, rand, x, y, z, mode, type);
+        } else if (clazz == StructureComponentCeresVillageHouse.class) {
+            return StructureComponentCeresVillageHouse.func_74921_a(start, components, rand, x, y, z, mode, type);
+        }
+
+        return null;
+    }
+
+    @Override
+    protected StructureComponent createTorch(StructureComponent startPiece, List<StructureComponent> components,
+        Random rand, int x, int y, int z, int mode, int type) {
+        final StructureBoundingBox box = StructureComponentCeresVillageTorch
+            .func_74904_a((StructureComponentCeresVillageStartPiece) startPiece, components, rand, x, y, z, mode);
+
+        return box == null ? null
+            : new StructureComponentCeresVillageTorch(
+                (StructureComponentCeresVillageStartPiece) startPiece,
+                type,
+                rand,
+                box,
+                mode);
+    }
+
+    @Override
+    protected StructureComponent createPath(StructureComponent startPiece, List<StructureComponent> components,
+        Random rand, int x, int y, int z, int mode, int type) {
+        final StructureBoundingBox box = StructureComponentCeresVillagePathGen
+            .func_74933_a((StructureComponentCeresVillageStartPiece) startPiece, components, rand, x, y, z, mode);
+
+        if (box != null && box.minY > 10) {
+            return new StructureComponentCeresVillagePathGen(
+                (StructureComponentCeresVillageStartPiece) startPiece,
+                type,
+                rand,
+                box,
+                mode);
+        }
+
+        return null;
     }
 }

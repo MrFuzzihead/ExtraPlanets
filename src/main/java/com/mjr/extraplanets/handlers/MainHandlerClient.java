@@ -4,7 +4,6 @@ import java.util.Random;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.settings.GameSettings;
-import net.minecraft.entity.effect.EntityLightningBolt;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.event.EntityViewRenderEvent;
 import net.minecraftforge.client.event.GuiOpenEvent;
@@ -17,6 +16,7 @@ import com.mjr.extraplanets.client.gui.overlay.OverlayPressure;
 import com.mjr.extraplanets.client.gui.overlay.OverlayRadiation;
 import com.mjr.extraplanets.client.gui.screen.CustomCelestialSelection;
 import com.mjr.extraplanets.planets.ExtraPlanets_Planets;
+import com.mjr.extraplanets.planets.Jupiter.JupiterStorms;
 
 import cpw.mods.fml.common.eventhandler.EventPriority;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
@@ -44,24 +44,31 @@ public class MainHandlerClient {
     /** Cached RNG for the client-only Jupiter fake lighting, allocated once instead of every tick. */
     private final Random rand = new Random();
 
+    /**
+     * Ticks until the next fake bolt. This used to be a flat "1% per tick" lottery, which is the same average rate but
+     * clumps: two bolts in consecutive ticks, then twenty seconds of nothing.
+     */
+    private int ticksUntilStrike;
+
     @SubscribeEvent
     public void onPlayer(PlayerTickEvent event) {
-        // The fake Jupiter lightning is purely client-side ambiance; never spawn real server bolts.
+        // The fake Jupiter lightning is purely client-side ambiance; the server spawns the real ones.
         if (event.side == Side.SERVER) return;
-        if (Config.jupiterLightingClient && event.player.worldObj.provider.dimensionId == Config.jupiterID) {
-            int addX = this.rand.nextInt(64);
-            int addZ = this.rand.nextInt(64);
-            if (this.rand.nextInt(2) == 1) addX = -addX;
-            if (this.rand.nextInt(2) == 1) addZ = -addZ;
-            if (addX <= 3) addX = 5;
-            if (addZ <= 3) addZ = 5;
-            if (this.rand.nextInt(100) == 10) event.player.worldObj.addWeatherEffect(
-                new EntityLightningBolt(
-                    event.player.worldObj,
-                    event.player.posX + addX,
-                    event.player.worldObj
-                        .getHeightValue((int) event.player.posX + addX, (int) event.player.posZ + addZ),
-                    event.player.posZ + addZ));
+        if (event.player.worldObj.provider.dimensionId != Config.jupiterID) return;
+
+        // With real server bolts enabled the synced bolts already render and thunder here, so running this too would
+        // double every strike. This path is the fallback for a server that has them switched off.
+        if (!Config.jupiterLightingClient || Config.jupiterLightingServer) return;
+
+        if (this.ticksUntilStrike > 0) {
+            --this.ticksUntilStrike;
+            return;
+        }
+        // 5-15 seconds between strikes; Jupiter is a gas giant that should never quite stop rumbling.
+        this.ticksUntilStrike = 100 + this.rand.nextInt(200);
+
+        if (event.player.worldObj.isRemote) {
+            JupiterStorms.strikeNear(event.player.worldObj, event.player.posX, event.player.posZ, this.rand);
         }
     }
 

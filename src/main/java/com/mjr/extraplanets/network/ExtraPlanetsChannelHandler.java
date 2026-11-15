@@ -5,6 +5,7 @@ import java.util.EnumMap;
 import net.minecraft.entity.player.EntityPlayerMP;
 
 import com.mjr.extraplanets.Constants;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.common.network.FMLEmbeddedChannel;
@@ -20,7 +21,6 @@ import micdoodle8.mods.galacticraft.core.network.PacketDynamic;
 import micdoodle8.mods.galacticraft.core.network.PacketDynamicInventory;
 import micdoodle8.mods.galacticraft.core.network.PacketEntityUpdate;
 import micdoodle8.mods.galacticraft.core.network.PacketRotateRocket;
-import micdoodle8.mods.galacticraft.core.util.GCLog;
 
 public class ExtraPlanetsChannelHandler extends FMLIndexedMessageToMessageCodec<IPacket> {
 
@@ -110,9 +110,9 @@ public class ExtraPlanetsChannelHandler extends FMLIndexedMessageToMessageCodec<
             this.channels.get(Side.SERVER)
                 .writeOutbound(message);
         } catch (Exception e) {
-            GCLog.severe(
-                "Forge error when sending network packet to nearby players - this is not a Galacticraft bug, does another mod make fake players?");
-            e.printStackTrace();
+            ExtraPlanetsLog.severe(
+                "Forge error when sending network packet to nearby players - this is not a Galacticraft bug, does another mod make fake players?",
+                e);
         }
     }
 
@@ -137,9 +137,9 @@ public class ExtraPlanetsChannelHandler extends FMLIndexedMessageToMessageCodec<
             this.channels.get(Side.SERVER)
                 .writeOutbound(message);
         } catch (Exception e) {
-            GCLog.severe(
-                "Forge error when sending network packet to all players in dimension - this is not a Galacticraft bug, does another mod make fake players?");
-            e.printStackTrace();
+            ExtraPlanetsLog.severe(
+                "Forge error when sending network packet to all players in dimension - this is not a Galacticraft bug, does another mod make fake players?",
+                e);
         }
     }
 

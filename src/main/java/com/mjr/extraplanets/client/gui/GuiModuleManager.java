@@ -33,6 +33,7 @@ import com.mjr.extraplanets.items.ExtraPlanets_Items;
 import com.mjr.extraplanets.items.armor.modules.ExtraPlanets_Modules;
 import com.mjr.extraplanets.items.armor.modules.Module;
 import com.mjr.extraplanets.items.armor.modules.ModuleHelper;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 public class GuiModuleManager implements IGuiHolder<GuiData> {
 
@@ -73,7 +74,12 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
             f = GuiManager.class.getDeclaredField("openedContainers");
             f.setAccessible(true);
         } catch (NoSuchFieldException e) {
-            // ignore — openForPlayer will fall back to plain FACTORY.open
+            // ModularUI2 renamed or moved the field: the GUI still opens, but the reopen-from-a-handler path degrades
+            // to the plain open call, which the guard in GuiManager may refuse. Say so once instead of silently.
+            ExtraPlanetsLog.severe(
+                "ModularUI2's GuiManager no longer has an 'openedContainers' field, so the suit module GUI can no"
+                    + " longer be reopened from inside a server-side handler",
+                e);
         }
         GUARD_LIST = f;
     }
@@ -85,7 +91,7 @@ public class GuiModuleManager implements IGuiHolder<GuiData> {
                 List<EntityPlayer> list = (List<EntityPlayer>) GUARD_LIST.get(null);
                 list.remove(player);
             } catch (Exception e) {
-                // ignore
+                ExtraPlanetsLog.severe("Could not clear the suit module GUI's entry from GuiManager's opened list", e);
             }
         }
     }

@@ -246,7 +246,10 @@ public class ModuleHelper {
      * @return the stored power in gJ of the given modular armour item.
      */
     public static int getArmourStoredPower(ItemStack item) {
-        if (!(item.getItem() instanceof IModularArmor)) {
+        // IModularArmor is a marker interface: it says "this suit has module slots", not "this suit runs on gJ".
+        // Any addon (or a future non-electric suit) can implement it, so the cast has to be checked - otherwise this
+        // HUD/tick path throws ClassCastException for that item every frame.
+        if (!(item.getItem() instanceof ElectricArmorBase)) {
             return 0;
         }
         return (int) ((ElectricArmorBase) item.getItem()).getElectricityStored(item);
@@ -254,9 +257,12 @@ public class ModuleHelper {
 
     /**
      * Discharges {@code power} gJ from the given modular armour item.
+     * <p>
+     * Does nothing for an {@link IModularArmor} that is not an {@link ElectricArmorBase}; see
+     * {@link #getArmourStoredPower(ItemStack)}.
      */
     public static void takeArmourPower(ItemStack item, int power) {
-        if (!(item.getItem() instanceof IModularArmor)) {
+        if (!(item.getItem() instanceof ElectricArmorBase)) {
             return;
         }
         ((ElectricArmorBase) item.getItem()).discharge(item, power, true);

@@ -39,6 +39,11 @@ public class Constants {
 
     public static final String CONFIG_FILE = "config/ExtraPlanets.cfg";
 
+    // Config categories are the literal section headers in config/ExtraPlanets.cfg, and the keys below them are the
+    // option names. They mix camelCase ("dimensionID"), ID/Id and plain words ("items"), and that is the on-disk
+    // format: renaming one moves every option under it into a new, empty section, so an existing config silently
+    // loses its values and the player's IDs change. Forge's Configuration#renameProperty is the only safe way to
+    // change one.
     public static final String CONFIG_CATEGORY_MAIN_DIMENSIONS = "main dimensions";
     public static final String CONFIG_CATEGORY_OTHER_DIMENSIONS = "other dimensions";
     public static final String CONFIG_CATEGORY_DIMENSION_IDS = "dimensionID";

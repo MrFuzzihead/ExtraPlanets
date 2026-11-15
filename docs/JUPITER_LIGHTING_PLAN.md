@@ -2,6 +2,19 @@
 
 ## Status
 
+- **IMPLEMENTED.** `jupiterLightingServer` is no longer dead config. Two corrections to the plan below were needed:
+  1. **There is no `WorldProvider#onUpdate()` in 1.7.10.** The plan's §2a hook does not exist. The server side is
+     driven from the FML world tick instead (`MainHandler.onWorldTick`, `TickEvent.WorldTickEvent`, `Side.SERVER`),
+     which is the hook that actually fires per world tick on a dedicated server.
+  2. **The client fake path already existed** (`MainHandlerClient.onPlayer`), so the work was to give it a proper
+     interval and a shared placement rule rather than to write it from scratch.
+- **Decisions taken** (§4 open questions): vanilla-danger bolts (the config advertises "Real Lighting Bolts"), one
+  strike per 20 seconds on average, 16-64 blocks from a *random player* in the dimension, never over open liquid,
+  client fake path suppressed only while the server key is on.
+- **Where the code is:** `planets/Jupiter/JupiterStorms` (placement rule + throttle, both sides), the server hook in
+  `handlers/MainHandler.onWorldTick`, the client fallback in `handlers/MainHandlerClient.onPlayer`.
+- **Covered by:** `JupiterStormsTest` (7 headless tests over the throttle) and one in-game check that a bolt lands on
+  solid ground 16-64 blocks from the target. The server hook itself still wants a playtest on a real Jupiter world.
 - **Tracked from:** `CODEBASE_ANALYSIS_FINDINGS.md` — P1 "Network packet / MainHandler" related note + optimization #8
   ("Remove dead config keys (`jupiterLightingServer`) or implement the feature they promise").
 - **State:** DRAFT — scope/balance decisions below are proposed, not yet agreed. No code written.
@@ -49,6 +62,9 @@ for the visuals + sound.
 ---
 
 ## 2. Proposed Design
+
+> **Superseded:** `WorldProvider` has no `onUpdate()` in 1.7.10. Implemented as `MainHandler.onWorldTick` instead;
+> see Status above.
 
 ### 2a. Server spawn — hook `WorldProviderJupiter.onUpdate()`
 `src/main/java/com/mjr/extraplanets/planets/Jupiter/WorldProviderJupiter.java` (currently has **no**

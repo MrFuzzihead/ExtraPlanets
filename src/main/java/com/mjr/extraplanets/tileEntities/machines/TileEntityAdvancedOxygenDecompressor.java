@@ -194,6 +194,9 @@ public class TileEntityAdvancedOxygenDecompressor extends TileEntityOxygen
 
     @Override
     public boolean isItemValidForSlot(int slotID, ItemStack itemstack) {
+        if (itemstack == null) {
+            return false;
+        }
         switch (slotID) {
             case 0:
                 return itemstack.getItem() instanceof ItemOxygenTank;

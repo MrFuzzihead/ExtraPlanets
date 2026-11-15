@@ -4,7 +4,6 @@ import java.util.List;
 import java.util.Random;
 
 import net.minecraft.block.Block;
-import net.minecraft.init.Blocks;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.world.World;
 import net.minecraft.world.gen.structure.StructureBoundingBox;
@@ -13,8 +12,6 @@ import net.minecraft.world.gen.structure.StructureComponent;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 
 public class StructureComponentRheaVillageWell extends StructureComponentRheaVillage {
-
-    private int averageGroundLevel = -1;
 
     public StructureComponentRheaVillageWell() {}
 
@@ -91,74 +88,7 @@ public class StructureComponentRheaVillageWell extends StructureComponentRheaVil
     @Override
     public boolean addComponentParts(World par1World, Random par2Random,
         StructureBoundingBox par3StructureBoundingBox) {
-        if (this.averageGroundLevel < 0) {
-            this.averageGroundLevel = this.getAverageGroundLevel(par1World, par3StructureBoundingBox);
-
-            if (this.averageGroundLevel < 0) {
-                return true;
-            }
-
-            this.boundingBox.offset(0, this.averageGroundLevel - this.boundingBox.maxY + 3, 0);
-        }
-
-        this.fillWithMetadataBlocks(
-            par1World,
-            par3StructureBoundingBox,
-            1,
-            0,
-            1,
-            4,
-            12,
-            4,
-            ExtraPlanets_Blocks.rheaBlocks,
-            2,
-            Blocks.flowing_water,
-            0,
-            false);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 2, 12, 2, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 3, 12, 2, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 2, 12, 3, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.air, 0, 3, 12, 3, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 13, 1, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 14, 1, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 13, 1, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 14, 1, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 13, 4, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 1, 14, 4, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 13, 4, par3StructureBoundingBox);
-        this.placeBlockAtCurrentPosition(par1World, Blocks.fence, 0, 4, 14, 4, par3StructureBoundingBox);
-        this.fillWithMetadataBlocks(
-            par1World,
-            par3StructureBoundingBox,
-            1,
-            15,
-            1,
-            4,
-            15,
-            4,
-            ExtraPlanets_Blocks.rheaBlocks,
-            2,
-            ExtraPlanets_Blocks.rheaBlocks,
-            2,
-            false);
-
-        for (int var4 = 0; var4 <= 5; ++var4) {
-            for (int var5 = 0; var5 <= 5; ++var5) {
-                if (var5 == 0 || var5 == 5 || var4 == 0 || var4 == 5) {
-                    this.placeBlockAtCurrentPosition(
-                        par1World,
-                        Blocks.gravel,
-                        0,
-                        var5,
-                        11,
-                        var4,
-                        par3StructureBoundingBox);
-                    this.clearCurrentPositionBlocksUpwards(par1World, var5, 12, var4, par3StructureBoundingBox);
-                }
-            }
-        }
-
-        return true;
+        return this.buildWell(par1World, par2Random, par3StructureBoundingBox, ExtraPlanets_Blocks.rheaBlocks);
     }
 
     protected void fillWithBlocksAndMetadata(World par1World, StructureBoundingBox par2StructureBoundingBox, int par3,

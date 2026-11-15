@@ -185,6 +185,13 @@ public class ExtraPlanets_Blocks {
     public static Block treasureChestTier10;
 
     // Dungeon Bricks
+    /**
+     * "veuns" is a typo for "venus" and it is load-bearing: the block is registered as
+     * {@code extraplanets:veunsDungeonBrick}, its translation key is {@code tile.veuns.dungeon_brick.name}, and the
+     * microblock material is registered as {@code tile.veunsDungeonBrick} (see {@code ExtraPlanets_MicroBlocks}).
+     * Renaming any of those breaks existing worlds and microblocks; leave the strings alone and rename the field only
+     * if you also add a registry alias.
+     */
     public static Block veunsDungeonBrick;
     public static Block jupiterDungeonBrick;
     public static Block saturnDungeonBrick;

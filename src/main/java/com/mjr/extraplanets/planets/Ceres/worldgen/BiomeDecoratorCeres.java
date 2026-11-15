@@ -8,6 +8,7 @@ import net.minecraftforge.event.terraingen.DecorateBiomeEvent;
 import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.blocks.fluid.ExtraPlanets_Fluids;
 import com.mjr.extraplanets.util.WorldGenHelper;
+import com.mjr.extraplanets.world.features.WorldGenDeshTower;
 
 import micdoodle8.mods.galacticraft.api.prefab.world.gen.BiomeDecoratorSpace;
 import micdoodle8.mods.galacticraft.core.world.gen.WorldGenMinableMeta;
@@ -122,6 +123,13 @@ public class BiomeDecoratorCeres extends BiomeDecoratorSpace {
                     ExtraPlanets_Fluids.radio_active_water,
                     ExtraPlanets_Blocks.ceresBlocks);
             }
+        }
+        // The Tower of Desh: a desh-lined iron-bars landmark on the Ceres surface. It was added in c1192dc ("Added
+        // a Custom Structure of Tower of Desh to Ceres") and lost when this decorator was rewritten, which left
+        // WorldGenDeshTower unreferenced and the landmark absent from every world generated since.
+        if (this.rand.nextInt(150) == 0) {
+            WorldGenHelper
+                .generateStructure(new WorldGenDeshTower(), this.currentWorld, this.rand, this.chunkX, 0, this.chunkZ);
         }
         MinecraftForge.EVENT_BUS
             .post(new DecorateBiomeEvent.Post(this.currentWorld, this.rand, this.chunkX, this.chunkZ));

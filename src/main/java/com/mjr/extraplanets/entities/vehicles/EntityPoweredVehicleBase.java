@@ -257,6 +257,14 @@ public abstract class EntityPoweredVehicleBase extends Entity
 
     @Override
     public void setPositionAndRotation2(double d, double d1, double d2, float f, float f1, int i) {
+        // Client-only by contract: the only caller is NetHandlerPlayClient's entity-move handler. The guard is not
+        // about this method's own side check but about the class it touches below - FMLClientHandler does not exist
+        // on a dedicated server, so a single future call from common code would be a NoClassDefFoundError, not an
+        // exception we could catch. worldObj is non-null by the time a spawned entity can be tracked, but the null
+        // check keeps that independent of the call path.
+        if (this.worldObj == null || !this.worldObj.isRemote) {
+            return;
+        }
         if (this.riddenByEntity != null) {
             if (this.riddenByEntity instanceof EntityPlayer && FMLClientHandler.instance()
                 .getClient().thePlayer.equals(this.riddenByEntity)) {} else {

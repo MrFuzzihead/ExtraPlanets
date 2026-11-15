@@ -1,7 +1,6 @@
 package com.mjr.extraplanets.items.armor.modules;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
 
 import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.entity.player.EntityPlayerMP;
@@ -37,9 +36,7 @@ public class ModuleJetpack extends Module {
         this.tier = tier;
         this.accelSpeed = tier == 1 ? 0.15 : 0.25;
         this.maxAccel = tier == 1 ? 0.5 : 0.7;
-        List<ItemStack> reqs = new ArrayList<ItemStack>();
-        reqs.add(new ItemStack(Blocks.piston, 1));
-        this.setRequirements(reqs);
+        this.setRequirementSupplier(() -> Collections.singletonList(new ItemStack(Blocks.piston, 1)));
     }
 
     public int getTier() {

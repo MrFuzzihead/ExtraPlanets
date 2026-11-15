@@ -461,7 +461,7 @@ public class TileEntitySolar extends TileBaseUniversalElectricalSource
 
     @Override
     public boolean canInsertItem(int slotID, ItemStack itemstack, int side) {
-        return this.isItemValidForSlot(slotID, itemstack);
+        return itemstack != null && this.isItemValidForSlot(slotID, itemstack);
     }
 
     @Override
@@ -471,7 +471,7 @@ public class TileEntitySolar extends TileBaseUniversalElectricalSource
 
     @Override
     public boolean isItemValidForSlot(int slotID, ItemStack itemstack) {
-        return slotID == 0 && ItemElectricBase.isElectricItem(itemstack.getItem());
+        return slotID == 0 && itemstack != null && ItemElectricBase.isElectricItem(itemstack.getItem());
     }
 
     @Override

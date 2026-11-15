@@ -16,7 +16,6 @@ import com.mjr.extraplanets.blocks.ExtraPlanets_Blocks;
 import com.mjr.extraplanets.entities.rockets.EntityTier7Rocket;
 import com.mjr.extraplanets.tileEntities.machines.TileEntityTier2LandingPad;
 
-import cpw.mods.fml.client.FMLClientHandler;
 import cpw.mods.fml.relauncher.Side;
 import cpw.mods.fml.relauncher.SideOnly;
 import micdoodle8.mods.galacticraft.api.entity.IRocketType.EnumRocketType;
@@ -149,19 +148,23 @@ public class Tier7Rocket extends Item implements IHoldableItem {
 
         if (par1ItemStack.hasTagCompound() && par1ItemStack.getTagCompound()
             .hasKey("RocketFuel")) {
-            EntityTier7Rocket rocket = new EntityTier7Rocket(
-                FMLClientHandler.instance()
-                    .getWorldClient(),
-                0,
-                0,
-                0,
-                EnumRocketType.values()[par1ItemStack.getItemDamage()]);
-            par2List.add(
-                GCCoreUtil.translate("gui.message.fuel.name") + ": "
-                    + par1ItemStack.getTagCompound()
-                        .getInteger("RocketFuel")
-                    + " / "
-                    + rocket.fuelTank.getCapacity());
+            // A tooltip is only ever drawn on the client, so there is no world on a dedicated server and the
+            // fuel line is omitted there - see CommonProxy#getClientWorld().
+            World clientWorld = ExtraPlanets.proxy.getClientWorld();
+            if (clientWorld != null) {
+                EntityTier7Rocket rocket = new EntityTier7Rocket(
+                    clientWorld,
+                    0,
+                    0,
+                    0,
+                    EnumRocketType.values()[par1ItemStack.getItemDamage()]);
+                par2List.add(
+                    GCCoreUtil.translate("gui.message.fuel.name") + ": "
+                        + par1ItemStack.getTagCompound()
+                            .getInteger("RocketFuel")
+                        + " / "
+                        + rocket.fuelTank.getCapacity());
+            }
         }
     }
 

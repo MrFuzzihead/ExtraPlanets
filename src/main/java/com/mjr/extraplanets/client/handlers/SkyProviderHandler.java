@@ -11,6 +11,7 @@ import com.mjr.extraplanets.moons.Callisto.SkyProviderCallisto;
 import com.mjr.extraplanets.moons.Callisto.WorldProviderCallisto;
 import com.mjr.extraplanets.moons.Deimos.SkyProviderDeimos;
 import com.mjr.extraplanets.moons.Deimos.WorldProviderDeimos;
+import com.mjr.extraplanets.moons.Europa.SkyProviderEuropa;
 import com.mjr.extraplanets.moons.Europa.WorldProviderEuropa;
 import com.mjr.extraplanets.moons.Ganymede.SkyProviderGanymede;
 import com.mjr.extraplanets.moons.Ganymede.WorldProviderGanymede;
@@ -24,6 +25,7 @@ import com.mjr.extraplanets.moons.Phobos.SkyProviderPhobos;
 import com.mjr.extraplanets.moons.Phobos.WorldProviderPhobos;
 import com.mjr.extraplanets.moons.Rhea.SkyProviderRhea;
 import com.mjr.extraplanets.moons.Rhea.WorldProviderRhea;
+import com.mjr.extraplanets.moons.Titan.SkyProviderTitan;
 import com.mjr.extraplanets.moons.Titan.WorldProviderTitan;
 import com.mjr.extraplanets.moons.Titania.SkyProviderTitania;
 import com.mjr.extraplanets.moons.Titania.WorldProviderTitania;
@@ -205,7 +207,9 @@ public class SkyProviderHandler {
             }
             if (world.provider instanceof WorldProviderEuropa) {
                 if (world.provider.getSkyRenderer() == null) {
-                    world.provider.setSkyRenderer(new SkyProviderGanymede((IGalacticraftWorldProvider) world.provider));
+                    // Europa renders Jupiter, like its sibling Ganymede, but through its own class: this block used
+                    // to construct SkyProviderGanymede and SkyProviderEuropa sat unused.
+                    world.provider.setSkyRenderer(new SkyProviderEuropa((IGalacticraftWorldProvider) world.provider));
                 }
 
                 if (world.provider.getCloudRenderer() == null) {
@@ -268,7 +272,9 @@ public class SkyProviderHandler {
             }
             if (world.provider instanceof WorldProviderTitan) {
                 if (world.provider.getSkyRenderer() == null) {
-                    world.provider.setSkyRenderer(new SkyProviderEris((IGalacticraftWorldProvider) world.provider));
+                    // Titan orbits Saturn. This block used to construct SkyProviderEris, so Titan showed Pluto,
+                    // Dysnomia and Earth; SkyProviderTitan (saturn.png) sat unused in the same package.
+                    world.provider.setSkyRenderer(new SkyProviderTitan((IGalacticraftWorldProvider) world.provider));
                 }
 
                 if (world.provider.getCloudRenderer() == null) {

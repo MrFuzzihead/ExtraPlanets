@@ -59,7 +59,10 @@ public class MapGenDungeon {
     }
 
     public void generateUsingSetBlock(World world, long seed, int x, int y, int z) {
-        final ChunkCoordinates dungeonCoords = this.getDungeonNear(seed, x / 16, y / 16);
+        // Without this the generator asks worldObj for its dimension and throws - only generateUsingArrays used to
+        // assign it, which is why this path was never exercised and never noticed.
+        this.worldObj = world;
+        final ChunkCoordinates dungeonCoords = this.getDungeonNear(seed, x / 16, z / 16);
         if (dungeonCoords != null) {
             this.generate(
                 world,

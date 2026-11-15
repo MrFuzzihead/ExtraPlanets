@@ -147,6 +147,17 @@ public class ClientProxy extends CommonProxy {
     public static int renderIdLandingPad;
 
     @Override
+    public net.minecraft.world.World getClientWorld() {
+        return net.minecraft.client.Minecraft.getMinecraft().theWorld;
+    }
+
+    @Override
+    public String getSneakKeyName() {
+        return net.minecraft.client.settings.GameSettings
+            .getKeyDisplayString(net.minecraft.client.Minecraft.getMinecraft().gameSettings.keyBindSneak.getKeyCode());
+    }
+
+    @Override
     public void preInit(FMLPreInitializationEvent event) {
         // Register the ModularUI factory for the spacesuit module manager GUI on the client.
         // The factory would otherwise only be registered when GuiModuleManager is first loaded,

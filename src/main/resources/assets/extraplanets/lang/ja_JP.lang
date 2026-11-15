@@ -647,38 +647,6 @@ tile.red_sandstone.name=赤色の砂岩
 tile.orange_sand.name=橙色の砂
 tile.orange_sandstone.name=橙色の砂岩
 
-#CandyCane/Cake/Icing Blocks
-tile.candy_blocks.candy_cane_red.name=赤色のキャンディケイン
-tile.candy_blocks.candy_cane_green.name=緑色のキャンディケイン
-tile.candy_blocks.candy_cane_blue.name=青色のキャンディケイン
-tile.candy_blocks.candy_cane_orange.name=橙色のキャンディケイン
-tile.candy_blocks.candy_cane_magenta.name=赤紫色のキャンディケイン
-tile.candy_blocks.candy_cane_pink.name=桃色のキャンディケイン
-tile.candy_blocks.candy_cane_lime.name=黄緑色のキャンディケイン
-tile.candy_blocks.candy_cane_purple.name=紫色のキャンディケイン
-tile.candy_blocks.candy_cane_brown.name=茶色のキャンディケイン
-tile.candy_blocks.candy_cane_black.name=黒色のキャンディケイン
-
-tile.candy_blocks_horizontal.candy_cane_red_horizontal.name=赤色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_green_horizontal.name=緑色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_blue_horizontal.name=青色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_orange_horizontal.name=橙色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_magenta_horizontal.name=赤紫色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_pink_horizontal.name=桃色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_lime_horizontal.name=黄緑色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_purple_horizontal.name=紫色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_brown_horizontal.name=茶色のキャンディケイン (横向き)
-tile.candy_blocks_horizontal.candy_cane_black_horizontal.name=黒色のキャンディケイン (横向き)
-
-tile.cake_blocks.cake_block.name=ケーキブロック
-tile.cake_blocks.cake_block_red_velvet.name=レッドヴェルヴェットケーキ ブロック
-tile.cake_blocks.cake_block_chocolate.name=チョコレートケーキ ブロック
-tile.cake_blocks.white_icing_red_dots.name=赤色の水玉模様のアイシング
-tile.cake_blocks.white_icing_green_dots.name=緑色の水玉模様のアイシング
-tile.cake_blocks.white_icing_pink_dots.name=桃色の水玉模様のアイシング
-tile.cake_blocks.white_icing_orange_dots.name=橙色の水玉模様のアイシング
-tile.cake_blocks.cookie_rocks.name=クッキーの岩
-
 tile.white_sugar_cane.name=白サトウキビブロック
 
 #Decorative Blocks

@@ -15,6 +15,7 @@ import org.lwjgl.util.vector.Matrix4f;
 import org.lwjgl.util.vector.Vector3f;
 
 import com.google.common.collect.Maps;
+import com.mjr.extraplanets.util.ExtraPlanetsLog;
 
 import cpw.mods.fml.common.FMLCommonHandler;
 import cpw.mods.fml.relauncher.Side;
@@ -328,6 +329,21 @@ public class CustomCelestialSelection extends GuiCelestialSelection {
         return matrixMap;
     }
 
+    /** Render-path failures are reported once per session: logging them per frame would bury the log. */
+    private static boolean renderInfoFailureLogged;
+
+    private static void logRenderInfoFailure(String what, Exception e) {
+        if (renderInfoFailureLogged) {
+            return;
+        }
+        renderInfoFailureLogged = true;
+        ExtraPlanetsLog.severe(
+            "Could not read " + what
+                + " for the celestial selection screen; the screen shows a default instead. Further failures of this"
+                + " kind are not logged.",
+            e);
+    }
+
     @Override
     public void drawButtons(int mousePosX, int mousePosY) {
         try {
@@ -573,7 +589,9 @@ public class CustomCelestialSelection extends GuiCelestialSelection {
                             .toLowerCase()
                             .contains("overworld") && !(this.selectedBody instanceof Satellite)) try {
                                 temperature = ((WorldProviderSpace) temp).getThermalLevelModifier();
-                            } catch (Exception e) {}
+                            } catch (Exception e) {
+                                logRenderInfoFailure("the thermal level of the selected body", e);
+                            }
                         this.drawString(
                             this.fontRendererObj,
                             GCCoreUtil.translate("gui.celestial_body_temperature.name") + ": "
@@ -587,7 +605,9 @@ public class CustomCelestialSelection extends GuiCelestialSelection {
                                 breathable = ((WorldProviderSpace) temp).hasBreathableAtmosphere();
                             if (this.selectedBody.getUnlocalizedName()
                                 .contains("overworld")) breathable = true;
-                        } catch (Exception e) {}
+                        } catch (Exception e) {
+                            logRenderInfoFailure("whether the selected body's atmosphere is breathable", e);
+                        }
                         this.drawString(
                             this.fontRendererObj,
                             GCCoreUtil.translate("gui.celestial_body_breathable.name") + ": "
@@ -666,9 +686,10 @@ public class CustomCelestialSelection extends GuiCelestialSelection {
                 }
             }
         } catch (Exception e) {
-            System.out.println(
-                "An error has occurred while rendering custom features on the Celestial Selection screen, Please check log for errors!");
-            e.printStackTrace();
+            ExtraPlanetsLog.severe(
+                "An error occurred while rendering the custom celestial-selection features; the rest of the screen was"
+                    + " still drawn. Please report this with the log.",
+                e);
         }
         super.drawButtons(mousePosX, mousePosY);
     }
