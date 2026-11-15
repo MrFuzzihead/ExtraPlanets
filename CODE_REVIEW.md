@@ -92,6 +92,11 @@ All four commands pass on a clean checkout:
   be set; the resolved dependency otherwise lives only in `mcmod.info`'s prose.
 * `Constants.DEPENDENCIES_FORGE` asks for `Forge@[10.13.4.1558,)` while the build targets `10.13.4.1614`. That is
   fine (the lower bound is intentional for pack compatibility), but it is worth a comment so nobody "fixes" it.
+* **The version had drifted.** The release version is the git tag (`git describe` names the jar and fills
+  `mcmod.info`), but `@Mod(version = ...)` used `Constants.modVersion`, a hand-kept `1.7.10-2.1.4` that was last
+  correct before 3.0.0 - so the mod list, `mcmod.info` and the jar name disagreed, and NEI's plugin reported 2.1.4
+  as well. **Fixed:** `@Mod` now uses the generated `Tags.VERSION` (cannot drift) and `Constants`' `LOCAL*` mirror is
+  bumped with a comment saying what it is for. This branch targets **3.1.0**.
 
 ---
 
