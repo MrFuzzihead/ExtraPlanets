@@ -53,6 +53,11 @@ public class ExtraPlanets_Armor {
 
     public static Item spaceSuitHelmet;
     public static Item spaceSuitChest;
+    /**
+     * Misspelled on purpose: "Legings" is part of the registered name ({@code extraplanets:spaceSuitLegings}) and
+     * therefore of every save that contains one. Renaming the field is fine as long as the string in
+     * {@code GameRegistry.registerItem} stays; renaming both breaks every existing world.
+     */
     public static Item spaceSuitLegings;
     public static Item spaceSuitBoots;
 

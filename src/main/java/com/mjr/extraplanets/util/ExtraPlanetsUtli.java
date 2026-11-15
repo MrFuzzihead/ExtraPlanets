@@ -9,6 +9,11 @@ import com.mjr.extraplanets.inventory.vehicles.ContainerVehicleBase;
 import com.mjr.extraplanets.network.PacketSimple;
 import com.mjr.extraplanets.network.PacketSimple.EnumSimplePacket;
 
+/**
+ * "Utli" is a typo for "Utils". Unlike the misspelled fields elsewhere in this mod this one is *not* part of any save
+ * format - it is a class name and nothing persists it - so it could be renamed safely. It has not been, because the
+ * rename touches every caller and buys nothing a comment cannot.
+ */
 public class ExtraPlanetsUtli {
 
     public static void openFuelVehicleInv(EntityPlayerMP player, IInventory buggyInv, int type) {

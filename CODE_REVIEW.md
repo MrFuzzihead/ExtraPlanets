@@ -351,7 +351,7 @@ planets - and nothing did.
 **Fixed:** both branches now construct their own body's renderer. `SkyProviderWiringTest` parses the handler and
 enforces the identity mapping, so a future copy-paste fails the build.
 
-### P3 — Naming that has become part of the save format
+### P3 — Naming that has become part of the save format — ✅ DOCUMENTED
 
 * `ExtraPlanetsUtli` (typo for `Utils`).
 * `ExtraPlanets_Blocks.veunsDungeonBrick` — and the matching `"tile.veunsDungeonBrick"` microblock key.
@@ -359,7 +359,10 @@ enforces the identity mapping, so a future copy-paste fails the build.
 * `Config`'s category constants mix camelCase, spaces and `ID`/`Id` (`"dimensionID"`, `"items"`, `"schematics GUI ID"`).
 
 These are cosmetic, but the field names appear in NBT/registry/translation keys, so they must **not** be renamed
-without a migration. Worth a comment on each saying so.
+without a migration.
+**Documented:** each one now says so where it is declared - the armour leggings fields, `veunsDungeonBrick` (including
+the microblock material name), the config category keys in `Constants`, and `ExtraPlanetsUtli`, which is the odd one
+out: it is a class name, nothing persists it, and the comment says it could be renamed safely if anyone wants to.
 
 ### Verified already fixed
 
@@ -774,7 +777,7 @@ Everything below is open. The order is by value ÷ effort.
 |---|---|---|---|---|
 | 1 | **Publish metadata** (§2.3): add `modrinthProjectId`, `curseForgeProjectId` and `curseForgeRelations` | 30 min | none | Without them the `release-tags` workflow cannot publish; Galacticraft is a hard requirement and should be declared |
 | 2 | **Collapse the three compatibility flags** (§5.4) | ~1 day | medium | `morePlanetsCompatibility`, `…Adv143` and `…New` overlap; one flag plus a "which bodies" list. Behavioural, so it needs a decision on which of the three wins |
-| 3 | **Comment the save-format typos** (§4 P3) | 30 min | none | `ExtraPlanetsUtli`, `veunsDungeonBrick`, `spaceSuitLegings` are in NBT/registry/translation keys. Do **not** rename; say so where they are declared |
+| ✅ | **Comment the save-format typos** (§4 P3) | 30 min | none | Every one now says at its declaration that it is part of the save/registry format |
 | 4 | **Server-side pressure/radiation** (§7.3) | 1-2 days | medium | The overlays and suit modules model both; the damage/drain side is only partly wired, so the layers are craftable-for-no-reason |
 | 5 | **Jetpack as a real flight controller** (§7.4) | 1 day | medium | Thrust is client-claimed today, which is exploitable; apply it in `tickServer` behind `hasPower` |
 | 6 | **`Config` instance facade** (§4 P1, the last open P1) | 2-3 days | medium | 317 public statics read by ~600 files. The sync half is solved; the facade is the safe first step of the rest. Cannot be proved behaviour-preserving by test, so it wants care, not speed |
