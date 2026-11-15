@@ -28,13 +28,16 @@
 | Build | New `addon.gradle.kts`: JaCoCo 0.8.16, Java 8 unit-test launcher, coverage report + ratchet, `gameTest` source set, `gameTestServer` task, `-PsmokeTest` hook |
 | Dependencies | Removed the unused `ModularUI:1.3.4`; `ModularUI2` is now `implementation` instead of `api`; added JUnit/Mockito test dependencies; every entry annotated with why it has that scope |
 | Tests | 171 headless JUnit 4 tests in `src/test/java` (was 0) |
-| In-game tests | New never-shipped test mod in `src/gameTest/java`, 41 checks, run by `./gradlew gameTestServer` |
+| In-game tests | New never-shipped test mod in `src/gameTest/java`, 44 checks, run by `./gradlew gameTestServer`, with its own coverage report and floor |
 | Production code | `ExtraPlanets_Modules.init()` is now idempotent; `Module.copy()` no longer shares the prototype's requirement list; new `SmokeTestHook` + `ExtraPlanets.loadComplete` |
 | Docs | `README.md` rewritten (badges, requirements, build/test commands), this file added |
 
-Measured coverage of the unit suite (`jacocoTestReport`, generated classes excluded):
-**2.73 % of 63,418 lines, 0.81 % of 28,438 branches**. That is expected for a mod that is 5 MB of worldgen and
-rendering; the ratchet is set just below it so it can only go up.
+Coverage has two numbers, because the two suites cannot share one (see §8.6):
+
+* headless (`jacocoTestReport`, generated and client-only classes excluded): **5.26 % of 63,485 lines, 2.74 % of
+  28,498 branches**, floor 5.1 %;
+* in game (`jacocoGameTestReport`, the server-side classes the JVM actually loaded): **50.86 % of 54,030 lines**,
+  floor 49 %.
 
 All four commands pass on a clean checkout:
 
@@ -680,7 +683,8 @@ Ordered by (value ÷ effort). None of these are implemented in this pass.
 5. **Schematic pages for the rovers 2.0 / rocket 11.** The schematic id plumbing (`Config.SYNC_ENTRIES`,
    `SchematicRegistry`, `SchematicPage` config ids) is fully generic; adding a page is currently a 6-file change that
    could be a 1-file change with a small builder.
-6. **In-game coverage in CI.** See §8.6 — the machinery is in place, only the class-dump flag is missing.
+6. ~~**In-game coverage in CI.**~~ Done: the agent's class dump feeds a real report and a floor, and the
+   game-test workflow enforces it (§8.6).
 
 ---
 
@@ -759,27 +763,31 @@ body's provider and its blocks, and eight of them use a different decorator base
 
 ---
 
-## 9. Priority plan
+## 9. What is left
 
-| Order | Item | Effort | Risk |
-|---|---|---|---|
-| 1 | `CommonProxy.getClientWorld()`/`getKeyDisplayString()` seam for the 8 remaining tooltip-only client calls (§4 P2) | 2 hours | low |
-| 3 | Empty `catch` blocks and `catch (Throwable)` in worldgen (§6.2) | 1 day | low |
-| 4 | `Config` instance facade (§4 P1) | 2-3 days | medium |
-| 5 | Refactor the 44 worldgen copies (§6.3) | 1 week | medium, mechanical |
-| 6 | Delete / implement the dead config keys (§5.4) | depends | low |
-| 7 | Add `gameTestServer` + `smokeTest` to CI (§6.4) | 1 hour | none |
-| 8 | Delete the local `migrate/` tree (§5.3) | 1 min | none |
-| ✅ | Make `ExtraPlanets_Modules.init()` order-independent (§4 P1) | 2 hours | medium |
-| ✅ | Name/value config sync payload with a compile-checked accessor table (§4 P1, §6.1) | 4 hours | medium |
-| ✅ | `ModuleHelper` cast guard, biome id 0, vehicle client guard, `getElectricityStored` split, `PacketSimple` failure, logging sweep (§4 P2, §6.2) | 1 day | low |
-| ✅ | Dead code (§5.1, §5.2): 17 classes + 728 KB of textures deleted, 3 unwired features restored, 2 wiring guards added | 1 day | none |
-| ✅ | Village refactor steps 0-6 (§6.3): three snapshot harnesses + 105,542 lines of duplication removed (80%) | 3 days | none (harness-gated) |
-| ✅ | §6.1: microblock table + `WorldHazards` + recipe split, with goldens and a headless classifier test | 1 day | none |
-| ✅ | §6.2: empty catch blocks logged, `NoStrayTracesTest` extended to forbid them | 2 hours | none |
-| ✅ | §6.4: in-game suite in CI, `jitpack.yml` JDK/install fixed, snapshots made world-independent | 3 hours | none |
-| ✅ | Jupiter lightning (the last dead config key): server-spawned real bolts + client fallback | 4 hours | low |
-| | Optional: enable biome-edge stabilisation (§5.2) - one shared class + one line per chunk manager | 2 hours | medium - worldgen change |
+Everything below is open. The order is by value ÷ effort.
+
+| # | Item | Effort | Risk | Notes |
+|---|---|---|---|---|
+| 1 | **Publish metadata** (§2.3): add `modrinthProjectId`, `curseForgeProjectId` and `curseForgeRelations` | 30 min | none | Without them the `release-tags` workflow cannot publish; Galacticraft is a hard requirement and should be declared |
+| 2 | **`CommonProxy` seam** for the 8 tooltip-only client calls (§4 P2) | 2 hours | low | `SpaceSuitArmor` and the seven `Tier4..10Rocket` classes reach `FMLClientHandler` inside `addInformation`. Latent, not broken - route them through the proxy instead of sprinkling `isRemote` checks |
+| 3 | **Collapse the three compatibility flags** (§5.4) | ~1 day | medium | `morePlanetsCompatibility`, `…Adv143` and `…New` overlap; one flag plus a "which bodies" list. Behavioural, so it needs a decision on which of the three wins |
+| 4 | **Comment the save-format typos** (§4 P3) | 30 min | none | `ExtraPlanetsUtli`, `veunsDungeonBrick`, `spaceSuitLegings` are in NBT/registry/translation keys. Do **not** rename; say so where they are declared |
+| 5 | **Server-side pressure/radiation** (§7.3) | 1-2 days | medium | The overlays and suit modules model both; the damage/drain side is only partly wired, so the layers are craftable-for-no-reason |
+| 6 | **Jetpack as a real flight controller** (§7.4) | 1 day | medium | Thrust is client-claimed today, which is exploitable; apply it in `tickServer` behind `hasPower` |
+| 7 | **`Config` instance facade** (§4 P1, the last open P1) | 2-3 days | medium | 317 public statics read by ~600 files. The sync half is solved; the facade is the safe first step of the rest. Cannot be proved behaviour-preserving by test, so it wants care, not speed |
+| 8 | **Module tiers instead of `_t1`/`_t2` variants** (§7.1) | 1 day | low | `subType` already exists and two modules use it |
+| 9 | **`/ep` command that reports the resolved ids** (§7.2) | 1 day | low | Turns the "biome ID conflict" log line into something actionable in game |
+| 10 | **Schematic page builder** (§7.5) | 1 day | low | Adding a page is a 6-file change |
+| 11 | **Kepler22b's own buildings** (§6.3) | 1 day | medium | Its house/wood hut/well differ by metadata; sharing them means proving the mapping is a pure function of block+metadata. Optional |
+| 12 | **Per-body split of `RecipesCrafting`** (§6.1) | 4 hours | low | 2,122 lines; order-safe because the bodies appear in sequence |
+| 13 | **Delete the local `migrate/` tree** (§5.3) | 1 min | none | 59 MB, already git-ignored; it is only in working copies |
+| 14 | **Biome-edge stabilisation** (§5.2) | 2 hours | medium | One shared class plus one line per chunk manager; changes worldgen for new chunks, and no release has ever shipped it enabled |
+
+Done in these passes, for the record: the config sync rewrite, the module-requirement ordering, the cast/biome/
+vehicle/armour/packet fixes, the logging sweep, the dead-code cleanup (17 classes, 728 KB of textures, three restored
+features), the village refactor (80 % of its duplication removed), the microblock and recipe splits, `WorldHazards`,
+Jupiter lightning, the in-game suite in CI, and the test infrastructure both suites run on.
 
 The test suite that now guards changes is the more valuable artefact than any single fix above: `./gradlew check` fails
 on a config-id collision, a broken sync contract, a module-registry duplicate, a packet-codec regression, and a
