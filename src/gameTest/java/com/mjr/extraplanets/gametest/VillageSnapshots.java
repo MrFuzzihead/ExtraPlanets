@@ -515,6 +515,13 @@ final class VillageSnapshots {
                 // The top layer is Galacticraft's moon gravel, which is what the village path generator looks for:
                 // it only paves over that block (or air), so a stone surface would make every path place nothing.
                 setFast(world, x + dx, PLATEAU_TOP, z + dz, GCBlocks.blockMoon, 5);
+                // Clear the whole column above the plateau, not just the band a component can reach: natural terrain
+                // higher than that (a hill at the scratch coordinates, which depends on the world seed) would be
+                // the highest solid block in the column, and the components read getTopSolidOrLiquidBlock to decide
+                // where to build. That is what made the goldens pass on one world and fail on another.
+                for (int y = PLATEAU_TOP + 1; y <= 255; y++) {
+                    setFast(world, x + dx, y, z + dz, Blocks.air, 0);
+                }
             }
         }
 
