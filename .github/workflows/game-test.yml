@@ -25,9 +25,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # The wrapper is committed without the executable bit, and a Windows checkout cannot add one
+      # (core.fileMode=false), so every job that wants to run it has to set it. `git update-index --chmod=+x gradlew`
+      # has been applied to the repository as well; this line is what keeps working in a fork that has not.
+      - name: Make the Gradle wrapper executable
+        run: chmod +x gradlew
+
       # Gradle 9 and RetroFuturaGradle need 17+ to start. The build itself targets Java 8 bytecode and provisions its
       # own toolchains, so this only has to be able to run Gradle.
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
