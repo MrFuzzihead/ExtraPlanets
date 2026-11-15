@@ -114,7 +114,9 @@ import micdoodle8.mods.galacticraft.core.items.GCItems;
 @Mod(
     modid = Constants.modID,
     name = Constants.modName,
-    version = Constants.modVersion,
+    // Generated from the git tag by the build (see Tags), so the jar name, mcmod.info and the mod list all agree.
+    // It used to be Constants.modVersion, a hand-maintained string that had been left at 2.1.4 since before 3.0.0.
+    version = Tags.VERSION,
     dependencies = Constants.DEPENDENCIES_FORGE + Constants.DEPENDENCIES_MODS)
 public class ExtraPlanets {
 

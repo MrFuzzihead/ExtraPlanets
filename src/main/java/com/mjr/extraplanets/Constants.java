@@ -5,16 +5,19 @@ public class Constants {
     public static final String modID = "ExtraPlanets";
     public static final String modName = "ExtraPlanets";
 
-    public static final int LOCALMAJVERSION = 2;
+    // The version comes from the git tag: the build derives it with `git describe` (see the generated Tags.VERSION
+    // and the jar name), and a release is whatever it is tagged as. These numbers are a hand-maintained mirror for
+    // anything that cannot read Tags - NEI's plugin version, for one - and they had drifted badly (2.1.4 while the
+    // last release was 3.0.6). Keep them in step with the tag, or the mod list in game disagrees with its own jar.
+    public static final int LOCALMAJVERSION = 3;
     public static final int LOCALMINVERSION = 1;
-    public static final int LOCALBUILDVERSION = 4;
+    public static final int LOCALBUILDVERSION = 0;
 
-    public static final String modVersion = "1.7.10" + "-"
-        + LOCALMAJVERSION
-        + "."
-        + LOCALMINVERSION
-        + "."
-        + LOCALBUILDVERSION;
+    /**
+     * For places that can only take a constant. {@code @Mod} uses {@link Tags#VERSION} instead, which is generated
+     * from the tag and therefore cannot drift.
+     */
+    public static final String modVersion = LOCALMAJVERSION + "." + LOCALMINVERSION + "." + LOCALBUILDVERSION;
 
     public static final String MCVERSION = "[1.7.10]";
     public static final String DEPENDENCIES_FORGE = "required-after:Forge@[10.13.4.1558,); "; // Keep the space at the
